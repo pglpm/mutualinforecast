@@ -6,7 +6,7 @@
 %% Home page: http://magnaspesmeretrix.org/
 %% Email (remove ZZ): pglpm0ZZ[at]gmail.com
 %% Created: 2000-08-23T16:53:30+0200
-%% Last-Updated: 2020-08-04T19:45:06+0200
+%% Last-Updated: 2020-08-07T10:14:21+0200
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % NB: This database contains also items whose content's validity I
@@ -427,6 +427,7 @@
 @String{ic = {Info.\ Comp.}}
 @String{icann = {Proc.\ International Conf.\ Artif.\ Neural Networks (ICANN)}}
 @String{iclr = {Proc.\ International Conf.\ Learn.\ Representations}}
+@String{icml = {Proc.\ International Conf.\ Mach.\ Lear.}}
 @String{icont = {Inform.\ Contr.}}
 @String{icsnl = {ICS (Int.\ Compumag Soc.)\ Newsletter}}
 @String{iec = {Ind.\ Eng.\ Chem.}}
@@ -36309,6 +36310,20 @@ note =	       {\url{http://www-levich.engr.ccny.cuny.edu/~hmakse/DOWNLOAD/VIRIAL
 keywords =     {statistical mechanics, temperature, preparation of state}
 }
 
+@Book{efron1982_r1994,
+author =       {Bradley Efron},
+title =	       {The Jackknife, the Bootstrap and Other Resampling Plans},
+publisher =    {SIAM},
+year =	       {1994},
+volume =       {38},
+series =       {CBMS-NSF Regional conference series in applied mathematics},
+address =      {Philadelphia},
+edition =      {repr.},
+note =	       {First publ.\ 1982},
+keywords =     {shuffling, mutual information, long-run frequencies},
+origdate =     {1982}
+}
+
 @Article{efron1986,
 author =       {Bradley Efron},
 title =	       {Why Isn't Everyone a {Bayesian}?},
@@ -40191,6 +40206,17 @@ year =	       {2017},
 volume =       {6},
 pages =	       {1710},
 note =	       {See \citebi{stokesetal2017b}}
+}
+
+@Article{fagen1978,
+author =       {Robert M. Fagen},
+title =	       {Information measures: Statistical confidence limits and inference},
+journal =      jtb,
+year =	       {1978},
+volume =       {73},
+number =       {1},
+pages =	       {61--79},
+keywords =     {shuffling, mutual information, long-run frequencies}
 }
 
 @Article{faginetal1990,
@@ -58105,7 +58131,8 @@ booktitle =    {\citein{bernardoetal1996}},
 year =	       {1996},
 pages =	       {223--253},
 note =	       {With discussion by M. Lavine, M. Gasparini, and reply},
-keywords =     {nonparametric, probability theory, Dirichlet distribution}
+keywords =     {nonparametric, probability theory, Dirichlet distribution},
+mynote =       {smoothed Dirichlet: \sect~2.3 p.~228}
 }
 
 @Article{hjortetal1996,
@@ -85394,6 +85421,28 @@ pages =	       {021028},
 keywords =     {computational neuroscience, statistical mechanics}
 }
 
+@Article{montemurroetal2007,
+author =       {Marcelo A. Montemurro and Riccardo Senatore and Stefano Panzeri},
+title =	       {A downward biased estimator of spike timing information},
+journal =      neuroc,
+year =	       {2007},
+volume =       {70},
+number =       {10--12},
+pages =	       {1777--1781},
+keywords =     {shuffling, mutual information, long-run frequencies}
+}
+
+@Article{montemurroetal2007b,
+author =       {Marcelo A. Montemurro and Riccardo Senatore and Stefano Panzeri},
+title =	       {Tight data-robust bounds to mutual information combining shuffling and model selection techniques},
+journal =      ncomp,
+year =	       {2007},
+volume =       {19},
+number =       {11},
+pages =	       {2913--2957},
+keywords =     {shuffling, mutual information, long-run frequencies}
+}
+
 @Misc{montesinos2003,
 author =       {Merced Montesinos},
 title =	       {The double role of {Einstein's} equations: as equations of motion and as vanishing energy-momentum tensor},
@@ -90779,6 +90828,17 @@ number =       {3},
 pages =	       {786--792},
 note =	       {\url{http://www0.cs.ucl.ac.uk/staff/c.archambeau/publ/neco_mo09_web.pdf}},
 keywords =     {Laplace approximation, saddle-point approximation, partition function, Ising spin model}
+}
+
+@Article{opticanetal1991,
+author =       {L. M. Optican and T. J. Gawne and B. J. Richmond and P. J. Joseph},
+title =	       {Unbiased measures of transmitted information and channel capacity from multivariate neuronal data},
+journal =      bc,
+year =	       {1991},
+volume =       {65},
+number =       {5},
+pages =	       {305--310},
+keywords =     {shuffling, mutual information, long-run frequencies}
 }
 
 @Article{orbanzetal2015,
@@ -96578,13 +96638,13 @@ keywords =     {Bayes factors, model comparison, Bayesian probability theory}
 
 @Article{portamana2019c_r2020,
 author =       {Porta Mana, Piero Giovanni Luca},
-title =	       {Dimensional analysis in relativity and in differential geometry},
+title =	       {Dimensional analysis in general relativity and in differential geometry},
 journal =      ejp,
 year =	       {2020},
 volume =       {**},
 number =       {**},
 pages =	       {**},
-note =	       {Rev.\ version at \osfeprint{jmqnu}},
+note =	       {\doi{https://doi.org/10.1088/1361-6404/aba90b}. Updated version at \osfeprint{jmqnu}},
 keywords =     {stress-energy-momentum tensor, curvature, connection, metric tensor, Einstein equations},
 mynote =       {\url{https://doi.org/10.1088/1361-6404/aba90b}}
 }
@@ -121562,6 +121622,26 @@ volume =       {48},
 number =       {3},
 pages =	       {771--775},
 keywords =     {convex sets, probability theory}
+}
+
+@Article{vinhetal2009,
+author =       {Nguyen Xuan Vinh and Julien Epps and James Bailey},
+title =	       {Information theoretic measures for clusterings comparison: is a correction for chance necessary?},
+journal =      icml,
+year =	       {2009},
+volume =       {26},
+pages =	       {1073--1080},
+keywords =     {shuffling, mutual information, long-run frequencies}
+}
+
+@Article{vinhetal2010,
+author =       {Nguyen Xuan Vinh and Julien Epps and James Bailey},
+title =	       {Information Theoretic Measures for Clusterings Comparison: Variants, Properties, Normalization and Correction for Chance},
+journal =      jmlr,
+year =	       {2010},
+volume =       {11},
+pages =	       {2837--2854},
+keywords =     {shuffling, mutual information, long-run frequencies}
 }
 
 @Article{visbecketal1997,
