@@ -1,7 +1,7 @@
 \pdfoutput=1
 %% Author: PGL  Porta Mana, C Battistin, S Gonzalo Cogno
 %% Created: 2015-05-01T20:53:34+0200
-%% Last-Updated: 2020-08-05T14:44:07+0200
+%% Last-Updated: 2020-08-07T13:45:40+0200
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \newif\ifarxiv
 \arxivfalse
@@ -32,49 +32,15 @@ british%
 %%% Calls to packages (uncomment as needed)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-%\usepackage{pifont}
-
-%\usepackage{fontawesome}
-
 \usepackage[T1]{fontenc} 
 \input{glyphtounicode} \pdfgentounicode=1
 
 \usepackage[utf8]{inputenx}
 
-%\usepackage{newunicodechar}
-% \newunicodechar{Ĕ}{\u{E}}
-% \newunicodechar{ĕ}{\u{e}}
-% \newunicodechar{Ĭ}{\u{I}}
-% \newunicodechar{ĭ}{\u{\i}}
-% \newunicodechar{Ŏ}{\u{O}}
-% \newunicodechar{ŏ}{\u{o}}
-% \newunicodechar{Ŭ}{\u{U}}
-% \newunicodechar{ŭ}{\u{u}}
-% \newunicodechar{Ā}{\=A}
-% \newunicodechar{ā}{\=a}
-% \newunicodechar{Ē}{\=E}
-% \newunicodechar{ē}{\=e}
-% \newunicodechar{Ī}{\=I}
-% \newunicodechar{ī}{\={\i}}
-% \newunicodechar{Ō}{\=O}
-% \newunicodechar{ō}{\=o}
-% \newunicodechar{Ū}{\=U}
-% \newunicodechar{ū}{\=u}
-% \newunicodechar{Ȳ}{\=Y}
-% \newunicodechar{ȳ}{\=y}
-
 \newcommand*{\bmmax}{0} % reduce number of bold fonts, before font packages
 \newcommand*{\hmmax}{0} % reduce number of heavy fonts, before font packages
 
 \usepackage{textcomp}
-
-%\usepackage[normalem]{ulem}% package for underlining
-% \makeatletter
-% \def\ssout{\bgroup \ULdepth=-.35ex%\UL@setULdepth
-%  \markoverwith{\lower\ULdepth\hbox
-%    {\kern-.03em\vbox{\hrule width.2em\kern1.2\p@\hrule}\kern-.03em}}%
-%  \ULon}
-% \makeatother
 
 \usepackage{amsmath}
 
@@ -85,19 +51,11 @@ british%
 %\usepackage{empheq}% automatically calls amsmath and mathtools
 %\newcommand*{\widefbox}[1]{\fbox{\hspace{1em}#1\hspace{1em}}}
 
-%%%% empheq above seems more versatile than these:
-%\usepackage{fancybox}
-%\usepackage{framed}
-
-% \usepackage[misc]{ifsym} % for dice
-% \newcommand*{\diceone}{{\scriptsize\Cube{1}}}
-
 \usepackage{amssymb}
 
 \usepackage{amsxtra}
 
 \usepackage[main=british]{babel}\selectlanguage{british}
-%\newcommand*{\langnohyph}{\foreignlanguage{nohyphenation}}
 \newcommand{\langnohyph}[1]{\begin{hyphenrules}{nohyphenation}#1\end{hyphenrules}}
 
 \usepackage[autostyle=false,autopunct=false,english=british]{csquotes}
@@ -127,26 +85,16 @@ british%
 
 \usepackage[shortlabels,inline]{enumitem}
 \SetEnumitemKey{para}{itemindent=\parindent,leftmargin=0pt,listparindent=\parindent,parsep=0pt,itemsep=\topsep}
-% \begin{asparaenum} = \begin{enumerate}[para]
-% \begin{inparaenum} = \begin{enumerate*}
 \setlist{itemsep=0pt,topsep=\parsep}
 \setlist[enumerate,2]{label=\alph*.}
 \setlist[enumerate]{label=\arabic*.,leftmargin=1.5\parindent}
 \setlist[itemize]{leftmargin=1.5\parindent}
 \setlist[description]{leftmargin=1.5\parindent}
-% old alternative:
-% \setlist[enumerate,2]{label=\alph*.}
-% \setlist[enumerate]{leftmargin=\parindent}
-% \setlist[itemize]{leftmargin=\parindent}
-% \setlist[description]{leftmargin=\parindent}
 
 \usepackage[babel,theoremfont,largesc]{newpxtext}
 
 \usepackage[bigdelims,nosymbolsc%,smallerops % probably arXiv doesn't have it
 ]{newpxmath}
-%\useosf
-%\linespread{1.083}%
-%\linespread{1.05}% widely used
 \linespread{1.1}% best for text with maths
 %% smaller operators for old version of newpxmath
 \makeatletter
@@ -203,18 +151,12 @@ british%
 \makeatother
 \input{definegreek.tex}% Greek letters not usually given in LaTeX.
 
-%\usepackage%[scaled=0.9]%
-%{classico}%  Optima as sans-serif font
 \renewcommand\sfdefault{uop}
 \DeclareMathAlphabet{\mathsf}  {T1}{\sfdefault}{m}{sl}
 \SetMathAlphabet{\mathsf}{bold}{T1}{\sfdefault}{b}{sl}
-%\newcommand*{\mathte}[1]{\textbf{\textit{\textsf{#1}}}}
-% Upright sans-serif math alphabet
-% \DeclareMathAlphabet{\mathsu}  {T1}{\sfdefault}{m}{n}
-% \SetMathAlphabet{\mathsu}{bold}{T1}{\sfdefault}{b}{n}
 
-% DejaVu Mono as typewriter text
-\usepackage[scaled=0.84]{DejaVuSansMono}
+\usepackage[scaled=0.84]{DejaVuSansMono}% DejaVu Mono as typewriter text
+
 
 \usepackage{mathdots}
 
@@ -238,8 +180,6 @@ british%
 % \definecolor{lpred}{RGB}{136,34,85}
 % \definecolor{lrpurple}{RGB}{170,68,153}
 \definecolor{lgrey}{RGB}{221,221,221}
-%\newcommand*\mycolourbox[1]{%
-%\colorbox{mygrey}{\hspace{1em}#1\hspace{1em}}}
 \colorlet{shadecolor}{lgrey}
 
 \usepackage{bm}
@@ -272,68 +212,29 @@ citestyle=authoryear-comp,bibstyle=pglpm-authoryear,autopunct=false,sorting=ny,s
 \DeclareDelimFormat{postnotedelim}{\addspace}
 \ifarxiv\else\addbibresource{portamanabib.bib}\fi
 \renewcommand{\bibfont}{\footnotesize}
-%\appto{\citesetup}{\footnotesize}% smaller font for citations
 \defbibheading{bibliography}[\bibname]{\section*{#1}\addcontentsline{toc}{section}{#1}%\markboth{#1}{#1}
 }
 \newcommand*{\citep}{\footcites}
 \newcommand*{\citey}{\footcites}%{\parencites*}
 \newcommand*{\ibid}{\unspace\addtocounter{footnote}{-1}\footnotemark{}}
-%\renewcommand*{\cite}{\parencite}
-%\renewcommand*{\cites}{\parencites}
 \providecommand{\href}[2]{#2}
 \providecommand{\eprint}[2]{\texttt{\href{#1}{#2}}}
 \newcommand*{\amp}{\&}
-% \newcommand*{\citein}[2][]{\textnormal{\textcite[#1]{#2}}%\addtocategory{extras}{#2}
-% }
-\newcommand*{\citein}[2][]{\textnormal{\textcite[#1]{#2}}%\addtocategory{extras}{#2}
-}
-\newcommand*{\citebi}[2][]{\textcite[#1]{#2}%\addtocategory{extras}{#2}
-}
+\newcommand*{\citein}[2][]{\textnormal{\textcite[#1]{#2}}}
+\newcommand*{\citebi}[2][]{\textcite[#1]{#2}}
 \newcommand*{\subtitleproc}[1]{}
 \newcommand*{\chapb}{ch.}
-%
-% \def\arxivp{}
-% \def\mparcp{}
-% \def\philscip{}
-% \def\biorxivp{}
-% \newcommand*{\arxivsi}{\texttt{arXiv} eprints available at \url{http://arxiv.org/}.\\}
-% \newcommand*{\mparcsi}{\texttt{mp\_arc} eprints available at \url{http://www.ma.utexas.edu/mp_arc/}.\\}
-% \newcommand*{\philscisi}{\texttt{philsci} eprints available at \url{http://philsci-archive.pitt.edu/}.\\}
-% \newcommand*{\biorxivsi}{\texttt{bioRxiv} eprints available at \url{http://biorxiv.org/}.\\}
-\newcommand*{\arxiveprint}[1]{%\global\def\arxivp{\arxivsi}%\citeauthor{0arxivcite}\addtocategory{ifarchcit}{0arxivcite}%eprint
-\texttt{arXiv:\urlalt{https://arxiv.org/abs/#1}{#1}}%
-%\texttt{\href{http://arxiv.org/abs/#1}{\protect\url{arXiv:#1}}}%
-%\renewcommand{\arxivnote}{\texttt{arXiv} eprints available at \url{http://arxiv.org/}.}
-}
-\newcommand*{\mparceprint}[1]{%\global\def\mparcp{\mparcsi}%\citeauthor{0mparccite}\addtocategory{ifarchcit}{0mparccite}%eprint
-\texttt{mp\_arc:\urlalt{http://www.ma.utexas.edu/mp_arc-bin/mpa?yn=#1}{#1}}%
-%\texttt{\href{http://www.ma.utexas.edu/mp_arc-bin/mpa?yn=#1}{\protect\url{mp_arc:#1}}}%
-%\providecommand{\mparcnote}{\texttt{mp_arc} eprints available at \url{http://www.ma.utexas.edu/mp_arc/}.}
-}
-\newcommand*{\haleprint}[1]{%\global\def\arxivp{\arxivsi}%\citeauthor{0arxivcite}\addtocategory{ifarchcit}{0arxivcite}%eprint
-\texttt{HAL:\urlalt{https://hal.archives-ouvertes.fr/#1}{#1}}%
-%\texttt{\href{http://arxiv.org/abs/#1}{\protect\url{arXiv:#1}}}%
-%\renewcommand{\arxivnote}{\texttt{arXiv} eprints available at \url{http://arxiv.org/}.}
-}
-\newcommand*{\philscieprint}[1]{%\global\def\philscip{\philscisi}%\citeauthor{0philscicite}\addtocategory{ifarchcit}{0philscicite}%eprint
-\texttt{PhilSci:\urlalt{http://philsci-archive.pitt.edu/archive/#1}{#1}}%
-%\texttt{\href{http://philsci-archive.pitt.edu/archive/#1}{\protect\url{PhilSci:#1}}}%
-%\providecommand{\mparcnote}{\texttt{philsci} eprints available at \url{http://philsci-archive.pitt.edu/}.}
-}
-\newcommand*{\biorxiveprint}[1]{%\global\def\biorxivp{\biorxivsi}%\citeauthor{0arxivcite}\addtocategory{ifarchcit}{0arxivcite}%eprint
-bioRxiv \texttt{doi:\urlalt{https://doi.org/10.1101/#1}{10.1101/#1}}%
-%\texttt{\href{http://arxiv.org/abs/#1}{\protect\url{arXiv:#1}}}%
-%\renewcommand{\arxivnote}{\texttt{arXiv} eprints available at \url{http://arxiv.org/}.}
-}
-\newcommand*{\osfeprint}[1]{%
-Open Science Framework \texttt{doi:\urlalt{https://doi.org/10.17605/osf.io/#1}{10.17605/osf.io/#1}}%
-}
+
+\newcommand*{\arxiveprint}[1]{\texttt{arXiv:\urlalt{https://arxiv.org/abs/#1}{#1}}}
+\newcommand*{\mparceprint}[1]{\texttt{mp\_arc:\urlalt{http://www.ma.utexas.edu/mp_arc-bin/mpa?yn=#1}{#1}}}
+\newcommand*{\haleprint}[1]{\texttt{HAL:\urlalt{https://hal.archives-ouvertes.fr/#1}{#1}}}
+\newcommand*{\philscieprint}[1]{\texttt{PhilSci:\urlalt{http://philsci-archive.pitt.edu/archive/#1}{#1}}}
+\newcommand*{\biorxiveprint}[1]{bioRxiv \texttt{doi:\urlalt{https://doi.org/10.1101/#1}{10.1101/#1}}}
+\newcommand*{\osfeprint}[1]{Open Science Framework \texttt{doi:\urlalt{https://doi.org/10.17605/osf.io/#1}{10.17605/osf.io/#1}}}
 
 \usepackage{graphicx}
 
 \usepackage{wrapfig}
-
-%\usepackage{tikz-cd}
 
 \PassOptionsToPackage{hyphens}{url}\usepackage[hypertexnames=false]{hyperref}
 
@@ -383,7 +284,6 @@ Open Science Framework \texttt{doi:\urlalt{https://doi.org/10.17605/osf.io/#1}{1
 \checkandfixthelayout[nearest]
 %%% End layout
 %% this fixes missing white spaces
-%\pdfmapline{+dummy-space <dummy-space.pfb}
 \pdfinterwordspaceon%
 
 %%% Sectioning
@@ -405,11 +305,6 @@ Open Science Framework \texttt{doi:\urlalt{https://doi.org/10.17605/osf.io/#1}{1
 \centering}
 \setsubsecheadstyle{\bfseries\sffamily%
 \raggedright}
-%\setbeforesecskip{-1.5ex plus 1ex minus .2ex}% plus 1ex minus .2ex}
-%\setaftersecskip{1.3ex plus .2ex }% plus 1ex minus .2ex}
-%\setsubsubsecheadstyle{\bfseries\sffamily\slshape\raggedright}
-%\setbeforesubsecskip{1.25ex plus 1ex minus .2ex }% plus 1ex minus .2ex}
-%\setaftersubsecskip{-1em}%{-0.5ex plus .2ex}% plus 1ex minus .2ex}
 \setsubsecindent{0pt}%0ex plus 1ex minus .2ex}
 \setparaheadstyle{\bfseries\sffamily%
 \raggedright}
@@ -447,13 +342,6 @@ Open Science Framework \texttt{doi:\urlalt{https://doi.org/10.17605/osf.io/#1}{1
 \makeoddfoot{plain}{}{\makebox[0pt]{\thepage}}{}
 \fi%typodisclaimtrue
 \makeoddhead{plain}{\scriptsize\reporthead}{}{}
-% \copypagestyle{manainitial}{plain}
-% \makeheadrule{manainitial}{\headwidth}{0.5\normalrulethickness}
-% \makeoddhead{manainitial}{%
-% \footnotesize\sffamily%
-% \scshape\headauthor}{}{\footnotesize\sffamily%
-% \headtitle}
-% \makeoddfoot{manaart}{}{\thepage}{}
 
 \pagestyle{manaart}
 
@@ -466,7 +354,6 @@ Open Science Framework \texttt{doi:\urlalt{https://doi.org/10.17605/osf.io/#1}{1
 \providecommand{\affiliation}[1]{\textsl{\textsf{\footnotesize #1}}}
 \providecommand{\epost}[1]{\texttt{\footnotesize\textless#1\textgreater}}
 \providecommand{\email}[2]{\href{mailto:#1ZZ@#2 ((remove ZZ))}{#1\protect\atf#2}}
-%\providecommand{\email}[2]{\href{mailto:#1@#2}{#1@#2}}
 
 \preauthor{\vspace{-0.5\baselineskip}\begin{center}
 \normalsize\sffamily%
@@ -480,7 +367,6 @@ Open Science Framework \texttt{doi:\urlalt{https://doi.org/10.17605/osf.io/#1}{1
 \captionnamefont{\footnotesize\sffamily%
 }
 \captiontitlefont{\footnotesize}
-%\firmlists*
 \midsloppy
 % handling orphan/widow lines, memman.pdf
 % \clubpenalty=10000
@@ -497,12 +383,8 @@ Open Science Framework \texttt{doi:\urlalt{https://doi.org/10.17605/osf.io/#1}{1
 
 \paragraphfootnotes
 \setlength{\footmarkwidth}{2ex}
-% \threecolumnfootnotes
-%\setlength{\footmarksep}{0em}
 \footmarkstyle{\textsuperscript{%\color{myred}
 \scriptsize\bfseries#1}~}
-%\footmarkstyle{\textsuperscript{\color{myred}\scriptsize\bfseries#1}~}
-%\footmarkstyle{\textsuperscript{[#1]}~}
 
 \selectlanguage{british}\frenchspacing
 
@@ -527,7 +409,6 @@ Open Science Framework \texttt{doi:\urlalt{https://doi.org/10.17605/osf.io/#1}{1
 \\
 \footnotesize(or permutations thereof)}
 
-%\date{Draft of \today\ (first drafted \firstdraft)}
 \date{\firstdraft; updated \updated}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -669,10 +550,6 @@ Open Science Framework \texttt{doi:\urlalt{https://doi.org/10.17605/osf.io/#1}{1
 \newcommand{\mynote}[1]{ {\color{notecolour}\puzzle\ #1}}
 \newcommand*{\widebar}[1]{{\mkern1.5mu\skew{2}\overline{\mkern-1.5mu#1\mkern-1.5mu}\mkern 1.5mu}}
 
-% \newcommand{\explanation}[4][t]{%\setlength{\tabcolsep}{-1ex}
-% %\smash{
-% \begin{tabular}[#1]{c}#2\\[0.5\jot]\rule{1pt}{#3}\\#4\end{tabular}}%}
-% \newcommand*{\ptext}[1]{\text{\small #1}}
 %\DeclareMathOperator*{\argsup}{arg\,sup}
 \newcommand*{\dob}{degree of belief}
 \newcommand*{\dobs}{degrees of belief}
@@ -715,23 +592,6 @@ Open Science Framework \texttt{doi:\urlalt{https://doi.org/10.17605/osf.io/#1}{1
 %\qquad{\footnotesize Keywords: ***}
 \end{abstract}
 \selectlanguage{british}\frenchspacing
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%% Epigraph
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% \asudedication{\small ***}
-% \vspace{\bigskipamount}
-% \setlength{\epigraphwidth}{.7\columnwidth}
-% %\epigraphposition{flushright}
-% \epigraphtextposition{flushright}
-% %\epigraphsourceposition{flushright}
-% \epigraphfontsize{\footnotesize}
-% \setlength{\epigraphrule}{0pt}
-% %\setlength{\beforeepigraphskip}{0pt}
-% %\setlength{\afterepigraphskip}{0pt}
-% \epigraph{\emph{text}}{source}
-
-
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% BEGINNING OF MAIN TEXT
@@ -1155,21 +1015,11 @@ the two long-run response frequencies.)
   To the developers and maintainers of \LaTeX, Emacs, AUC\TeX, Open Science
   Framework, R, Python, Inkscape, Sci-Hub for making a free and impartial
   scientific exchange possible.
-%\rotatebox{15}{P}\rotatebox{5}{I}\rotatebox{-10}{P}\rotatebox{10}{\reflectbox{P}}\rotatebox{-5}{O}.
-%\sourceatright{\autanet}
 \mbox{}\hfill\autanet
 \end{acknowledgements}
 \fi
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%% Appendices
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
-%\clearpage
 \bigskip
-% %\renewcommand*{\appendixpagename}{Appendix}
-% %\renewcommand*{\appendixname}{Appendix}
-% %\appendixpage
-% \appendix
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% Bibliography
@@ -1178,8 +1028,6 @@ the two long-run response frequencies.)
 \defbibnote{prenote}{{\footnotesize (\enquote{de $X$} is listed under D,
     \enquote{van $X$} under V, and so on, regardless of national
     conventions.)\par}}
-% \defbibnote{postnote}{\par\medskip\noindent{\footnotesize% Note:
-%     \arxivp \mparcp \philscip \biorxivp}}
 
 \printbibliography[prenote=prenote%,postnote=postnote
 ]
