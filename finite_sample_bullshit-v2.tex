@@ -1,7 +1,7 @@
 \pdfoutput=1
 %% Author: PGL  Porta Mana, C Battistin, S Gonzalo Cogno
 %% Created: 2015-05-01T20:53:34+0200
-%% Last-Updated: 2020-08-09T14:14:16+0200
+%% Last-Updated: 2020-08-09T14:18:36+0200
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \newif\ifarxiv
 \arxivfalse
@@ -566,7 +566,7 @@ citestyle=authoryear-comp,bibstyle=pglpm-authoryear,autopunct=false,sorting=ny,s
 \newcommand*{\vsum}{\bm{\varSigma}}
 \newcommand*{\hh}{\textrm{H}}
 \newcommand*{\dd}{\textrm{D}}
-\newcommand*{\ii}{\textrm{I}_{\textrm{h}}}
+\newcommand*{\ii}{I}%_{\textrm{h}}}
 %\DeclareMathOperator*{\lb}{lb}
 
 
@@ -1002,10 +1002,10 @@ Let $\yfa \defd (\yffa_{1}, \dotsc, \yffa_{10})$ and $\yfb$ be the response
 frequencies observed in the sample, conditional on the two kinds of
 stimulus $\alphaup$ and $\betaup$. Let
 $\yFa \defd (\yFFa_{1}, \dotsc, \yFFa_{10})$ and $\yFb$ be the long-run
-response frequencies, conditional to the two kinds of stimulus. If the two
-kinds of stimulus are assumed to have equal sample frequencies and equal
-long-run frequencies, then the mutual information between the stimulus and
-response long-run frequencies is given by the specific formula
+response frequencies, conditional on the two kinds of stimulus. If the two
+kinds of stimulus are assumed to occur equally often in the sample and in
+the long run, then the mutual information between the stimulus frequencies
+and response long-run frequencies is given by the specific formula
 \begin{equation}
   \label{eq:mutual_info_specific}
   \begin{split}
