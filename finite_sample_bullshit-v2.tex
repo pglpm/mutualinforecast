@@ -1,7 +1,7 @@
 \pdfoutput=1
 %% Author: PGL  Porta Mana, C Battistin, S Gonzalo Cogno
 %% Created: 2015-05-01T20:53:34+0200
-%% Last-Updated: 2020-08-09T14:18:36+0200
+%% Last-Updated: 2020-08-09T19:23:38+0200
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \newif\ifarxiv
 \arxivfalse
@@ -1025,12 +1025,12 @@ and response long-run frequencies is given by the specific formula
 \medskip
 
 
-This is the probability density that the long-run mutual information has
+The probability density that the long-run mutual information has
 value $M$ within $\di M$, given the observed conditional frequencies
 $\yfa$, $\yfb$ in a sample of $n$ each, and given the superdistribution
 $\pf(\yFa,\yFb \| A)\,\di\yFa\,\di\yFb$ for the long-run conditional
 frequencies ($A$ denotes the specific assumptions behind the
-superdistribution):
+superdistribution), has the following formula:
 \begin{multline}
   \label{eq:full_inference}
   \pf( \ii \eq M \| \yfa, \yfb, A) \propto
@@ -1069,10 +1069,15 @@ from two \enquote{urns} with known contents. We can rewrite it with
 exponentials:
 \begin{equation}
   \label{eq:drawurn}
+  \begin{split}
   \pf( \text{\small seq}^{\alphaup}, \text{\small seq}^{\betaup} \| \yFa,\yFb , A)
-  = 
-  \exp\bigl( n\vsum \yfa\ln\yFa + n\vsum \yfb\ln\yFb \bigr)
+  &=
+  \Biggl[\prod_{r=1}^{10}  \bigl(\yFFa_{r}\bigr)^{n\,\yffa_{r}} \Biggr] \times
+  \Biggl[\prod_{r=1}^{10}  \bigl(\yFFb_{r}\bigr)^{n\,\yffb_{r}}\Biggr]
+  \\[\jot]
+&\equiv  \exp\bigl( n\vsum \yfa\ln\yFa + n\vsum \yfb\ln\yFb \bigr)
  % \times \pf(\yFa,\yFb \| A)\,\di\yFa\,\di\yFb
+\end{split}
 \end{equation}
 
 Using the rule of conditional probability we obtain the density in
