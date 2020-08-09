@@ -1,7 +1,7 @@
 \pdfoutput=1
 %% Author: PGL  Porta Mana, C Battistin, S Gonzalo Cogno
 %% Created: 2015-05-01T20:53:34+0200
-%% Last-Updated: 2020-08-08T19:34:52+0200
+%% Last-Updated: 2020-08-09T13:08:29+0200
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \newif\ifarxiv
 \arxivfalse
@@ -490,9 +490,9 @@ citestyle=authoryear-comp,bibstyle=pglpm-authoryear,autopunct=false,sorting=ny,s
 %\renewcommand{\*}{\land}
 %% symbol = for equality statements within probabilities
 %% from https://tex.stackexchange.com/a/484142/97039
-%\newcommand*{\eq}{\mathrel{\!=\!}}
-%\let\texteq\=
-%\renewcommand*{\=}{\TextOrMath\texteq\eq}
+\newcommand*{\eq}{\mathrel{\!=\!}}
+\let\texteq\=
+\renewcommand*{\=}{\TextOrMath\texteq\eq}
 %%
 \newcommand*{\sect}{\S}% Sect.~
 \newcommand*{\sects}{\S\S}% Sect.~
@@ -554,6 +554,22 @@ citestyle=authoryear-comp,bibstyle=pglpm-authoryear,autopunct=false,sorting=ny,s
 \newcommand*{\dob}{degree of belief}
 \newcommand*{\dobs}{degrees of belief}
 \newcommand*{\bit}{\mathrm{bit}}
+
+\newcommand*{\yffa}{f^{\alphaup}}
+\newcommand*{\yffb}{f^{\betaup}}
+\newcommand*{\yfa}{\bm{f}^{\alphaup}}
+\newcommand*{\yfb}{\bm{f}^{\betaup}}
+\newcommand*{\yFFa}{F^{\alphaup}}
+\newcommand*{\yFFb}{F^{\betaup}}
+\newcommand*{\yFa}{\bm{F}^{\alphaup}}
+\newcommand*{\yFb}{\bm{F}^{\betaup}}
+\newcommand*{\vsum}{\bm{\varSigma}}
+\newcommand*{\hh}{\textrm{H}}
+\newcommand*{\dd}{\textrm{D}}
+\newcommand*{\ii}{\textrm{I}_{\textrm{h}}}
+%\DeclareMathOperator*{\lb}{lb}
+
+
 %%% Custom macros end @@@
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -852,14 +868,15 @@ under the assumption of the given superdistribution.
 The results are shown in \fig~\ref{fig:superdistributions} for the four
 kinds of superdistribution entertained in the discussion above.
 
-Note that this kind of plot can be used to guess the long-run mutual
-information given the one observed in the sample, under the assumption of
-the specific superdistribution underlying the plot. An example is given in
-\fig~\ref{fig:backward}: if in an observation of 20 responses per stimulus
-we find a mutual information of $0.2\:\bit$, then the long-run mutual
-information is at 68\% between $0.15\:\bit$ and $0.30\:\bit$, with a median
-of $0.22\:\bit$. Such inference assumes the superdistribution underlying
-the bottom-right of \fig~\ref{fig:superdistributions}.
+Note that this kind of plot could be used to guess the long-run mutual
+information \emph{if we only knew} the mutual information observed in the
+sample, under the assumption of the specific superdistribution underlying
+the plot. An example is given in \fig~\ref{fig:backward}: if in an
+observation of 20 responses per stimulus we find a mutual information of
+$0.2\:\bit$, then the long-run mutual information is at 68\% between
+$0.15\:\bit$ and $0.30\:\bit$, with a median of $0.22\:\bit$. Such
+inference assumes the superdistribution underlying the bottom-right of
+\fig~\ref{fig:superdistributions}.
 \begin{figure}[bt!]%{l}{0.75\linewidth} % with wrapfigure
 \centering\includegraphics[width=\linewidth]{scripts/scatter_backward.png}%
 \\%
@@ -875,6 +892,12 @@ the bottom-right of \fig~\ref{fig:superdistributions}.
 % 50\%: 0.21573429
 % 68\%: 0.15244061 0.29950121
 % 95\%: 0.09731645 0.38798742
+
+We shall see in \sect~\ref{sec:guess_from_freqs}, however, that knowledge
+of the sample conditional frequencies provides additional data besides the
+mutual information that can be calculated from them. Thus our guess about
+the long-run mutual information should be calculated using the whole sample
+frequencies.
 
 The four examples of \fig~\ref{fig:superdistributions} show that the joint
 distribution of long-run \amp\ sample mutual informations can be wildly
@@ -944,12 +967,6 @@ the specific case?).
 Bayesian posterior calculation. The prior is the superdistribution about
 the two long-run response frequencies.)
 
-
-
-
-
-\textcolor{white}{If you find this you can claim a postcard from me.}
-
 \mynote{The long-run frequencies of the two kinds of stimulus -- assumed to
   be 50\%/50\% throughout the present discussion -- are also very
   important. Even if the conditional responses seem to yield low mutual
@@ -957,6 +974,165 @@ the two long-run response frequencies.)
   of mutual info when the stimuli don't occur equally often. In fact, this
   is partly a \emph{decision} problem, which can't be judged only by
   checking frequencies or probabilities.}
+
+
+\section{Using the sample frequencies for our guess}
+\label{sec:guess_from_freqs}
+
+Let us use the notation
+\begin{equation}
+  \label{eq:sum_noindices}
+  \bm{x}/\bm{y} \defd (x_{1}/y_{1}, \dotsc, x_{10}/y_{10}) \ ,
+  \qquad
+  \vsum \,\bm{x} \ln\bm{y} \defd \tsum_{i} x_{i} \ln y_{i} \ ,
+\end{equation}
+%where $\lb \defd \log_{2}$  \parencite[convention][item 2-12.7]{iso2009b}
+and let
+\begin{equation}
+  \label{eq:entropies}
+  \hh(\bm{x}) \defd -\vsum\,\bm{x}\ln\bm{x}\ ,
+  \qquad
+  \dd(\bm{x} \| \bm{y}) \defd \vsum\,\bm{x}\ln\bm{x}/\bm{y}
+\end{equation}
+be the Shannon entropy and relative entropy for distributions $\bm{x}$,
+$\bm{y}$.
+
+
+Let $\yfa \defd (\yffa_{1}, \dotsc, \yffa_{10})$ and $\yfb$ be the response
+frequencies observed in the sample, conditional on the two kinds of
+stimulus $\alphaup$ and $\betaup$. Let
+$\yFa \defd (\yFFa_{1}, \dotsc, \yFFa_{10})$ and $\yFb$ be the long-run
+response frequencies, conditional to the two kinds of stimulus. If the two
+kinds of stimulus are assumed to have equal sample frequencies and equal
+long-run frequencies, then the mutual information between the stimulus and
+response long-run frequencies is given by the specific formula
+\begin{equation}
+  \label{eq:mutual_info_specific}
+  \begin{split}
+  \ii(\yFa, \yFb) &\equiv
+  \vsum\,\frac{1}{2}\yFa\ln\frac{2\yFa}{\yFa + \yFb} +
+  \vsum\,\frac{1}{2}\yFb\ln\frac{2\yFb}{\yFa + \yFb}
+  % \\[\jot]
+  % &\equiv \hh\biggl(\frac{\yFa + \yFb}{2}\biggr)
+  % - \frac{1}{2} \hh(\yFa) - \frac{1}{2} \hh(\yFb)
+  \\[2\jot]
+  &\equiv \hh\bigl[\tfrac{1}{2}(\yFa + \yFb)\bigr]
+  - \tfrac{1}{2} \hh(\yFa) - \tfrac{1}{2} \hh(\yFb)
+  \ .
+\end{split}
+\end{equation}
+
+\medskip
+
+
+This is the probability density that the long-run mutual information has
+value $M$ within $\di M$, given the observed conditional frequencies
+$\yfa$, $\yfb$ in a sample of $n$ each, and given the superdistribution
+$\pf(\yFa,\yFb \| A)\,\di\yFa\,\di\yFb$ for the long-run conditional
+frequencies:
+\begin{multline}
+  \label{eq:full_inference}
+  \pf( \ii \eq M \| \yfa, \yfb, A) \propto
+  \int
+  \delt\bigl[M - \ii(\yFa, \yFb) \bigr] \times{}\\[\jot]
+  \exp\bigl[ - n \dd(\yfa \| \yFa) - n \dd(\yfb \| \yFb)  \bigr] \
+  \pf(\yFa,\yFb \| A)\,\di\yFa\,\di\yFb
+\end{multline}
+
+
+\medskip
+
+Proof:
+
+By marginalization
+\begin{multline}
+  \label{eq:margin_I}
+  \pf( \ii \eq M \| \yfa, \yfb, A) \\
+  \begin{aligned}
+&=  \int \pf( \ii \eq M \| \yFa, \yFb, \yfa, \yfb, A) \times
+  \pf(\yFa,\yFb \| \yfa, \yfb, A)\,\di\yFa\,\di\yFb
+  \\
+   &=
+  \int  \delt\bigl[M - \ii(\yFa, \yFb) \bigr] \times
+  \pf(\yFa,\yFb \| \yfa, \yfb, A)\,\di\yFa\,\di\yFb
+ \end{aligned}
+\end{multline}
+where the second equality comes from the fact that the mutual information
+is completely determined by the long-run conditional frequencies.
+
+The probability of observing two sequences of responses, each of length
+$n$, in which the responses appear with frequencies $\yfa$ and $\yfb$,
+given the long-run frequencies $\yFa$, $\yFb$, can be calculated by simple
+combinatorics; it's essentially the formula for drawing with replacement
+from two \enquote{urns} with known contents. We can rewrite it with
+exponentials:
+\begin{equation}
+  \label{eq:drawurn}
+  \pf( \text{\small seq}^{\alphaup}, \text{\small seq}^{\betaup} \| \yFa,\yFb , A)
+  = 
+  \exp\bigl( n\vsum \yfa\ln\yFa + n\vsum \yfb\ln\yFb \bigr)
+ % \times \pf(\yFa,\yFb \| A)\,\di\yFa\,\di\yFb
+\end{equation}
+
+Using the rule of conditional probability we obtain the density in
+$\di\yFa\,\di\yFb$:
+\begin{multline}
+  \label{eq:definetti_bayes}
+  \pf( \yFa, \yFb \|
+  \text{\small seq}^{\alphaup}, \text{\small seq}^{\betaup}, A) 
+  \\[\jot]
+  \begin{aligned}
+    &= \frac{\exp\bigl( n\vsum \yfa\ln\yFa + n\vsum \yfb\ln\yFb \bigr) \times
+      \pf(\yFa,\yFb \| A)}{
+      \int \exp\bigl( n\vsum \yfa\ln\yFa + n\vsum \yfb\ln\yFb \bigr) \times
+  \pf(\yFa,\yFb \| A)\,\di\yFa\,\di\yFb}
+  \\[2\jot]
+    &= \frac{\exp\bigl[ - n \dd(\yfa \| \yFa) - n \dd(\yfb \| \yFb)  \bigr]
+      \times
+      \pf(\yFa,\yFb \| A)}{
+      \int \bigl[ - n \dd(\yfa \| \yFa) - n \dd(\yfb \| \yFb)  \bigr]
+      \times  \pf(\yFa,\yFb \| A)\,\di\yFa\,\di\yFb}
+ \end{aligned}
+\end{multline}
+where the second equality is obtained multiplying numerator and denominator
+by $\exp[n \hh(\yfa) + n \hh(\yfb)]$.
+
+The formula above also shows that the knowledge of the sample frequencies
+is equivalent to the knowledge of the specific sequences, for the purpose
+of guessing the long-run frequencies:
+\begin{equation}
+  \label{eq:sufficient_freqs}
+  \pf( \yFa, \yFb \|
+  \text{\small seq}^{\alphaup}, \text{\small seq}^{\betaup}, A) =
+  \pf( \yFa, \yFb \| \yfa, \yfb, A) 
+\end{equation}
+that is, the sample frequencies are sufficient statistics.
+
+\medskip
+
+Finally substituting formula~\eqref{eq:definetti_bayes}
+into~\eqref{eq:margin_I} we obtain~\eqref{eq:full_inference}.
+
+\medskip
+
+If we only knew the sample mutual-information, but not the sample
+frequencies, it would be necessary to marginalize the
+probability~\eqref{eq:full_inference} over all possible values of the
+sample frequencies that have the observed mutual information (this is what
+\figs~\ref{fig:superdistributions}--\ref{fig:backward} do). This would lead
+(for convexity reasons) to a broadening of the probability distribution for
+$M$, indicating that we are indeed basing our inference on a reduced amount
+of data. \mynote{Or?}
+
+\medskip
+
+Examination of formula~\eqref{eq:full_inference} shows that it behaves in
+an intuitive way when our sample is large: for large sample size $n$ the
+exponential term becomes a delta centred on the observed frequencies. The
+long-run mutual information is therefore approximately equal to the sample
+mutual information. \mynote{One can also do expansions in $n$ to obtain
+  asymptotic corrections.}
+
 
 
 
