@@ -1,7 +1,7 @@
 \pdfoutput=1
 %% Author: PGL  Porta Mana, C Battistin, S Gonzalo Cogno
 %% Created: 2015-05-01T20:53:34+0200
-%% Last-Updated: 2020-08-09T14:04:11+0200
+%% Last-Updated: 2020-08-09T14:14:16+0200
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \newif\ifarxiv
 \arxivfalse
@@ -992,7 +992,7 @@ and let
   \label{eq:entropies}
   \hh(\bm{x}) \defd -\vsum\,\bm{x}\ln\bm{x}\ ,
   \qquad
-  \dd(\bm{x} \| \bm{y}) \defd \vsum\,\bm{x}\ln\bm{x}/\bm{y}
+  \dd(\bm{x} , \bm{y}) \defd \vsum\,\bm{x}\ln\bm{x}/\bm{y}
 \end{equation}
 be the Shannon entropy and relative entropy for distributions $\bm{x}$,
 $\bm{y}$.
@@ -1029,13 +1029,14 @@ This is the probability density that the long-run mutual information has
 value $M$ within $\di M$, given the observed conditional frequencies
 $\yfa$, $\yfb$ in a sample of $n$ each, and given the superdistribution
 $\pf(\yFa,\yFb \| A)\,\di\yFa\,\di\yFb$ for the long-run conditional
-frequencies:
+frequencies ($A$ denotes the specific assumptions behind the
+superdistribution):
 \begin{multline}
   \label{eq:full_inference}
   \pf( \ii \eq M \| \yfa, \yfb, A) \propto
   \int
   \delt\bigl[M - \ii(\yFa, \yFb) \bigr] \times{}\\[\jot]
-  \exp\bigl[ - n \dd(\yfa \| \yFa) - n \dd(\yfb \| \yFb)  \bigr] \
+  \exp\bigl[ - n \, \dd(\yfa , \yFa) - n \, \dd(\yfb , \yFb)  \bigr] \
   \pf(\yFa,\yFb \| A)\,\di\yFa\,\di\yFb
 \end{multline}
 
@@ -1087,10 +1088,10 @@ $\di\yFa\,\di\yFb$:
       \int \exp\bigl( n\vsum \yfa\ln\yFa + n\vsum \yfb\ln\yFb \bigr) \times
   \pf(\yFa,\yFb \| A)\,\di\yFa\,\di\yFb}
   \\[2\jot]
-    &= \frac{\exp\bigl[ - n \dd(\yfa \| \yFa) - n \dd(\yfb \| \yFb)  \bigr]
+    &= \frac{\exp\bigl[ - n \, \dd(\yfa , \yFa) - n\, \dd(\yfb , \yFb)  \bigr]
       \times
       \pf(\yFa,\yFb \| A)}{
-      \int \bigl[ - n \dd(\yfa \| \yFa) - n \dd(\yfb \| \yFb)  \bigr]
+      \int \bigl[ - n \, \dd(\yfa , \yFa) - n \, \dd(\yfb , \yFb)  \bigr]
       \times  \pf(\yFa,\yFb \| A)\,\di\yFa\,\di\yFb}
  \end{aligned}
 \end{multline}
