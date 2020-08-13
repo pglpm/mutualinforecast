@@ -1,7 +1,7 @@
 \pdfoutput=1
 %% Author: PGL  Porta Mana, C Battistin, S Gonzalo Cogno
 %% Created: 2015-05-01T20:53:34+0200
-%% Last-Updated: 2020-08-13T08:21:39+0200
+%% Last-Updated: 2020-08-13T08:33:47+0200
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \newif\ifarxiv
 \arxivfalse
@@ -998,15 +998,14 @@ be the Shannon entropy and relative entropy for distributions $\bm{x}$,
 $\bm{y}$.
 \begin{innote}
   This is actually a vector-covector notation. A distribution is
-  represented by a vector $\bm{x} \defd
-  \Bigl(\begin{smallmatrix}
-    x_{1}\\x_{2}\\\dotso
-  \end{smallmatrix}\Bigr)$; the four arithmetic operations act element-wise
-  on vectors and covectors. The logarithm acts element-wise and maps
-  a vector into a covector:
-  $\ln\Bigl(\begin{smallmatrix} x_{1}\\x_{2}\\\dotso
-  \end{smallmatrix}\Bigr) \defd \bigl(\ln x_{1}\ \ln x_{2}\ \dotso\bigr)$.
-  Multiplication of a vector and a covector (in any order) yields a scalar.
+  represented by a covector
+  $\bm{x} \defd \bigl( x_{1}\ x_{2}\ \dotso\bigr)$. The four arithmetic
+  operations act element-wise on vectors and covectors. The logarithm acts
+  element-wise and maps covectors into vectors:
+  $\ln\bigl( x_{1}\ x_{2}\ \dotso\bigr) \defd \Bigl(\begin{smallmatrix} \ln
+    x_{1}\\ \ln x_{2}\\\dotso
+  \end{smallmatrix}\Bigr)$.
+  Multiplication of a covector and a vector yields a scalar.
 \end{innote}
 
 Label the possible responses by $r$. Let
@@ -1046,7 +1045,7 @@ superdistribution), has the following formula:
 \begin{multline}
   \label{eq:full_inference}
   \pf( \ii \eq M \| \yfa, \yfb, A) \propto
-  \int
+  \iint\!
   \delt\bigl[M - \ii(\yFa, \yFb) \bigr] \times{}\\[\jot]
   \exp\bigl[ - n \, \dd(\yfa , \yFa) - n \, \dd(\yfb , \yFb)  \bigr] \
   \pf(\yFa,\yFb \| A)\,\di\yFa\,\di\yFb
@@ -1062,11 +1061,11 @@ By marginalization
   \label{eq:margin_I}
   \pf( \ii \eq M \| \yfa, \yfb, A) \\
   \begin{aligned}
-&=  \int \pf( \ii \eq M \| \yFa, \yFb, \yfa, \yfb, A) \times
+&=  \iint\! \pf( \ii \eq M \| \yFa, \yFb, \yfa, \yfb, A) \times
   \pf(\yFa,\yFb \| \yfa, \yfb, A)\,\di\yFa\,\di\yFb
   \\
    &=
-  \int  \delt\bigl[M - \ii(\yFa, \yFb) \bigr] \times
+  \iint\!  \delt\bigl[M - \ii(\yFa, \yFb) \bigr] \times
   \pf(\yFa,\yFb \| \yfa, \yfb, A)\,\di\yFa\,\di\yFb
  \end{aligned}
 \end{multline}
@@ -1084,10 +1083,10 @@ exponentials:
   \begin{split}
   \pf( \text{\small seq}_{\alphaup}, \text{\small seq}_{\betaup} \| \yFa,\yFb , A)
   &=
-  \Biggl[\prod_{r}  \bigl(\yFFa{r}\bigr)^{n\,\yffa{r}} \Biggr] \times
-  \Biggl[\prod_{r}  \bigl(\yFFb{r}\bigr)^{n\,\yffb{r}}\Biggr]
+  \biggl[\prod_{r}  \bigl(\yFFa{r}\bigr)^{n\,\yffa{r}} \biggr] \times
+  \biggl[\prod_{r}  \bigl(\yFFb{r}\bigr)^{n\,\yffb{r}}\biggr]
   \\[\jot]
-&\equiv  \exp\bigl( n\, \yfa\ln\yFa + n\, \yfb\ln\yFb \bigr)
+&\equiv  \exp\bigl( n\, \yfa\ln\yFa + n\, \yfb\ln\yFb \bigr) \ .
  % \times \pf(\yFa,\yFb \| A)\,\di\yFa\,\di\yFb
 \end{split}
 \end{equation}
@@ -1102,13 +1101,13 @@ $\di\yFa\,\di\yFb$:
   \begin{aligned}
     &= \frac{\exp\bigl( n\, \yfa\ln\yFa + n\, \yfb\ln\yFb \bigr) \times
       \pf(\yFa,\yFb \| A)}{
-      \int \exp\bigl( n\, \yfa\ln\yFa + n\, \yfb\ln\yFb \bigr) \times
+      \iint\! \exp\bigl( n\, \yfa\ln\yFa + n\, \yfb\ln\yFb \bigr) \times
   \pf(\yFa,\yFb \| A)\,\di\yFa\,\di\yFb}
   \\[2\jot]
     &= \frac{\exp\bigl[ - n \, \dd(\yfa , \yFa) - n\, \dd(\yfb , \yFb)  \bigr]
       \times
       \pf(\yFa,\yFb \| A)}{
-      \int \exp\bigl[ - n \, \dd(\yfa , \yFa) - n \, \dd(\yfb , \yFb)  \bigr]
+      \iint\! \exp\bigl[ - n \, \dd(\yfa , \yFa) - n \, \dd(\yfb , \yFb)  \bigr]
       \times  \pf(\yFa,\yFb \| A)\,\di\yFa\,\di\yFb}
  \end{aligned}
 \end{multline}
@@ -1117,7 +1116,7 @@ by $\exp[n \hh(\yfa) + n \hh(\yfb)]$.
 
 The formula above also shows that the knowledge of the sample frequencies
 is equivalent to the knowledge of the specific sequences, for the purpose
-of guessing the long-run frequencies; that is, the sample frequencies are
+of guessing the long-run frequencies. That is, the sample frequencies are
 sufficient statistics:
 \begin{equation}
   \label{eq:sufficient_freqs}
