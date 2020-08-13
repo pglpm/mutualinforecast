@@ -1,7 +1,7 @@
 \pdfoutput=1
 %% Author: PGL  Porta Mana, C Battistin, S Gonzalo Cogno
 %% Created: 2015-05-01T20:53:34+0200
-%% Last-Updated: 2020-08-09T19:23:38+0200
+%% Last-Updated: 2020-08-13T08:17:47+0200
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \newif\ifarxiv
 \arxivfalse
@@ -555,14 +555,14 @@ citestyle=authoryear-comp,bibstyle=pglpm-authoryear,autopunct=false,sorting=ny,s
 \newcommand*{\dobs}{degrees of belief}
 \newcommand*{\bit}{\mathrm{bit}}
 
-\newcommand*{\yffa}{f^{\alphaup}}
-\newcommand*{\yffb}{f^{\betaup}}
-\newcommand*{\yfa}{\bm{f}^{\alphaup}}
-\newcommand*{\yfb}{\bm{f}^{\betaup}}
-\newcommand*{\yFFa}{F^{\alphaup}}
-\newcommand*{\yFFb}{F^{\betaup}}
-\newcommand*{\yFa}{\bm{F}^{\alphaup}}
-\newcommand*{\yFb}{\bm{F}^{\betaup}}
+\newcommand*{\yffa}[1]{f_{#1\|\alphaup}}
+\newcommand*{\yffb}[1]{f_{#1\|\betaup}}
+\newcommand*{\yfa}{\bm{f}_{\!\|\alphaup}}
+\newcommand*{\yfb}{\bm{f}_{\!\|\betaup}}
+\newcommand*{\yFFa}[1]{F_{#1\|\alphaup}}
+\newcommand*{\yFFb}[1]{F_{#1\|\betaup}}
+\newcommand*{\yFa}{\bm{F}_{\!\|\alphaup}}
+\newcommand*{\yFb}{\bm{F}_{\!\|\betaup}}
 \newcommand*{\vsum}{\bm{\varSigma}}
 \newcommand*{\hh}{\textrm{H}}
 \newcommand*{\dd}{\textrm{D}}
@@ -982,26 +982,38 @@ the two long-run response frequencies.)
 Let us use the notation
 \begin{equation}
   \label{eq:sum_noindices}
-  \bm{x}/\bm{y} \defd (x_{1}/y_{1}, \dotsc, x_{10}/y_{10}) \ ,
+  \bm{x}/\bm{y} \defd (x_{1}/y_{1},  x_{2}/y_{2}, \dotsc) \ ,
   \qquad
-  \vsum \,\bm{x} \ln\bm{y} \defd \tsum_{i} x_{i} \ln y_{i} \ ,
+  \bm{x} \ln\bm{y} \defd \tsum_{i} x_{i} \ln y_{i} \ ,
 \end{equation}
 %where $\lb \defd \log_{2}$  \parencite[convention][item 2-12.7]{iso2009b}
 and let
 \begin{equation}
   \label{eq:entropies}
-  \hh(\bm{x}) \defd -\vsum\,\bm{x}\ln\bm{x}\ ,
+  \hh(\bm{x}) \defd -\bm{x}\ln\bm{x}\ ,
   \qquad
-  \dd(\bm{x} , \bm{y}) \defd \vsum\,\bm{x}\ln\bm{x}/\bm{y}
+  \dd(\bm{x} , \bm{y}) \defd \bm{x}\ln\bm{x}/\bm{y}
 \end{equation}
 be the Shannon entropy and relative entropy for distributions $\bm{x}$,
 $\bm{y}$.
+\begin{innote}
+  This is actually a vector-covector notation. A distribution is
+  represented by a vector $\bm{x} \defd
+  \Bigl(\begin{smallmatrix}
+    x_{1}\\x_{2}\\\dotso
+  \end{smallmatrix}\Bigr)$; the four arithmetic operations act element-wise
+  or vectors and covectors. The logarithm acts element-wise and maps
+  a vector into a covector:
+  $\ln\Bigl(\begin{smallmatrix} x_{1}\\x_{2}\\\dotso
+  \end{smallmatrix}\Bigr) \defd \bigl(\ln x_{1}\ \ln x_{2}\ \dotso\bigr)$.
+  Multiplication of a vector and a covector (in any order) yields a scalar.
+\end{innote}
 
-
-Let $\yfa \defd (\yffa_{1}, \dotsc, \yffa_{10})$ and $\yfb$ be the response
-frequencies observed in the sample, conditional on the two kinds of
-stimulus $\alphaup$ and $\betaup$. Let
-$\yFa \defd (\yFFa_{1}, \dotsc, \yFFa_{10})$ and $\yFb$ be the long-run
+Label the possible responses by $r$. Let
+$\yfa \defd (\yffa{1}, \dotsc, \yffa{r},\dotsc)$ and $\yfb$ be the
+response frequencies observed in the sample, conditional on the two kinds
+of stimulus $\alphaup$ and $\betaup$. Let
+$\yFa \defd \bigl(\yFFa{r} \bigr)$ and $\yFb$ be the long-run
 response frequencies, conditional on the two kinds of stimulus. If the two
 kinds of stimulus are assumed to occur equally often in the sample and in
 the long run, then the mutual information between the stimulus frequencies
@@ -1010,8 +1022,8 @@ and response long-run frequencies is given by the specific formula
   \label{eq:mutual_info_specific}
   \begin{split}
   \ii(\yFa, \yFb) &\equiv
-  \vsum\,\frac{1}{2}\yFa\ln\frac{2\yFa}{\yFa + \yFb} +
-  \vsum\,\frac{1}{2}\yFb\ln\frac{2\yFb}{\yFa + \yFb}
+ \frac{1}{2}\yFa\ln\frac{2\yFa}{\yFa + \yFb} +
+  \frac{1}{2}\yFb\ln\frac{2\yFb}{\yFa + \yFb}
   % \\[\jot]
   % &\equiv \hh\biggl(\frac{\yFa + \yFb}{2}\biggr)
   % - \frac{1}{2} \hh(\yFa) - \frac{1}{2} \hh(\yFb)
@@ -1070,12 +1082,12 @@ exponentials:
 \begin{equation}
   \label{eq:drawurn}
   \begin{split}
-  \pf( \text{\small seq}^{\alphaup}, \text{\small seq}^{\betaup} \| \yFa,\yFb , A)
+  \pf( \text{\small seq}_{\alphaup}, \text{\small seq}_{\betaup} \| \yFa,\yFb , A)
   &=
-  \Biggl[\prod_{r=1}^{10}  \bigl(\yFFa_{r}\bigr)^{n\,\yffa_{r}} \Biggr] \times
-  \Biggl[\prod_{r=1}^{10}  \bigl(\yFFb_{r}\bigr)^{n\,\yffb_{r}}\Biggr]
+  \Biggl[\prod_{r}  \bigl(\yFFa{r}\bigr)^{n\,\yffa{r}} \Biggr] \times
+  \Biggl[\prod_{r}  \bigl(\yFFb{r}\bigr)^{n\,\yffb{r}}\Biggr]
   \\[\jot]
-&\equiv  \exp\bigl( n\vsum \yfa\ln\yFa + n\vsum \yfb\ln\yFb \bigr)
+&\equiv  \exp\bigl( n\, \yfa\ln\yFa + n\, \yfb\ln\yFb \bigr)
  % \times \pf(\yFa,\yFb \| A)\,\di\yFa\,\di\yFb
 \end{split}
 \end{equation}
@@ -1085,18 +1097,18 @@ $\di\yFa\,\di\yFb$:
 \begin{multline}
   \label{eq:definetti_bayes}
   \pf( \yFa, \yFb \|
-  \text{\small seq}^{\alphaup}, \text{\small seq}^{\betaup}, A) 
+  \text{\small seq}_{\alphaup}, \text{\small seq}_{\betaup}, A) 
   \\[\jot]
   \begin{aligned}
-    &= \frac{\exp\bigl( n\vsum \yfa\ln\yFa + n\vsum \yfb\ln\yFb \bigr) \times
+    &= \frac{\exp\bigl( n\, \yfa\ln\yFa + n\, \yfb\ln\yFb \bigr) \times
       \pf(\yFa,\yFb \| A)}{
-      \int \exp\bigl( n\vsum \yfa\ln\yFa + n\vsum \yfb\ln\yFb \bigr) \times
+      \int \exp\bigl( n\, \yfa\ln\yFa + n\, \yfb\ln\yFb \bigr) \times
   \pf(\yFa,\yFb \| A)\,\di\yFa\,\di\yFb}
   \\[2\jot]
     &= \frac{\exp\bigl[ - n \, \dd(\yfa , \yFa) - n\, \dd(\yfb , \yFb)  \bigr]
       \times
       \pf(\yFa,\yFb \| A)}{
-      \int \bigl[ - n \, \dd(\yfa , \yFa) - n \, \dd(\yfb , \yFb)  \bigr]
+      \int \exp\bigl[ - n \, \dd(\yfa , \yFa) - n \, \dd(\yfb , \yFb)  \bigr]
       \times  \pf(\yFa,\yFb \| A)\,\di\yFa\,\di\yFb}
  \end{aligned}
 \end{multline}
@@ -1105,14 +1117,14 @@ by $\exp[n \hh(\yfa) + n \hh(\yfb)]$.
 
 The formula above also shows that the knowledge of the sample frequencies
 is equivalent to the knowledge of the specific sequences, for the purpose
-of guessing the long-run frequencies:
+of guessing the long-run frequencies; that is, the sample frequencies are
+sufficient statistics:
 \begin{equation}
   \label{eq:sufficient_freqs}
   \pf( \yFa, \yFb \|
-  \text{\small seq}^{\alphaup}, \text{\small seq}^{\betaup}, A) =
-  \pf( \yFa, \yFb \| \yfa, \yfb, A) 
+  \text{\small seq}_{\alphaup}, \text{\small seq}_{\betaup}, A) =
+  \pf( \yFa, \yFb \| \yfa, \yfb, A) \ .
 \end{equation}
-that is, the sample frequencies are sufficient statistics.
 
 \medskip
 
@@ -1125,10 +1137,10 @@ If we only knew the sample mutual-information, but not the sample
 frequencies, it would be necessary to marginalize the
 probability~\eqref{eq:full_inference} over all possible values of the
 sample frequencies that have the observed mutual information (this is what
-\figs~\ref{fig:superdistributions}--\ref{fig:backward} do). This would lead
-(for convexity reasons) to a broadening of the probability distribution for
-$M$, indicating that we are indeed basing our inference on a reduced amount
-of data. \mynote{Or?}
+\figs~\ref{fig:superdistributions}--\ref{fig:backward} do). This would
+lead, for convexity reasons, to a broadening of the probability
+distribution for $M$, indicating that we are indeed basing our inference on
+a reduced amount of data. \mynote{Or?}
 
 \medskip
 
