@@ -277,7 +277,8 @@
   \newunit\newblock
   \usebibmacro{in:}%
   \usebibmacro{maintitle+booktitle}%
-%%%  \newunit\newblock
+%\newunit\newblock
+\setunit{\addcomma\space}\newblock
   \usebibmacro{byeditor+others}%
 %  \newunit\newblock
 %%%\setunit{\addcomma\space}\newblock
@@ -859,9 +860,11 @@
   \newunit}
 
 \newbibmacro*{chapter+pages}{%
-  \setunit{\bibpagespunct}%
-  \printfield{chapter}%
-  \setunit{\bibpagespunct}%
+%  \setunit{\bibpagespunct}%
+  \setunit{\addcolon}%
+\printfield{chapter}%
+  \setunit{\addcolon}%
+%  \setunit{\bibpagespunct}%
   \printfield{pages}%
   \newunit}
 

@@ -1,7 +1,7 @@
 \pdfoutput=1
 %% Author: PGL  Porta Mana, C Battistin, S Gonzalo Cogno
 %% Created: 2015-05-01T20:53:34+0200
-%% Last-Updated: 2020-08-13T08:36:06+0200
+%% Last-Updated: 2020-08-13T12:40:00+0200
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \newif\ifarxiv
 \arxivfalse
@@ -567,6 +567,7 @@ citestyle=authoryear-comp,bibstyle=pglpm-authoryear,autopunct=false,sorting=ny,s
 \newcommand*{\hh}{\textrm{H}}
 \newcommand*{\dd}{\textrm{D}}
 \newcommand*{\ii}{I}%_{\textrm{h}}}
+\newcommand*{\yIv}{\Hat{I}}%_{\textrm{h}}}
 %\DeclareMathOperator*{\lb}{lb}
 
 
@@ -1037,47 +1038,47 @@ and response long-run frequencies is given by the specific formula
 
 
 The probability density that the long-run mutual information has
-value $M$ within $\di M$, given the observed conditional frequencies
+value $\ii=\yIv$ within $\di \yIv$, given the observed conditional frequencies
 $\yfa$, $\yfb$ in a sample of $n$ each, and given the superdistribution
 $\pf(\yFa,\yFb \| A)\,\di\yFa\,\di\yFb$ for the long-run conditional
 frequencies ($A$ denotes the specific assumptions behind the
-superdistribution), has the following formula:
+superdistribution), has the following expression:
 \begin{multline}
   \label{eq:full_inference}
-  \pf( \ii \eq M \| \yfa, \yfb, A) \propto
+  \pf( \yIv \| \yfa, \yfb, A) \propto
   \iint\!
-  \delt\bigl[M - \ii(\yFa, \yFb) \bigr] \times{}\\[\jot]
-  \exp\bigl[ - n \, \dd(\yfa , \yFa) - n \, \dd(\yfb , \yFb)  \bigr] \
-  \pf(\yFa,\yFb \| A)\,\di\yFa\,\di\yFb
+  \delt\bigl[\yIv - \ii(\yFa, \yFb) \bigr] \times{}\\[\jot]
+  \exp\bigl[ - n \, \dd(\yfa , \yFa) - n \, \dd(\yfb , \yFb)  \bigr] \times
+  \pf(\yFa,\yFb \| A)\,\di\yFa\,\di\yFb \ .
 \end{multline}
 
 
 \medskip
 
 Proof:
-
 By marginalization
 \begin{multline}
   \label{eq:margin_I}
-  \pf( \ii \eq M \| \yfa, \yfb, A) \\
+  \pf( \yIv \| \yfa, \yfb, A) \\
   \begin{aligned}
-&=  \iint\! \pf( \ii \eq M \| \yFa, \yFb, \yfa, \yfb, A) \times
+&=  \iint\! \pf( \yIv \| \yFa, \yFb, \yfa, \yfb, A) \times
   \pf(\yFa,\yFb \| \yfa, \yfb, A)\,\di\yFa\,\di\yFb
   \\
    &=
-  \iint\!  \delt\bigl[M - \ii(\yFa, \yFb) \bigr] \times
+  \iint\!  \delt\bigl[\yIv - \ii(\yFa, \yFb) \bigr] \times
   \pf(\yFa,\yFb \| \yfa, \yfb, A)\,\di\yFa\,\di\yFb
  \end{aligned}
 \end{multline}
 where the second equality comes from the fact that the mutual information
 is completely determined by the long-run conditional frequencies.
 
-The probability of observing two sequences of responses, each of length
-$n$, in which the responses appear with frequencies $\yfa$ and $\yfb$,
+The probability of observing a sequence of $n$ responses for each kind of
+stimulus, with the responses appearing with frequencies $\yfa$ and $\yfb$,
 given the long-run frequencies $\yFa$, $\yFb$, can be calculated by simple
-combinatorics; it's essentially the formula for drawing with replacement
-from two \enquote{urns} with known contents. We can rewrite it with
-exponentials:
+combinatorics. It's essentially the formula for drawing with replacement
+from two \enquote{urns} with known contents
+\citep{definetti1938}[\sect~4.6]{bernardoetal1994_r2000}. We can rewrite it
+with exponentials:
 \begin{equation}
   \label{eq:drawurn}
   \begin{split}
@@ -1138,7 +1139,7 @@ probability~\eqref{eq:full_inference} over all possible values of the
 sample frequencies that have the observed mutual information (this is what
 \figs~\ref{fig:superdistributions}--\ref{fig:backward} do). This would
 lead, for convexity reasons, to a broadening of the probability
-distribution for $M$, indicating that we are indeed basing our inference on
+distribution for $\yIv$, indicating that we are indeed basing our inference on
 a reduced amount of data. In fact the sample mutual information is not a
 sufficient statistic.
 
