@@ -10,6 +10,10 @@ library('RColorBrewer')
 #library('png')
 #library('plot3D')
 library('foreach')
+library('doFuture')
+registerDoFuture()
+plan(multiprocess, workers=6)
+library('doRNG')
 library('LaplacesDemon')
 library('RNetCDF')
 #library('Rmpfr')
@@ -77,3 +81,47 @@ hist(MIsamples, breaks=histcells, freq=FALSE, xlab='long-run MI/bit',
 matpoints(x=dataMI, y=0, type='p', pch=17, cex=2, col=myred)
 dev.off()
 
+#####
+## Forcasts using only the mutual info of the sample, rather than the sample frequencies
+
+nmcsamplesbis <- 40000
+
+## Dirichlet parameters for F-uniform prior
+dirichpriorfreqs <- foreach(i=1:nstimuli, .combine=rbind)%do%{rep(1/nresponses, nresponses)}
+dirichpriorsize <- foreach(i=1:nstimuli, .combine=c)%do%{nresponses}*10
+
+dirichpriorparams <- dirichpriorsize * dirichpriorfreqs
+
+Fpriorsamples <- aperm(simplify2array(foreach(i=1:nstimuli)%do%{
+    rdirichlet(n=nmcsamplesbis, alpha=dirichpriorparams[i,]) }) , perm=c(1,3,2))
+## format: 1 row = 1 MCsample, 1 column = 1 stimulus, 1 3rdDim = 1 response
+
+doubleMIsamples <- foreach(i=1:nmcsamplesbis, .combine=rbind)%dorng%{
+    c(MI(foreach(s=1:nstimuli, .combine=rbind)%do%{
+        tabulate(sample(x=1:nresponses, size=datasize[s], replace=TRUE,
+                        Fpriorsamples[i,s,]), nbins=nresponses)/datasize[s]
+    })
+    , MI(Fpriorsamples[i,,]))}
+
+
+miwidth <- 0.01 # width around the mutual info
+MIsamplesbis <- doubleMIsamples[(doubleMIsamples[,1] > dataMI - miwidth) & (doubleMIsamples[,1] < dataMI + miwidth),2]
+
+histcells <- seq(from=0, to=1, length.out=round(20/diff(range(MIsamplesbis))))
+pdff(paste0('onlyMI_',generalname,dirichpriorsize[1]))
+hist(MIsamplesbis, breaks=histcells, freq=FALSE, xlab='long-run MI/bit',
+     main=paste0('Dirichlet prior with uniform reference distribution and prior size = ', dirichpriorsize[1], '\nsample MI = ', signif(dataMI,3), ' bit'))
+matpoints(x=dataMI, y=0, type='p', pch=17, cex=2, col=myred)
+dev.off()
+
+
+mcdataMI <- doubleMIsamples[,1]
+histcells <- seq(from=0, to=1, length.out=round(25/diff(range(mcdataMI))))
+pdff(paste0('test',dirichpriorsize[1]))
+hist(mcdataMI, breaks=histcells, freq=FALSE, xlab='long-run MI/bit',
+     main=paste0('Dirichlet prior with uniform reference distribution and prior size = ', dirichpriorsize[1], '\nsample MI = ', signif(dataMI,3), ' bit'))
+matpoints(x=dataMI, y=0, type='p', pch=17, cex=2, col=myred)
+dev.off()
+
+
+plan(sequential)
