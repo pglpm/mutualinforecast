@@ -1,7 +1,7 @@
 \pdfoutput=1
 %% Author: PGL  Porta Mana, C Battistin, S Gonzalo Cogno
 %% Created: 2015-05-01T20:53:34+0200
-%% Last-Updated: 2020-08-13T12:40:00+0200
+%% Last-Updated: 2020-08-17T13:09:06+0200
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \newif\ifarxiv
 \arxivfalse
@@ -628,16 +628,16 @@ citestyle=authoryear-comp,bibstyle=pglpm-authoryear,autopunct=false,sorting=ny,s
 \section{Long-run mutual info and sample mutual info}
 \label{sec:intro}
 
-We have, say, two kinds of stimuli and ten kinds of neural responses to
-these stimuli, under specific environmental and behavioural conditions, and
-for a specific kind of subjects. The responses could be, for example, ten
+We have, say, two stimuli and ten possible neural responses to each
+stimulus, under specific environmental and behavioural conditions, and for
+a specific class of subjects. The responses could be, for example, ten
 different firing rates of a specific neuron, or ten different
-total-population activities of a brain region, to two different kinds of
-visual stimuli.
+total-population activities of a brain region, to two different visual
+stimuli.
 
 Imagine that a researcher gave us the results of $10^{60}$
 stimulus-response measurements, all performed for the specified conditions
-and subjects, and in which the two kinds of stimulus occurred equally
+and subjects, and in which the two stimuli occurred equally
 often. From the long-run\footnote{\enquote{But this \emph{long run} is a
     misleading guide to current affairs. \emph{In the long run} we are all
     dead.} \parencite[\sect~3.I p.~65]{keynes1923_r2013}} joint frequencies
@@ -646,7 +646,7 @@ information between stimulus and response.
 
 But we don't have access to such a wealth of observations, and never will.
 Suppose we only have actual knowledge of a sample of few, say 20,
-measurements for each kind of stimulus. They are a sample from such
+measurements for each stimulus. They are a sample from such
 unobservable long-run sequence. We can calculate the joint frequencies of
 stimulus-response pairs in this sample and the resulting sample mutual
 information.
@@ -666,10 +666,10 @@ Let's explore some possibilities.
 \caption{Example A}\label{fig:resp_caseA}
 \end{figure}% finite_sampling_bullshit.R
 \textbf{Example A}. Suppose the long-run frequencies of responses conditional
-on each kind of stimulus are as given\citep[as the example
+on each stimulus are as given\citep[as the example
 in][]{panzerietal2007} in the top panel of \fig~\ref{fig:resp_caseA}. The
-light-grey histogram is for the responses to the first kind of stimulus;
-dark-grey for the second kind. In the long run all responses occur equally
+light-grey histogram is for the responses to the first stimulus;
+dark-grey for the second. In the long run all responses occur equally
 often for either stimulus. The long-run mutual information is $0\:\bit$.
 
 Now we consider a sample of 20 response measurements for each stimulus from
@@ -694,7 +694,7 @@ this case. The long-run one is even outside the inner 95\% interval range.
 \textbf{Example B}. The long-run frequencies of responses are given in the top
 panel of \fig~\ref{fig:resp_caseB}. The responses do not occur equally
 often in the long run, and the frequencies of some of them are different
-for the two kinds of stimulus. The long-run mutual information is
+for the two stimuli. The long-run mutual information is
 $0.48\:\bit$.
 
 We again consider a sample of 20 response measurements for each stimulus.
@@ -834,10 +834,10 @@ This would lead to yet another superdistribution on the space of
 frequencies. \mynote{will write the exact formula}
 
 Finally, should such a superdistribution be factorizable over the frequency
-distributions for the two different kinds of stimulus (as is the case in
-the three examples above)? Owing to biological constraints there should be
-some similarity across such distributions, and such factorizability might
-be not be a sensible assumption.
+distributions for the two stimuli (as is the case in the three examples
+above)? Owing to biological constraints there should be some similarity
+across such distributions, and such factorizability might be not be a
+sensible assumption.
 
 \medskip
 
@@ -867,7 +867,7 @@ under the assumption of the given superdistribution.
   hierarchic)}\label{fig:superdistributions}
 \end{figure}% finite_sampling_bullshit.R
 The results are shown in \fig~\ref{fig:superdistributions} for the four
-kinds of superdistribution entertained in the discussion above.
+superdistributions entertained in the discussion above.
 
 Note that this kind of plot could be used to guess the long-run mutual
 information \emph{if we only knew} the mutual information observed in the
@@ -968,7 +968,7 @@ the specific case?).
 Bayesian posterior calculation. The prior is the superdistribution about
 the two long-run response frequencies.)
 
-\mynote{The long-run frequencies of the two kinds of stimulus -- assumed to
+\mynote{The long-run frequencies of the two stimuli -- assumed to
   be 50\%/50\% throughout the present discussion -- are also very
   important. Even if the conditional responses seem to yield low mutual
   info when stimuli occur equally often, they may yield a sufficient amount
@@ -1010,14 +1010,14 @@ $\bm{y}$.
 \end{innote}
 
 Label the possible responses by $r$. Let
-$\yfa \defd (\yffa{1}, \dotsc, \yffa{r},\dotsc)$ and $\yfb$ be the
-response frequencies observed in the sample, conditional on the two kinds
-of stimulus $\alphaup$ and $\betaup$. Let
-$\yFa \defd \bigl(\yFFa{r} \bigr)$ and $\yFb$ be the long-run
-response frequencies, conditional on the two kinds of stimulus. If the two
-kinds of stimulus are assumed to occur equally often in the sample and in
-the long run, then the mutual information between the stimulus frequencies
-and response long-run frequencies is given by the specific formula
+$\yfa \defd (\yffa{1}, \dotsc, \yffa{r},\dotsc)$ and $\yfb$ be the response
+frequencies observed in the sample, conditional on the two stimuli
+$\alphaup$ and $\betaup$. Let $\yFa \defd \bigl(\yFFa{r} \bigr)$ and $\yFb$
+be the long-run response frequencies, conditional on the two 
+stimuli. If the two stimuli are assumed to occur equally often
+in the sample and in the long run, then the mutual information between the
+stimulus frequencies and response long-run frequencies is given by the
+specific formula
 \begin{equation}
   \label{eq:mutual_info_specific}
   \begin{split}
@@ -1072,7 +1072,7 @@ By marginalization
 where the second equality comes from the fact that the mutual information
 is completely determined by the long-run conditional frequencies.
 
-The probability of observing a sequence of $n$ responses for each kind of
+The probability of observing a sequence of $n$ responses for each 
 stimulus, with the responses appearing with frequencies $\yfa$ and $\yfb$,
 given the long-run frequencies $\yFa$, $\yFb$, can be calculated by simple
 combinatorics. It's essentially the formula for drawing with replacement
