@@ -6,7 +6,7 @@
 %% Home page: http://magnaspesmeretrix.org/
 %% Email (remove ZZ): pglZZ[at]portamana.org
 %% Created: 2000-08-23T16:53:30+0200
-%% Last-Updated: 2020-08-25T13:47:27+0200
+%% Last-Updated: 2020-08-31T09:42:56+0200
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % NB: This database contains also items whose content's validity I
@@ -342,6 +342,7 @@
 @String{ejs = {Electron.\ J. Stat.}}
 @String{ejtp = {Electron.\ J. Theor.\ Phys.}}
 @String{el = {Econ.\ Lett.}}
+@String{elife = {eLife}}
 @String{em = {Econometrica}}
 @String{emath = {Expo.\ Math.}}
 @String{emn = {Edinburgh Math.\ Notes}}
@@ -527,6 +528,7 @@
 @String{jcb = {J. Comput.\ Biol.}}
 @String{jce = {J. Chem.\ Educ.}}
 @String{jcgs = {J. Comput.\ Graph.\ Stat.}}
+@String{jcim = {J. Chem.\ Inf.\ Model.}}
 @String{jcl = {J. Climate}}
 @String{jcns = {J. Comput.\ Neurosci.}}
 @String{jcompp = {J. Comput.\ Phys.}}
@@ -10728,6 +10730,17 @@ note =	       {\url{http://drsmorey.org/research/rdmorey/bibtex/upload/Berger:Be
 keywords =     {Bayesian probability theory, teaching, $p$-values}
 }
 
+@Article{bergeretal1991,
+author =       {James O. Berger and Julia Mortera},
+title =	       {Interpreting the Stars in Precise Hypothesis Testing},
+journal =      isr,
+year =	       {1991},
+volume =       {59},
+number =       {3},
+pages =	       {337--353},
+keywords =     {Lindley's paradox}
+}
+
 @Article{bergeretal1996,
 author =       {James O. Berger and Luis R. Pericchi},
 title =	       {The Intrinsic {Bayes} Factor for Model Selection and Prediction},
@@ -11270,8 +11283,9 @@ title =	       {A {Bayesian} analysis of classical hypothesis testing},
 journal =      teio,
 year =	       {1980},
 volume =       {31},
+note = 	       {See also discussion in \citebi{jaynesetal1980}},
 number =       {1},
-pages =	       {605--647},
+pages =	       {605--618},
 keywords =     {null hypothesis}
 }
 
@@ -11281,6 +11295,19 @@ title =	       {The concept of exchangeability and its applications},
 year =	       {1996},
 note =	       {\url{http://www.uv.es/~bernardo/publications.html}},
 keywords =     {probability theory}
+}
+
+@InCollection{bernardo1999,
+author =       {Jos{\'e} M. Bernardo},
+title =	       {Nested Hypothesis Testing: The Bayesian Reference Criterion},
+booktitle =    {Bayesian Statistics 6},
+publisher =    {Oxford University Press},
+year =	       {1999},
+editor =       {Jos{\'e}-Miguel and J. O. Berger and A. P. Dawid and Adrian F. M. Smith},
+pages =	       {101--130},
+address =      {Oxford},
+note =	       {\url{http://www.uv.es/~bernardo/publications.html}},
+keywords =     {Bayes factors, model comparison, Jeffreys prior, improper priors, Lindley's paradox}
 }
 
 @InCollection{bernardo2003,
@@ -11312,7 +11339,8 @@ title =	       {Bayesian Statistics\subtitleproc{: Proceedings of the First Inte
 publisher =    {Valencia University Press},
 year =	       {1980},
 address =      {Valencia},
-note =	       {\url{https://www.uv.es/~bernardo/valenciam.html}}
+note =	       {\url{https://www.uv.es/~bernardo/valenciam.html}},
+mynote =       {This is the same as journal "teio" vol.~31}
 }
 
 @Book{bernardoetal1985,
@@ -11393,7 +11421,7 @@ volume =       {70},
 number =       {3},
 pages =	       {351--372},
 note =	       {\url{https://www.uv.es/~bernardo/publications.html}},
-keywords =     {Bayes factors, model comparison, Jeffreys prior, improper priors},
+keywords =     {Bayes factors, model comparison, Jeffreys prior, improper priors, Lindley's paradox},
 mynote =       {Sadly they speak about "null hypotheses". I don't agree in considering it a decision problem the way they do.}
 }
 
@@ -23805,6 +23833,17 @@ volume =       {45},
 number =       {11},
 pages =	       {115304},
 keywords =     {convex spaces}
+}
+
+@Article{chuangetal2018,
+author =       {Kangway V. Chuang and Michael J. Keiser},
+title =	       {Comment on ``{Predicting} reaction performance in {C--N} cross-coupling using machine learning''},
+journal =      sci,
+year =	       {2018},
+volume =       {362},
+number =       {6416},
+pages =	       {eaat8603},
+keywords =     {machine-learning generalizability}
 }
 
 @Article{chubykaloetal1996,
@@ -42981,6 +43020,17 @@ note =	       {\arxiveprint{1406.5421}},
 keywords =     {exchangeability, probability theory}
 }
 
+@Article{forward1961,
+author =       {Robert L. Forward},
+title =	       {General Relativity for the Experimentalist},
+journal =      pire,
+year =	       {1961},
+volume =       {49},
+number =       {5},
+pages =	       {892--904},
+keywords =     {gravitomagnetic effect}
+}
+
 @InCollection{fosdick1978,
 author =       {Roger L. Fosdick},
 title =	       {On an inequality in thermodynamic stability},
@@ -48990,6 +49040,18 @@ number =       {4},
 pages =	       {249--266}
 }
 
+@Article{goodmanetal2007,
+author =       {Steven Goodman and Sander Greenland},
+title =	       {Why Most Published Research Findings Are False: Problems in the Analysis},
+journal =      plosmed,
+year =	       {2007},
+volume =       {4},
+number =       {4},
+pages =	       {e168},
+note =	       {See \citebi{ioannidis2005,ioannidis2007}},
+keywords =     {reproducibility crisis, p-values, statistical significance}
+}
+
 @Article{goodmanetal2010,
 author =       {Jonathan Goodman and Jonathan Weare},
 title =	       {Ensemble samplers with affine invariance},
@@ -52145,6 +52207,15 @@ year =	       {1954},
 volume =       {96},
 number =       {6},
 pages =	       {1683--1685}
+}
+
+@Book{guptaetal1971,
+editor =       {Shanti S. Gupta and James Yackel},
+title =	       {Statistical Decision Theory and Related Topics\subtitleproc{: Proceedings of a Symposium Held at Purdue University November 23--25, 1970}},
+publisher =    {Academic Press},
+year =	       {1971},
+address =      {New York},
+keywords =     {p-values, null-hypothesis testing, Lindley's paradox}
 }
 
 @Article{guptaetal1976,
@@ -60895,6 +60966,17 @@ pages =	       {1--54},
 note =	       {See also \citebi{truesdell1956b}}
 }
 
+@Article{imrieetal2018,
+author =       {Fergus Imrie and Anthony R. Bradley and van der Schaar, Mihaela and Charlotte M. Deane},
+title =	       {Protein Family-Specific Models Using Deep Neural Networks and Transfer Learning Improve Virtual Screening and Highlight the Need for More Data},
+journal =      jcim,
+year =	       {2018},
+volume =       {58},
+number =       {11},
+pages =	       {2319--2330},
+keywords =     {machine-learning generalizability}
+}
+
 @Article{imryetal1999,
 author =       {Yoseph Imry and Rolf Landauer},
 title =	       {Conductance viewed as transmission},
@@ -61078,6 +61160,30 @@ year =	       {1954},
 volume =       {40},
 number =       {2},
 pages =	       {119--121}
+}
+
+@Article{ioannidis2005,
+author =       {John P. A. Ioannidis},
+title =	       {Why Most Published Research Findings Are False},
+journal =      plosmed,
+year =	       {2005},
+volume =       {2},
+number =       {8},
+pages =	       {e124},
+note = 	       {See also \citebi{goodmanetal2007,ioannidis2007}},
+keywords =     {reproducibility crisis, p-values, statistical significance}
+}
+
+@Article{ioannidis2007,
+author =       {John P. A. Ioannidis},
+title =	       {Why Most Published Research Findings Are False: Author's Reply to {Goodman} and {Greenland}},
+journal =      plosmed,
+year =	       {2007},
+volume =       {4},
+number =       {6},
+pages =	       {e215},
+keywords =     {reproducibility crisis, p-values, statistical significance},
+mynote =       {See \citebi{ioannidis2005,goodmanetal2007}}
 }
 
 @Misc{iorio2004,
@@ -63164,6 +63270,17 @@ volume =       {51},
 number =       {1},
 pages =	       {89--109},
 note =	       {\url{http://bayes.wustl.edu/etj/node1.html}}
+}
+
+@Article{jaynesetal1980,
+author =       {E. T. Jaynes and D. J. Spiegelhalter and H. Akaike and A. P. Dempster and J. M. Dickey and S. Geisser and I. J. Good and D. V. Lindley and O'Hagan, A. and A. Zellner and Jos{\'e}-Miguel Bernardo},
+title =	       {Discussion {[}hypothesis testing{]}},
+journal =      teio,
+year =	       {1980},
+volume =       {31},
+number =       {1},
+pages =	       {618--647},
+note =	       {See \citebi{zellneretal1980} and \citebi{bernardo1980}}
 }
 
 @Book{jazwinski1970,
@@ -79150,6 +79267,17 @@ keywords =     {thermodynamics, statistical mechanics},
 origdate =     {2005}
 }
 
+@Article{mackeyetal2009,
+author =       {Mark D. Mackey and James L. Melville},
+title =	       {Better than Random? {The} Chemotype Enrichment Problem},
+journal =      jcim,
+year =	       {2009},
+volume =       {49},
+number =       {5},
+pages =	       {1154--1162},
+keywords =     {machine-learning generalizability}
+}
+
 @Article{mackinnon1976,
 author =       {Edward MacKinnon},
 title =	       {{De Broglie's} thesis: A critical retrospective},
@@ -85796,6 +85924,17 @@ volume =       {125},
 number =       {3},
 pages =	       {034101},
 keywords =     {continuum mechanics}
+}
+
+@Article{morenoetal1991,
+author =       {E. Moreno and J. A. Cano},
+title =	       {Robust Bayesian Analysis With {$\epsilon$}-Contaminations Partially Known},
+journal =      jrssb,
+year =	       {1991},
+volume =       {53},
+number =       {1},
+pages =	       {143--155},
+keywords =     {Lindley's paradox}
 }
 
 @Misc{morenofloresetal2009,
@@ -92919,6 +93058,18 @@ note =	       {See \citebi{haldane1948}},
 keywords =     {probability theory, Haldane prior}
 }
 
+@Article{pearsonetal1965,
+author =       {E. S. Pearson and G. A. Barnard and I. J. Good and S. C. Pearce and Leslie Kish and L. J. Savage and Cedric A. B. Smith},
+title =	       {Discussion on {Professor Smith's} paper},
+journal =      jrssa,
+year =	       {1965},
+volume =       {128},
+number =       {4},
+pages =	       {490--499},
+note =	       {See \citebi{smith1965b}},
+keywords =     {Lindley's paradox}
+}
+
 @Article{pearsonetal2008,
 author =       {Thomas A. Pearson and Teri A. Manolio},
 title =	       {How to Interpret a Genome-wide Association Study},
@@ -95558,6 +95709,15 @@ year =	       {1964},
 volume =       {146},
 number =       {3642},
 pages =	       {347--353}
+}
+
+@Article{plavensigrayetal2017,
+author =       {Plav{\'e}n-Sigray, Pontus and Granville James Matheson and Bj{\"o}rn Christian Schiffler and William Hedley Thompson},
+title =	       {Research: The readability of scientific texts is decreasing over time},
+journal =      elife,
+year =	       {2017},
+volume =       {6},
+pages =	       {e27725}
 }
 
 @Article{plebanski1975,
@@ -100583,6 +100743,16 @@ pages =	       {323--341},
 keywords =     {maximum-entropy principle}
 }
 
+@Article{richensetal2020,
+author =       {Jonathan G. Richens and Ciar{\'a}n M. Lee and Saurabh Johri},
+title =	       {Improving the accuracy of medical diagnosis with causal machine learning},
+journal =      natcomm,
+year =	       {2020},
+volume =       {11},
+pages =	       {3923},
+keywords =     {machine-learning generalizability}
+}
+
 @PhdThesis{richman1977,
 author =       {James Gregory Richman},
 title =	       {Kinematics and energetics of the mesoscale mid-ocean circulation: {MODE}},
@@ -101420,6 +101590,17 @@ note =	       {First publ.\ in French 1992},
 keywords =     {improper priors, Bayesian probability theory, decision theory, Monte Carlo},
 mynote =       {doesn't cite Jaynes's book, is sloppy in introducing concepts, seems to treat probability distributions as real measurable entities},
 origdate =     {1992}
+}
+
+@Article{robert2014,
+author =       {Christian P. Robert},
+title =	       {On the {Jeffreys-Lindley} paradox},
+journal =      psci,
+year =	       {2014},
+volume =       {81},
+number =       {2},
+pages =	       {216--232},
+keywords =     {Lindley's paradox}
 }
 
 @Book{robertetal1999_r2004,
@@ -103427,6 +103608,15 @@ volume =       {131},
 number =       {3},
 pages =	       {964--989},
 keywords =     {statistical mechanics, heat conduction}
+}
+
+@InCollection{rubin1971,
+author =       {Herman Rubin},
+title =	       {A decision-theoretic approach to the problem of testing a null hypothesis},
+booktitle =    {\citein{guptaetal1971}},
+year =	       {1971},
+pages =	       {103--108},
+keywords =     {null-hypothesis test, Lindley's paradox}
 }
 
 @Article{rubin1978,
@@ -108537,6 +108727,17 @@ keywords =     {probability theory},
 origdate =     {1943}
 }
 
+@Article{shoichetetal1993,
+author =       {B. K. Shoichet and R. M. Stroud and D. V. Santi and I. D. Kuntz and K. M. Perry},
+title =	       {Structure-based discovery of inhibitors of thymidylate synthase},
+journal =      sci,
+year =	       {1993},
+volume =       {259},
+number =       {5100},
+pages =	       {1445--1450},
+keywords =     {machine-learning generalizability}
+}
+
 @Misc{shor2003,
 author =       {Peter W. Shor},
 title =	       {Equivalence of additivity questions in quantum information theory},
@@ -108838,6 +109039,17 @@ year =	       {1954},
 volume =       {96},
 number =       {2},
 pages =	       {243--249}
+}
+
+@Article{siegetal2019,
+author =       {Jochen Sieg and Florian Flachsenberg and Matthias Rarey},
+title =	       {In Need of Bias Control: Evaluating Chemical Data for Machine Learning in Structure-Based Virtual Screening},
+journal =      jcim,
+year =	       {2019},
+volume =       {59},
+number =       {3},
+pages =	       {947--961},
+keywords =     {machine-learning generalizability}
 }
 
 @Article{siegmundschultze2006,
@@ -110287,6 +110499,18 @@ pages =	       {282--292},
 keywords =     {relativistic continuum mechanics}
 }
 
+@Article{smith1965b,
+author =       {Cedric A. B. Smith},
+title =	       {Personal Probability and Statistical Analysis},
+journal =      jrssa,
+year =	       {1965},
+volume =       {128},
+number =       {4},
+pages =	       {469--489},
+note =	       {See also discussion and reply in \citebi{pearsonetal1965}},
+keywords =     {Lindley's paradox}
+}
+
 @Article{smith1971,
 author =       {G. F. Smith},
 title =	       {On isotropic functions of symmetric tensors, skew-symmetric tensors and vectors},
@@ -111242,6 +111466,17 @@ number =       {6},
 pages =	       {1051--1080}
 }
 
+@Article{spanos2013,
+author =       {Aris Spanos},
+title =	       {Who Should Be Afraid of the {Jeffreys-Lindley} Paradox?},
+journal =      psci,
+year =	       {2013},
+volume =       {80},
+number =       {1},
+pages =	       {73--93},
+keywords =     {Lindley's paradox}
+}
+
 @Article{spavierietal1992,
 author =       {G. Spavieri and G. Cavalleri},
 title =	       {Interpretation of the {Aharonov-Bohm} and the {Aharonov-Casher} Effects in Terms of Classical Electromagnetic Fields},
@@ -111669,6 +111904,16 @@ volume =       {63},
 number =       {6},
 pages =	       {062302},
 keywords =     {modes, quantum theory, quantum field theory, electromagnetism}
+}
+
+@Article{sprenger2013,
+author =       {Jan Sprenger},
+title =	       {Testing a Precise Null Hypothesis: The Case of {Lindley's} Paradox},
+journal =      psci,
+year =	       {2013},
+volume =       {80},
+number =       {5},
+pages =	       {733--744}
 }
 
 @Article{spurgin1976,
@@ -128051,6 +128296,17 @@ volume =       {59},
 number =       {307},
 pages =	       {763--778},
 keywords =     {Bayesian probability theory}
+}
+
+@Article{zellneretal1980,
+author =       {Arnold Zellner and A. Siow},
+title =	       {Posterior odds ratios for selected regression hypotheses},
+journal =      teio,
+year =	       {1980},
+volume =       {31},
+number =       {1},
+pages =	       {585--603},
+note =	       {See also discussion in \citebi{jaynesetal1980}}
 }
 
 @Article{zellneretal1986,
