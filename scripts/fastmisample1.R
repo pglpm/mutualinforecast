@@ -15,6 +15,7 @@ library('doRNG')
 
 registerDoFuture()
 print(paste0('available workers: ', availableCores()))
+ntasks <- availableCores()
 plan(multicore, workers=ntasks-1)
 print(paste0('number of workers: ', nbrOfWorkers()))
 
@@ -45,7 +46,6 @@ scriptname <- 'mc6'
 
 generalname <- paste0('result_mi_dirich')
 datafilename <- 'data1'
-priorweight <- 0.1
 
 dataabsfreqs <- as.matrix(read.csv(paste0(datafilename,'.csv'),header=FALSE,sep=','))
 ## format: 1 row = 1 stimulus, 1 column = 1 response
@@ -69,6 +69,9 @@ dataMI <- MI(datarelfreqs)
 
 
 ## Dirichlet parameters for F-uniform prior
+
+priorweight <- 1
+
 dirichpriorfreqs <- foreach(i=1:nstimuli, .combine=rbind)%do%{rep(1/nresponses, nresponses)}
 dirichpriorsize <- foreach(i=1:nstimuli, .combine=c)%do%{nresponses}*priorweight
 
@@ -80,7 +83,19 @@ Fpriorsamples <- aperm(simplify2array(foreach(i=1:nstimuli)%dorng%{
 
 print('Created long-run samples')
 
-doubleMIsamples <- foreach(i=1:nmcsamples, .combine=rbind)%dorng%{
+
+mcdataMI <- longrunMIsamples[,1]
+histcells <- seq(from=0, to=1, length.out=round(25/diff(range(mcdataMI))))
+pdff(paste0('distrsampleMI_',dirichpriorsize[1]))
+hist(mcdataMI, breaks=histcells, freq=FALSE, xlab='long-run MI/bit',
+     main=paste0('Dirichlet prior with uniform reference distribution and prior size = ', dirichpriorsize[1], '\nsample MI = ', signif(dataMI,3), ' bit'))
+matpoints(x=dataMI, y=0, type='p', pch=17, cex=2, col=myred)
+dev.off()
+
+
+
+
+sampleandinfMIsamples <- foreach(i=1:nmcsamples, .combine=rbind)%dorng%{
     ## Fpriorsamples <- foreach(s=1:nstimuli, .combine=rbind)%do%{
     ##     rdirichlet(n=1, alpha=dirichpriorparams[s,])}
     
@@ -88,7 +103,6 @@ doubleMIsamples <- foreach(i=1:nmcsamples, .combine=rbind)%dorng%{
         tabulate(sample(x=1:nresponses, size=datasize[s], replace=TRUE,
                         Fpriorsamples[i,s,]), nbins=nresponses)/datasize[s]
     }) , MI(Fpriorsamples[i,,]))}
-
 
 
 miwidth <- 0.01 # width around the mutual info
@@ -102,13 +116,6 @@ matpoints(x=dataMI, y=0, type='p', pch=17, cex=2, col=myred)
 dev.off()
 
 
-mcdataMI <- doubleMIsamples[,1]
-histcells <- seq(from=0, to=1, length.out=round(25/diff(range(mcdataMI))))
-pdff(paste0('distrsampleMI_',dirichpriorsize[1]))
-hist(mcdataMI, breaks=histcells, freq=FALSE, xlab='long-run MI/bit',
-     main=paste0('Dirichlet prior with uniform reference distribution and prior size = ', dirichpriorsize[1], '\nsample MI = ', signif(dataMI,3), ' bit'))
-matpoints(x=dataMI, y=0, type='p', pch=17, cex=2, col=myred)
-dev.off()
 
 
 plan(sequential)

@@ -1,7 +1,7 @@
 \pdfoutput=1
 %% Author: PGL  Porta Mana, C Battistin, S Gonzalo Cogno
 %% Created: 2015-05-01T20:53:34+0200
-%% Last-Updated: 2020-08-24T14:39:30+0200
+%% Last-Updated: 2020-09-07T09:47:29+0200
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \newif\ifarxiv
 \arxivfalse
@@ -616,9 +616,9 @@ citestyle=authoryear-comp,bibstyle=pglpm-authoryear,autopunct=false,sorting=ny,s
 \setlength{\epigraphrule}{0pt}
 %\setlength{\beforeepigraphskip}{0pt}
 %\setlength{\afterepigraphskip}{0pt}
-\epigraph{\emph{% In allowing us to focus on one aspect of a concept (e.g., the battling aspects of arguing), a metaphorical concept can keep us from focusing on other aspects of the concept that are inconsistent with that metaphor. For example, i
-\textins*{I}n the midst of a heated argument, when we are intent on attacking our opponent's position and defending our own, we may lose sight of the cooperative aspects of arguing. Someone who is arguing with you can be viewed as giving you his time, a valuable commodity, in an effort at mutual understanding.% But when we are preoccupied with the battle aspects, we often lose sight of the cooperative aspects.
-}}{\parencite[\chap~4 p.~10]{lakoffetal1980}}
+% \epigraph{\emph{% In allowing us to focus on one aspect of a concept (e.g., the battling aspects of arguing), a metaphorical concept can keep us from focusing on other aspects of the concept that are inconsistent with that metaphor. For example, i
+% \textins*{I}n the midst of a heated argument, when we are intent on attacking our opponent's position and defending our own, we may lose sight of the cooperative aspects of arguing. Someone who is arguing with you can be viewed as giving you his time, a valuable commodity, in an effort at mutual understanding.% But when we are preoccupied with the battle aspects, we often lose sight of the cooperative aspects.
+% }}{\parencite[\chap~4 p.~10]{lakoffetal1980}}
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -1152,6 +1152,57 @@ information is therefore approximately equal to the long-run mutual
 information. \mynote{One can also do expansions in $n$ to obtain asymptotic
   corrections. The exponential term also shows where maximum-entropy
   methods come from.}
+
+
+\paragraph{Examples of results}
+
+Suppose we have observed responses with the following frequencies in a
+sample of 20 responses per stimulus:
+\begin{center}%[h!]%{l}{0.75\linewidth} % with wrapfigure
+\includegraphics[width=\linewidth]{scripts/example1.png}%
+\end{center}%
+This sample has a mutual information of $0.387\:\bit$.
+
+We want to know what mutual information we would find if we could
+accumulate an infinite number of samples (long-run mutual information).
+
+As we saw in \sect~\ref{sec:longrun_freqs}, it is necessary to make an
+initial guess (before the sample is observed) about what the long-run
+frequencies could be; that is, we need to choose a superdistribution. Such
+choice depend on the context: the specific experiment, brain region, and
+all other biological details. We imagine three cases, each of which could
+be appropriate in a different context.
+
+First: we consider all long-run response-frequency distributions, for each
+stimulus, to be equally probable. This belief is represented by a Dirichlet
+distribution with unit parameters. Our resulting guess about the long-run
+mutual information is given by the probability distribution at the top of
+\fig~\ref{fig:example_result}.
+\begin{figure}[p]%{l}{0.75\linewidth} % with wrapfigure
+\centering\includegraphics[width=0.71\linewidth]{scripts/result_f_dirich10.pdf}\\%
+\includegraphics[width=0.71\linewidth]{scripts/result_f_dirich1.pdf}\\%
+\includegraphics[width=0.71\linewidth]{scripts/result_f_dirich100.pdf}%
+\caption{Top: uniform superdistribution; middle: peaked frequency
+  distributions are more probable;
+  bottom: uniform frequency distributions are more probable (equally
+  probable sequences)}\label{fig:example_result}  
+\end{figure}% fastsample1.R
+
+Second: we consider long-run response-frequency distributions with one or
+more very sharp peaks to be more probable than broad distributions. This
+belief is represented by a Dirichlet distribution with parameters less than
+unity. Our resulting guess about the long-run mutual information is given
+by the probability distribution in the middle of
+\fig~\ref{fig:example_result}.
+
+Third: we consider long-run response-frequency distributions of almost flat
+shape to be more probable than peaked distributions. This belief is
+represented by a Dirichlet distribution with parameters larger than unity.
+Our resulting guess about the long-run mutual information is given by the
+probability distribution at the bottom of \fig~\ref{fig:example_result}.
+
+
+
 
 
 
