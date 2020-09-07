@@ -1,7 +1,7 @@
 \pdfoutput=1
 %% Author: PGL  Porta Mana, C Battistin, S Gonzalo Cogno
 %% Created: 2015-05-01T20:53:34+0200
-%% Last-Updated: 2020-09-07T09:59:20+0200
+%% Last-Updated: 2020-09-07T10:09:55+0200
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \newif\ifarxiv
 \arxivfalse
@@ -1210,6 +1210,19 @@ distribution at the bottom of \fig~\ref{fig:example_result}. There is a
 95\% probability that the long-run mutual info is between 0.0103 and
 0.0676~bit, and a 50-50\% probability that it is lower or higher than
 0.0309~bit.
+
+\bigskip
+
+Note how these three different prior assumptions lead to
+three very different guesses about the long-run mutual information, based
+on the same observed sample. This strong dependence on the prior assumption
+is to be expected because the sample is small.
+
+Also, there is no way to say which assumption is \enquote{true}. But if we
+have samples from previous experiments, for which we believe that our
+initial guesses should be the same as in the present case, then our initial
+superdistribution can -- and ought to -- be updated with the results of
+those other experiments, using a hyerarchic model.
 
 
 
