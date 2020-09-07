@@ -1,7 +1,7 @@
 \pdfoutput=1
 %% Author: PGL  Porta Mana, C Battistin, S Gonzalo Cogno
 %% Created: 2015-05-01T20:53:34+0200
-%% Last-Updated: 2020-09-07T10:09:55+0200
+%% Last-Updated: 2020-09-07T10:15:02+0200
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \newif\ifarxiv
 \arxivfalse
@@ -1169,16 +1169,16 @@ accumulate an infinite number of samples (long-run mutual information).
 As we saw in \sect~\ref{sec:longrun_freqs}, it is necessary to make an
 initial guess (before the sample is observed) about what the long-run
 frequencies could be; that is, we need to choose a superdistribution. Such
-choice depend on the context: the specific experiment, brain region, and
-all other biological details. We imagine three example cases, each of which
-could be appropriate in a different context.
+choice depends on the context: the specific experiment, brain region, cell
+type, and all other biological details. We imagine three example cases, each
+of which could be appropriate in a different context.
 
 First. We consider all long-run response-frequency distributions, for each
-stimulus, to be equally probable in frequency space (this belief is
-represented by a \enquote{flat} Dirichlet distribution with unit
-parameters). Our resulting guess about the long-run mutual information is
-given by the probability distribution at the top of
-\fig~\ref{fig:example_result}. There is a 95\% probability that the
+stimulus, to be equally probable in frequency space: peaked or flat, broad
+or narrow, and so on (this belief is represented by a \enquote{flat}
+Dirichlet superdistribution with unit parameters). Our resulting guess about the
+long-run mutual information is given by the probability distribution at the
+top of \fig~\ref{fig:example_result}. There is a 95\% probability that the
 long-run mutual info is between 0.093 and 0.371~bit, and a 50-50\%
 probability that it is lower or higher than 0.214~bit.
 \begin{figure}[p]%{l}{0.75\linewidth} % with wrapfigure
@@ -1193,22 +1193,22 @@ probability that it is lower or higher than 0.214~bit.
 
 Second. We consider long-run response-frequency distributions with one or
 more very sharp peaks to be more probable than broad distributions (this
-belief is represented by a Dirichlet distribution with parameters less than
-unity, very close to a Jeffreys prior). Our resulting guess about the
+belief is represented here by a Dirichlet superdistribution with parameters less
+than unity, very close to a Jeffreys prior). Our resulting guess about the
 long-run mutual information is given by the probability distribution in the
-middle of \fig~\ref{fig:example_result}. There is a 95\% probability that the
-long-run mutual info is between 0.245 and 0.591~bit, and a 50-50\%
+middle of \fig~\ref{fig:example_result}. There is a 95\% probability that
+the long-run mutual info is between 0.245 and 0.591~bit, and a 50-50\%
 probability that it is lower or higher than 0.413~bit.
 
 Third. We consider long-run response-frequency distributions of almost flat
 shape to be more probable than peaked distributions; this is very similar
 to giving equal probability to all possible long-run \emph{sequences} of
-responses, rather than to their frequencies (this belief is represented by
-a Dirichlet distribution with parameters larger than unity). Our resulting
-guess about the long-run mutual information is given by the probability
-distribution at the bottom of \fig~\ref{fig:example_result}. There is a
-95\% probability that the long-run mutual info is between 0.0103 and
-0.0676~bit, and a 50-50\% probability that it is lower or higher than
+responses, rather than to their frequencies (this belief is represented
+here by a Dirichlet superdistribution with parameters larger than unity).
+Our resulting guess about the long-run mutual information is given by the
+probability distribution at the bottom of \fig~\ref{fig:example_result}.
+There is a 95\% probability that the long-run mutual info is between 0.0103
+and 0.0676~bit, and a 50-50\% probability that it is lower or higher than
 0.0309~bit.
 
 \bigskip
