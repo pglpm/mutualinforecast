@@ -12,6 +12,7 @@
 *.dvi
 *.out.ps
 .Rhistory
+.RData
 Rplots.pdf
 *~
 _*
