@@ -1,5 +1,5 @@
 ## Author: Battistin, Gonzalo Cogno, Porta Mana
-## Last-Updated: 2020-11-19T14:01:33+0100
+## Last-Updated: 2020-11-19T16:37:29+0100
 ################
 ## Script for:
 ## - outputting samples of prior & posterior distributions
@@ -8,8 +8,8 @@
 ################
 
 #### Custom setup ####
-#library('ggplot2')
 ## For colour-blind friendly palettes, from https://personal.sron.nl/~pault/
+## (consider using khroma package instead)
 library('RColorBrewer') 
 mypurpleblue <- '#4477AA'
 myblue <- '#66CCEE'
@@ -22,13 +22,14 @@ mypalette <- c(myblue, myred, mygreen, myyellow, myredpurple, mypurpleblue, mygr
 palette(mypalette)
 barpalette <- colorRampPalette(c(mypurpleblue,'white',myredpurple),space='Lab')
 barpalettepos <- colorRampPalette(c('white','black'),space='Lab')
-dev.off()
+#dev.off()
 ####
+library('ggplot2')
 #library('cowplot')
 library('png')
 #library('plot3D')
 library('foreach')
-#library('LaplacesDemon')
+library('LaplacesDemon') # used for Dirichlet generator
 #library('RNetCDF')
 #library('Rmpfr')
 #library('rgl')
@@ -36,7 +37,66 @@ options(bitmapType='cairo')
 pdff <- function(filename){pdf(file=paste0(filename,'.pdf'),paper='a4r',height=11.7,width=16.5)} # to output in pdf format
 #### End custom setup ####
 
+#### Dirichlet parameters
 set.seed(149)
+
+meanSpikes <- 5 * (40/1000) # 5 Hz, 40 ms bin
+maxSpikes <- 15
+baseDistr <- foreach(i=0:maxSpikes, .combine=c)%do%{dpois(x=i, lambda=meanSpikes, log=FALSE)}
+baseWeight <- 1
+rootNumSamples <- 32
+##
+baseDistr <- baseDistr/sum(baseDistr)
+sample <- rdirichlet(n=rootNumSamples^2, alpha=baseWeight * baseDistr)
+pdff('__testprior')
+par(mar=c(1,1,1,1)*0.3, mfrow=c(rootNumSamples,rootNumSamples))
+for(i in 1:rootNumSamples^2){barplot(sample[i,1:11],#ylim=c(0,1),
+                                     axes=FALSE)}
+dev.off()
+
+
+
+
+meanSpikes <- 5 * (40/1000) # 5 Hz, 40 ms bin
+maxSpikes <- 15
+baseDistr <- foreach(i=0:maxSpikes, .combine=c)%do%{1/(maxSpikes+1)}
+baseWeight <- 10
+rootNumSamples <- 32
+##
+baseDistr <- baseDistr/sum(baseDistr)
+sample <- rdirichlet(n=rootNumSamples^2, alpha=baseWeight * baseDistr)
+pdff('__testprior')
+par(mar=c(1,1,1,1)*0.3, mfrow=c(rootNumSamples,rootNumSamples))
+for(i in 1:rootNumSamples^2){barplot(sample[i,],ylim=c(0,1),axes=FALSE)}
+dev.off()
+
+
+
+
+
+
+meanSpikes <- 5 * (40/1000) # 5 Hz, 40 ms bin
+maxSpikes <- 15
+baseDistr <- foreach(i=0:maxSpikes, .combine=c)%do%{dgeom(x=i, prob=1/(1+meanSpikes), log=FALSE)}
+baseDistr <- baseDistr/sum(baseDistr)
+
+baseWeight <- 0.01
+pdff('__testprior')
+for(i in 1:100){
+    sample <- c(rdirichlet(n=1, alpha=baseWeight * baseDistr))
+    matplot(x=0:maxSpikes,y=sample,type='l')
+}
+dev.off()
+
+baseWeight <- 0.1
+sample <- rdirichlet(n=100, alpha=baseWeight * baseDistr)
+pdff('__testprior')
+matplot(x=0:maxSpikes,y=t(sample),type='l')
+dev.off()
+
+
+
+
 
 # Function to calculate mutual info from frequency pairs
 ## freqs[,S] = response freqs for stimulus S
