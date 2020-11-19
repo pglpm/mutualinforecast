@@ -1,5 +1,5 @@
 ## Author: Battistin, Gonzalo Cogno, Porta Mana
-## Last-Updated: 2020-11-19T16:37:29+0100
+## Last-Updated: 2020-11-19T19:50:27+0100
 ################
 ## Script for:
 ## - outputting samples of prior & posterior distributions
@@ -37,65 +37,56 @@ options(bitmapType='cairo')
 pdff <- function(filename){pdf(file=paste0(filename,'.pdf'),paper='a4r',height=11.7,width=16.5)} # to output in pdf format
 #### End custom setup ####
 
-#### Dirichlet parameters
 set.seed(149)
-
+#### Main parameters
 meanSpikes <- 5 * (40/1000) # 5 Hz, 40 ms bin
 maxSpikes <- 15
 baseDistr <- foreach(i=0:maxSpikes, .combine=c)%do%{dpois(x=i, lambda=meanSpikes, log=FALSE)}
-baseWeight <- 1
+baseWeight <- 10
 rootNumSamples <- 32
 ##
 baseDistr <- baseDistr/sum(baseDistr)
-sample <- rdirichlet(n=rootNumSamples^2, alpha=baseWeight * baseDistr)
-pdff('__testprior')
-par(mar=c(1,1,1,1)*0.3, mfrow=c(rootNumSamples,rootNumSamples))
-for(i in 1:rootNumSamples^2){barplot(sample[i,1:11],#ylim=c(0,1),
+sample <- t(rdirichlet(n=rootNumSamples^2, alpha=baseWeight * baseDistr))
+## plot samples
+pdff(paste0('prior_samples_geom-distr_w',baseWeight))
+rg <- 0:maxSpikes
+matplot(x=rg, y=sample, type='p', pch=NA, cex=0.5,
+        col=mypurpleblue, ylim=c(0,1),
+        xlab='spike count', ylab='probability')
+title(paste0('Base distr: geometric with mean spike count = 40 Hz. Base weight = ',baseWeight))
+for(i in seq(-0.3, 0.3, by=0.05)){
+    matpoints(x=rg+i, y=sample, type='p', pch='-', cex=0.5, col=mypurpleblue)        
+}
+par(mar=c(1,1,1,1)*0.3, mfrow=c(rootNumSamples, rootNumSamples))
+for(i in 1:rootNumSamples^2){barplot(sample[1:11,i], ylim=c(0,1), col=mypurpleblue,
                                      axes=FALSE)}
 dev.off()
 
 
 
 
-meanSpikes <- 5 * (40/1000) # 5 Hz, 40 ms bin
-maxSpikes <- 15
-baseDistr <- foreach(i=0:maxSpikes, .combine=c)%do%{1/(maxSpikes+1)}
-baseWeight <- 10
-rootNumSamples <- 32
-##
-baseDistr <- baseDistr/sum(baseDistr)
-sample <- rdirichlet(n=rootNumSamples^2, alpha=baseWeight * baseDistr)
-pdff('__testprior')
-par(mar=c(1,1,1,1)*0.3, mfrow=c(rootNumSamples,rootNumSamples))
-for(i in 1:rootNumSamples^2){barplot(sample[i,],ylim=c(0,1),axes=FALSE)}
-dev.off()
+
+
+##############################################################
+#### Old pieces of code
+##############################################################
 
 
 
 
+## example 10 sequences, each with 15 values
+data <- t(sapply(1:15, function(x){rnorm(n=10, mean=x)}))
+
+matplot(x=1:15, y=data, type='p', pch='-', cex=1, col='black')
 
 
-meanSpikes <- 5 * (40/1000) # 5 Hz, 40 ms bin
-maxSpikes <- 15
-baseDistr <- foreach(i=0:maxSpikes, .combine=c)%do%{dgeom(x=i, prob=1/(1+meanSpikes), log=FALSE)}
-baseDistr <- baseDistr/sum(baseDistr)
+## example 10 sequences, each with 15 values
+data <- t(sapply(1:15, function(x){rnorm(n=10, mean=x)}))
 
-baseWeight <- 0.01
-pdff('__testprior')
-for(i in 1:100){
-    sample <- c(rdirichlet(n=1, alpha=baseWeight * baseDistr))
-    matplot(x=0:maxSpikes,y=sample,type='l')
+matplot(x=1:15, y=data, type='p', pch='-', cex=1, col='black')
+for(dx in seq(-0.3, 0.3, by=0.1)){
+    matpoints(x=(1:15)+dx, y=data, type='p', pch='-', cex=1, col='black')
 }
-dev.off()
-
-baseWeight <- 0.1
-sample <- rdirichlet(n=100, alpha=baseWeight * baseDistr)
-pdff('__testprior')
-matplot(x=0:maxSpikes,y=t(sample),type='l')
-dev.off()
-
-
-
 
 
 # Function to calculate mutual info from frequency pairs
