@@ -1,5 +1,5 @@
 ## Author: Battistin, Gonzalo Cogno, Porta Mana
-## Last-Updated: 2020-11-19T19:50:27+0100
+## Last-Updated: 2020-11-19T21:51:38+0100
 ################
 ## Script for:
 ## - outputting samples of prior & posterior distributions
@@ -37,38 +37,66 @@ options(bitmapType='cairo')
 pdff <- function(filename){pdf(file=paste0(filename,'.pdf'),paper='a4r',height=11.7,width=16.5)} # to output in pdf format
 #### End custom setup ####
 
+
 set.seed(149)
+
 #### Main parameters
 meanSpikes <- 5 * (40/1000) # 5 Hz, 40 ms bin
 maxSpikes <- 15
 baseDistr <- foreach(i=0:maxSpikes, .combine=c)%do%{dpois(x=i, lambda=meanSpikes, log=FALSE)}
-baseWeight <- 10
+baseWeight <- 0.1
 rootNumSamples <- 32
 ##
+#### Create samples
 baseDistr <- baseDistr/sum(baseDistr)
 sample <- t(rdirichlet(n=rootNumSamples^2, alpha=baseWeight * baseDistr))
-## plot samples
-pdff(paste0('prior_samples_geom-distr_w',baseWeight))
+##
+#### Function to calculate mutual info from frequency pairs
+## freqs[,S] = response freqs for stimulus S
+## assumes all stimuli equally probable
+mutualinfo <- function(freqs,base=2){##in bits
+    stimulusFreqs <- 1/ncol(freqs)
+    jointFreqs <- freqs * stimulusFreqs
+    responseFreqs <- rowSums(jointFreqs)
+    sum(jointFreqs *
+        log2(jointFreqs/outer(responseFreqs,rep(stimulusFreqs,ncol(freqs)))),
+        na.rm=TRUE)/log2(base)
+}
+##
+#### Second set of samples and calculation of samples of mutual info
+sample2 <- t(rdirichlet(n=rootNumSamples^2, alpha=baseWeight * baseDistr))
+##
+miSamples <- foreach(i=1:rootNumSamples^2, .combine=c)%do%{
+    mutualinfo(cbind(sample[,i], sample2[,i]))
+}
+miDistr <-  hist(miSamples, breaks=seq(0,1,length.out=11), plot=FALSE)
+##
+#### Plots of samples and long-run mutual-info distribution
 rg <- 0:maxSpikes
+##
+pdff(paste0('prior_samples_geom-distr_w', baseWeight))
+## Plot of mutual-info prob. distribution
+barplot(height=miDistr$density, names.arg=miDistr$mids,
+        ylab='probability density', xlab='long-run mutual info')
+title(paste0('Base distr: geometric with mean spike count = 40 Hz. Base weight = ', baseWeight))
+## Overlappig plot of samples
 matplot(x=rg, y=sample, type='p', pch=NA, cex=0.5,
         col=mypurpleblue, ylim=c(0,1),
-        xlab='spike count', ylab='probability')
-title(paste0('Base distr: geometric with mean spike count = 40 Hz. Base weight = ',baseWeight))
-for(i in seq(-0.3, 0.3, by=0.05)){
+        xlab='spike count', ylab='long-run frequency')
+for(i in seq(-0.3, 0.3, by=0.05)){# hack to create longer lines
     matpoints(x=rg+i, y=sample, type='p', pch='-', cex=0.5, col=mypurpleblue)        
 }
-par(mar=c(1,1,1,1)*0.3, mfrow=c(rootNumSamples, rootNumSamples))
+## Distinct plots of samples
+par(mar=c(1,1,1,1)*0.3, mfrow=c(rootNumSamples, rootNumSamples)) # prepare grid
 for(i in 1:rootNumSamples^2){barplot(sample[1:11,i], ylim=c(0,1), col=mypurpleblue,
                                      axes=FALSE)}
+##
 dev.off()
 
 
 
-
-
-
 ##############################################################
-#### Old pieces of code
+#### Old pieces of code below
 ##############################################################
 
 
