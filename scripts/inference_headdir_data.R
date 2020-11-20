@@ -1,5 +1,5 @@
 ## Author: Battistin, Gonzalo Cogno, Porta Mana
-## Last-Updated: 2020-11-20T12:51:11+0100
+## Last-Updated: 2020-11-20T13:32:03+0100
 ################
 ## Script for:
 ## - outputting samples of prior & posterior distributions
@@ -44,7 +44,7 @@ set.seed(149)
 meanSpikes <- 5 * (40/1000) # 5 Hz, 40 ms bin
 maxSpikes <- 15
 baseDistr <- foreach(i=0:maxSpikes, .combine=c)%do%{dpois(x=i, lambda=meanSpikes, log=FALSE)}
-baseWeight <- 10
+baseWeight <- 0.1
 rootNumSamples <- 32 # we draw rootNumSamples^2 samples
 ##
 #### Create samples: 1 row per spike count, 1 column per sample
@@ -83,8 +83,9 @@ title(paste0('Base distr: geometric with mean spike count = 40 Hz. Base weight =
 matplot(x=rg, y=sample, type='p', pch=NA, cex=0.5,
         col=mypurpleblue, ylim=c(0,1),
         xlab='spike count', ylab='long-run frequency')
-for(i in seq(-0.3, 0.3, by=0.05)){# hack to create longer lines
-    matpoints(x=rg+i, y=sample, type='p', pch='-', cex=0.5, col=mypurpleblue)        
+lineStretch <- c(-1, 1) * 0.45
+for(i in rg){# hack to create longer lines
+    matlines(x=i+lineStretch, y=rbind(sample[i+1,],sample[i+1,]), type='l', lty=1, lwd=0.25, col=mypurpleblue) 
 }
 ## Distinct plots of samples
 par(mar=c(1,1,1,1)*0.3, mfrow=c(rootNumSamples, rootNumSamples)) # prepare grid
@@ -100,8 +101,8 @@ dev.off()
 set.seed(149)
 #### Main parameters
 sampleFreqsFiles <- c(
-    'HistogramSpikeCounts_north_20TimeBins.csv', 'HistogramSpikeCounts_south_20TimeBins.csv'
-#    'HistogramSpikeCounts_north.csv', 'HistogramSpikeCounts_south.csv'
+#    'HistogramSpikeCounts_north_20TimeBins.csv', 'HistogramSpikeCounts_south_20TimeBins.csv'
+    'HistogramSpikeCounts_north.csv', 'HistogramSpikeCounts_south.csv'
 )
 stimulusNames <- c('N', 'S')
 meanSpikes <- 5 * (40/1000) # 5 Hz, 40 ms bin
@@ -148,23 +149,25 @@ miDistr <- hist(miSamples, breaks=seq(0,1,length.out=41), plot=FALSE)
 #### Plots of samples and long-run mutual-info distribution
 rg <- 0:maxSpikes
 ##
-pdff(paste0('posterior_20bin_samplepairs_geom-distr_w', baseWeight))
+#pdff(paste0('posterior_20bin_samplepairs_geom-distr_w', baseWeight))
+pdff(paste0('posterior_samplepairs_geom-distr_w', baseWeight))
 ## Plot of mutual-info prob. distribution
 barplot(height=miDistr$density, names.arg=miDistr$mids,
         ylab='probability density', xlab='long-run mutual info')
-title(paste0('Posteriors from 20 bins. Base distr: geometric with mean spike count = 40 Hz. Base weight = ', baseWeight))
+#title(paste0('Posteriors from 20 bins. Base distr: geometric with mean spike count = 40 Hz. Base weight = ', baseWeight))
+title(paste0('Posteriors from all bins. Base distr: geometric with mean spike count = 40 Hz. Base weight = ', baseWeight))
 ## Overlappig plot of samples
-matplot(x=rg, y=samplePairs[[1]], type='p', pch=NA, cex=0.5,
+sample <- samplePairs[[1]]
+matplot(x=rg, y=sample, type='p', pch=NA, cex=0.5,
         col=mypurpleblue, ylim=c(-1,1),
         xlab='spike count', ylab='long-run frequency')
-for(i in seq(-0.3, 0.3, by=0.05)){# hack to create longer lines
-    matpoints(x=rg+i, y=samplePairs[[1]], type='p', pch='-', cex=0.5, col=mypurpleblue)        
+lineStretch <- c(-1, 1) * 0.45
+for(i in rg){# hack to create longer lines
+    matlines(x=i+lineStretch, y=rbind(sample[i+1,],sample[i+1,]), type='l', lty=1, lwd=0.25, col=mypurpleblue) 
 }
-matplot(x=rg, y=-samplePairs[[2]], type='p', pch=NA, cex=0.5,
-        col=myred, ylim=c(-1,1),
-        xlab='spike count', ylab='long-run frequency', add=TRUE)
-for(i in seq(-0.3, 0.3, by=0.05)){# hack to create longer lines
-    matpoints(x=rg+i, y=-samplePairs[[2]], type='p', pch='-', cex=0.5, col=myred)        
+sample <- -samplePairs[[2]]
+for(i in rg){# hack to create longer lines
+    matlines(x=i+lineStretch, y=rbind(sample[i+1,],sample[i+1,]), type='l', lty=1, lwd=0.25, col=myred) 
 }
 ## Distinct plots of samples
 par(mar=c(1,1,1,1)*0.3, mfrow=c(rootNumSamples, rootNumSamples)) # prepare grid
