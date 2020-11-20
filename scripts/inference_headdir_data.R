@@ -1,5 +1,5 @@
 ## Author: Battistin, Gonzalo Cogno, Porta Mana
-## Last-Updated: 2020-11-20T17:11:50+0100
+## Last-Updated: 2020-11-20T19:44:29+0100
 ################
 ## Script for:
 ## - outputting samples of prior & posterior distributions
@@ -99,8 +99,14 @@ rg <- 0:maxSpikes
 ##
 pdff(paste0(pdfName, baseWeight))
 ## Plot of mutual-info prob. distribution
-barplot(height=miDistr$density, names.arg=miDistr$mids,
-        ylab='probability density', xlab='long-run mutual info')
+xmids <- barplot(height=miDistr$density, names.arg=miDistr$mids,
+                 ylab='probability density', xlab='long-run mutual info')
+## add vertical quantile lines and text
+    rb <- (xmids[length(xmids)]-xmids[1])/(miDistr$mids[length(miDistr$mids)]-miDistr$mids[1])
+    ra <- xmids[1]-rb*miDistr$mids[1]
+for(q in miQuantiles){
+    matlines(x=rep(q*rb+ra,2),y=c(-1,1/2)*max(miDistr$density), lty=2, lwd=3, col=mygreen)
+}
     text(x=50, y=max(miDistr$density), labels=paste0('2.5%, 50%, 97.5%\n',paste(signif(miQuantiles,3),collapse=', ')),
          adj=c(1,1), cex=1.5)
 title(paste0(plotTitle, baseWeight))
@@ -126,7 +132,8 @@ for(i in 1:rootNumSamples^2){
            axes=FALSE, add=TRUE)
 }
 ##
-dev.off()
+    dev.off()
+#    cbind(test,miDistr$mids)
 }
 #######################################
 
@@ -155,8 +162,8 @@ plotSuperdistrSamples(dataFiles=c('HistogramSpikeCounts_north.csv', 'HistogramSp
                           )
 
 #### posterior, 20 bins
-plotSuperdistrSamples(dataFiles=c('HistogramSpikeCounts_north_20TimeBins.csv', 'HistogramSpikeCounts_south_20TimeBins.csv'),
-                      baseWeight=1,
+test <- plotSuperdistrSamples(dataFiles=c('HistogramSpikeCounts_north_20TimeBins.csv', 'HistogramSpikeCounts_south_20TimeBins.csv'),
+                      baseWeight=10,
                       plotTitle='Posterior, 20 bins. Base distr: geometric with mean spike count = 40 Hz. Base weight = ',
                       pdfName='posterior_20bins_samplepairs_geom-distr_w',
                       meanSpikes=0.2, # 5Hz * (40Hz/1000s)
