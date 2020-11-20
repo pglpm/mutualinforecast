@@ -1,5 +1,5 @@
 ## Author: Battistin, Gonzalo Cogno, Porta Mana
-## Last-Updated: 2020-11-20T10:03:20+0100
+## Last-Updated: 2020-11-20T11:44:17+0100
 ################
 ## Script for:
 ## - outputting samples of prior & posterior distributions
@@ -45,7 +45,7 @@ meanSpikes <- 5 * (40/1000) # 5 Hz, 40 ms bin
 maxSpikes <- 15
 baseDistr <- foreach(i=0:maxSpikes, .combine=c)%do%{dpois(x=i, lambda=meanSpikes, log=FALSE)}
 baseWeight <- 10
-rootNumSamples <- 32
+rootNumSamples <- 32 # we draw rootNumSamples^2 samples
 ##
 #### Create samples: 1 row per spike count, 1 column per sample
 baseDistr <- baseDistr/sum(baseDistr)
@@ -102,12 +102,12 @@ set.seed(149)
 sampleFreqsFiles <- c(
     'HistogramSpikeCounts_north.csv', 'HistogramSpikeCounts_south.csv'
 )
-stimulusNames <- c('N','S')
+stimulusNames <- c('N', 'S')
 meanSpikes <- 5 * (40/1000) # 5 Hz, 40 ms bin
 maxSpikes <- 15
 baseDistr <- foreach(i=0:maxSpikes, .combine=c)%do%{dpois(x=i, lambda=meanSpikes, log=FALSE)}
 baseWeight <- 10
-rootNumSamples <- 32
+rootNumSamples <- 32 # we draw rootNumSamples^2 samples
 ##
 #### Read data and update Dirichlet parameters
 numStimuli <- length(sampleFreqsFiles)
@@ -142,7 +142,7 @@ mutualinfo <- function(freqs,base=2){##in bits
 miSamples <- foreach(i=1:rootNumSamples^2, .combine=c)%do%{
     mutualinfo(cbind(samplePairs[[1]][,i], samplePairs[[2]][,i]))
 }
-miDistr <-  hist(miSamples, breaks=seq(0,1,length.out=41), plot=FALSE)
+miDistr <- hist(miSamples, breaks=seq(0,1,length.out=41), plot=FALSE)
 ##
 #### Plots of samples and long-run mutual-info distribution
 rg <- 0:maxSpikes
