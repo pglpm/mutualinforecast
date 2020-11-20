@@ -1,5 +1,5 @@
 ## Author: Battistin, Gonzalo Cogno, Porta Mana
-## Last-Updated: 2020-11-20T09:49:39+0100
+## Last-Updated: 2020-11-20T10:03:20+0100
 ################
 ## Script for:
 ## - outputting samples of prior & posterior distributions
@@ -44,7 +44,7 @@ set.seed(149)
 meanSpikes <- 5 * (40/1000) # 5 Hz, 40 ms bin
 maxSpikes <- 15
 baseDistr <- foreach(i=0:maxSpikes, .combine=c)%do%{dpois(x=i, lambda=meanSpikes, log=FALSE)}
-baseWeight <- 0.1
+baseWeight <- 10
 rootNumSamples <- 32
 ##
 #### Create samples: 1 row per spike count, 1 column per sample
@@ -88,8 +88,9 @@ for(i in seq(-0.3, 0.3, by=0.05)){# hack to create longer lines
 }
 ## Distinct plots of samples
 par(mar=c(1,1,1,1)*0.3, mfrow=c(rootNumSamples, rootNumSamples)) # prepare grid
-for(i in 1:rootNumSamples^2){barplot(sample[1:11,i], ylim=c(0,1), col=mypurpleblue,
-                                     axes=FALSE)}
+for(i in 1:rootNumSamples^2){
+    barplot(sample[1:11,i], ylim=c(0,1), col=mypurpleblue, border=NA,
+            axes=FALSE)}
 ##
 dev.off()
 
@@ -105,7 +106,7 @@ stimulusNames <- c('N','S')
 meanSpikes <- 5 * (40/1000) # 5 Hz, 40 ms bin
 maxSpikes <- 15
 baseDistr <- foreach(i=0:maxSpikes, .combine=c)%do%{dpois(x=i, lambda=meanSpikes, log=FALSE)}
-baseWeight <- 0.1
+baseWeight <- 10
 rootNumSamples <- 32
 ##
 #### Read data and update Dirichlet parameters
@@ -123,7 +124,7 @@ baseDistr <- baseDistr/sum(baseDistr)
 postAlphas <- baseWeight * baseDistr + sampleFreqs
 ## post-samples: list, 1 item per stimulus; 1 row per spike count, 1 column per sample
 samplePairs <- lapply(1:numStimuli, function(x){
-    t(rdirichlet(n=rootNumSamples^2, alpha=postAlphas[,i]))}
+    t(rdirichlet(n=rootNumSamples^2, alpha=postAlphas[,x]))}
     )
 #### Function to calculate mutual info from frequency pairs
 ## freqs[,S] = response freqs for stimulus S: one column per stimulus
@@ -141,7 +142,7 @@ mutualinfo <- function(freqs,base=2){##in bits
 miSamples <- foreach(i=1:rootNumSamples^2, .combine=c)%do%{
     mutualinfo(cbind(samplePairs[[1]][,i], samplePairs[[2]][,i]))
 }
-miDistr <-  hist(miSamples, breaks=seq(0,1,length.out=21), plot=FALSE)
+miDistr <-  hist(miSamples, breaks=seq(0,1,length.out=41), plot=FALSE)
 ##
 #### Plots of samples and long-run mutual-info distribution
 rg <- 0:maxSpikes
@@ -150,28 +151,36 @@ pdff(paste0('posterior_samplepairs_geom-distr_w', baseWeight))
 ## Plot of mutual-info prob. distribution
 barplot(height=miDistr$density, names.arg=miDistr$mids,
         ylab='probability density', xlab='long-run mutual info')
-title(paste0('Base distr: geometric with mean spike count = 40 Hz. Base weight = ', baseWeight))
-dev.off()
-
+title(paste0('Posteriors. Base distr: geometric with mean spike count = 40 Hz. Base weight = ', baseWeight))
 ## Overlappig plot of samples
 matplot(x=rg, y=samplePairs[[1]], type='p', pch=NA, cex=0.5,
-        col=mypurpleblue, ylim=c(0,1),
+        col=mypurpleblue, ylim=c(-1,1),
         xlab='spike count', ylab='long-run frequency')
 for(i in seq(-0.3, 0.3, by=0.05)){# hack to create longer lines
-    matpoints(x=rg+i, y=sample, type='p', pch='-', cex=0.5, col=mypurpleblue)        
+    matpoints(x=rg+i, y=samplePairs[[1]], type='p', pch='-', cex=0.5, col=mypurpleblue)        
 }
-matplot(x=rg, y=samplePairs[[2]], type='p', pch=NA, cex=0.5,
-        col=myred, ylim=c(0,1),
+matplot(x=rg, y=-samplePairs[[2]], type='p', pch=NA, cex=0.5,
+        col=myred, ylim=c(-1,1),
         xlab='spike count', ylab='long-run frequency', add=TRUE)
 for(i in seq(-0.3, 0.3, by=0.05)){# hack to create longer lines
-    matpoints(x=rg+i, y=sample, type='p', pch='-', cex=0.5, col=myred)        
+    matpoints(x=rg+i, y=-samplePairs[[2]], type='p', pch='-', cex=0.5, col=myred)        
 }
 ## Distinct plots of samples
 par(mar=c(1,1,1,1)*0.3, mfrow=c(rootNumSamples, rootNumSamples)) # prepare grid
-for(i in 1:rootNumSamples^2){barplot(samplePairs[[1]][,i], ylim=c(0,1), col=mypurpleblue,
-                                     axes=FALSE)}
+for(i in 1:rootNumSamples^2){
+    barplot(samplePairs[[1]][1:11,i], ylim=c(-1,1), col=mypurpleblue, border=NA,
+            axes=FALSE)
+    barplot(-samplePairs[[2]][1:11,i], ylim=c(-1,1), col=myred, border=NA,
+           axes=FALSE, add=TRUE)
+}
 ##
 dev.off()
+
+
+
+
+
+
 
 
 
