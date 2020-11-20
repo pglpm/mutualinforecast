@@ -1,5 +1,5 @@
 ## Author: Battistin, Gonzalo Cogno, Porta Mana
-## Last-Updated: 2020-11-20T11:44:17+0100
+## Last-Updated: 2020-11-20T12:51:11+0100
 ################
 ## Script for:
 ## - outputting samples of prior & posterior distributions
@@ -100,13 +100,14 @@ dev.off()
 set.seed(149)
 #### Main parameters
 sampleFreqsFiles <- c(
-    'HistogramSpikeCounts_north.csv', 'HistogramSpikeCounts_south.csv'
+    'HistogramSpikeCounts_north_20TimeBins.csv', 'HistogramSpikeCounts_south_20TimeBins.csv'
+#    'HistogramSpikeCounts_north.csv', 'HistogramSpikeCounts_south.csv'
 )
 stimulusNames <- c('N', 'S')
 meanSpikes <- 5 * (40/1000) # 5 Hz, 40 ms bin
 maxSpikes <- 15
 baseDistr <- foreach(i=0:maxSpikes, .combine=c)%do%{dpois(x=i, lambda=meanSpikes, log=FALSE)}
-baseWeight <- 10
+baseWeight <- 0.1
 rootNumSamples <- 32 # we draw rootNumSamples^2 samples
 ##
 #### Read data and update Dirichlet parameters
@@ -147,11 +148,11 @@ miDistr <- hist(miSamples, breaks=seq(0,1,length.out=41), plot=FALSE)
 #### Plots of samples and long-run mutual-info distribution
 rg <- 0:maxSpikes
 ##
-pdff(paste0('posterior_samplepairs_geom-distr_w', baseWeight))
+pdff(paste0('posterior_20bin_samplepairs_geom-distr_w', baseWeight))
 ## Plot of mutual-info prob. distribution
 barplot(height=miDistr$density, names.arg=miDistr$mids,
         ylab='probability density', xlab='long-run mutual info')
-title(paste0('Posteriors. Base distr: geometric with mean spike count = 40 Hz. Base weight = ', baseWeight))
+title(paste0('Posteriors from 20 bins. Base distr: geometric with mean spike count = 40 Hz. Base weight = ', baseWeight))
 ## Overlappig plot of samples
 matplot(x=rg, y=samplePairs[[1]], type='p', pch=NA, cex=0.5,
         col=mypurpleblue, ylim=c(-1,1),
