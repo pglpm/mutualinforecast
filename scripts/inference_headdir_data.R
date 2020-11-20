@@ -1,5 +1,5 @@
 ## Author: Battistin, Gonzalo Cogno, Porta Mana
-## Last-Updated: 2020-11-20T13:32:03+0100
+## Last-Updated: 2020-11-20T17:11:50+0100
 ################
 ## Script for:
 ## - outputting samples of prior & posterior distributions
@@ -38,93 +38,40 @@ pdff <- function(filename){pdf(file=paste0(filename,'.pdf'),paper='a4r',height=1
 #### End custom setup ####
 
 
-#### Code for plotting prior samples ####
+#######################################
+#### MAIN FUNCTION TO PLOT SAMPLES ####
+plotSuperdistrSamples <- function(dataFiles=NULL, # NULL to plot prior samples
+                                  baseWeight=10,
+                                  plotTitle,
+                                  pdfName,
+                                  meanSpikes=0.2, # 5Hz * (40Hz/1000s)
+                                  maxSpikes=15,
+                                  rootNumSamples=32 # rootNumSamples^2 samples
+                                  ){
+#### Code for plotting prior or posterior samples ####
 set.seed(149)
-#### Main parameters
-meanSpikes <- 5 * (40/1000) # 5 Hz, 40 ms bin
-maxSpikes <- 15
-baseDistr <- foreach(i=0:maxSpikes, .combine=c)%do%{dpois(x=i, lambda=meanSpikes, log=FALSE)}
-baseWeight <- 0.1
-rootNumSamples <- 32 # we draw rootNumSamples^2 samples
-##
-#### Create samples: 1 row per spike count, 1 column per sample
-baseDistr <- baseDistr/sum(baseDistr)
-sample <- t(rdirichlet(n=rootNumSamples^2, alpha=baseWeight * baseDistr))
-##
-#### Function to calculate mutual info from frequency pairs
-## freqs[,S] = response freqs for stimulus S: one column per stimulus
-## assumes all stimuli equally probable
-mutualinfo <- function(freqs,base=2){##in bits
-    stimulusFreqs <- 1/ncol(freqs)
-    jointFreqs <- freqs * stimulusFreqs
-    responseFreqs <- rowSums(jointFreqs)
-    sum(jointFreqs *
-        log2(jointFreqs/outer(responseFreqs,rep(stimulusFreqs,ncol(freqs)))),
-        na.rm=TRUE)/log2(base)
-}
-##
-#### Second set of samples and calculation of samples of mutual info
-sample2 <- t(rdirichlet(n=rootNumSamples^2, alpha=baseWeight * baseDistr))
-##
-miSamples <- foreach(i=1:rootNumSamples^2, .combine=c)%do%{
-    mutualinfo(cbind(sample[,i], sample2[,i]))
-}
-miDistr <-  hist(miSamples, breaks=seq(0,1,length.out=11), plot=FALSE)
-##
-#### Plots of samples and long-run mutual-info distribution
-rg <- 0:maxSpikes
-##
-pdff(paste0('prior_samples_geom-distr_w', baseWeight))
-## Plot of mutual-info prob. distribution
-barplot(height=miDistr$density, names.arg=miDistr$mids,
-        ylab='probability density', xlab='long-run mutual info')
-title(paste0('Base distr: geometric with mean spike count = 40 Hz. Base weight = ', baseWeight))
-## Overlappig plot of samples
-matplot(x=rg, y=sample, type='p', pch=NA, cex=0.5,
-        col=mypurpleblue, ylim=c(0,1),
-        xlab='spike count', ylab='long-run frequency')
-lineStretch <- c(-1, 1) * 0.45
-for(i in rg){# hack to create longer lines
-    matlines(x=i+lineStretch, y=rbind(sample[i+1,],sample[i+1,]), type='l', lty=1, lwd=0.25, col=mypurpleblue) 
-}
-## Distinct plots of samples
-par(mar=c(1,1,1,1)*0.3, mfrow=c(rootNumSamples, rootNumSamples)) # prepare grid
-for(i in 1:rootNumSamples^2){
-    barplot(sample[1:11,i], ylim=c(0,1), col=mypurpleblue, border=NA,
-            axes=FALSE)}
-##
-dev.off()
-
-
-
-#### Code for plotting posterior samples ####
-set.seed(149)
-#### Main parameters
-sampleFreqsFiles <- c(
-#    'HistogramSpikeCounts_north_20TimeBins.csv', 'HistogramSpikeCounts_south_20TimeBins.csv'
-    'HistogramSpikeCounts_north.csv', 'HistogramSpikeCounts_south.csv'
-)
 stimulusNames <- c('N', 'S')
-meanSpikes <- 5 * (40/1000) # 5 Hz, 40 ms bin
-maxSpikes <- 15
-baseDistr <- foreach(i=0:maxSpikes, .combine=c)%do%{dpois(x=i, lambda=meanSpikes, log=FALSE)}
-baseWeight <- 0.1
-rootNumSamples <- 32 # we draw rootNumSamples^2 samples
+baseDistr <- foreach(i=0:maxSpikes, .combine=c)%do%{dgeom(x=i, prob=1/(meanSpikes+1), log=FALSE)}
+baseDistr <- baseDistr/sum(baseDistr)
 ##
 #### Read data and update Dirichlet parameters
-numStimuli <- length(sampleFreqsFiles)
-sampleFreqs <- foreach(i=1:numStimuli, .combine=cbind)%do%{
-    data <- integer(maxSpikes+1)
-    fileData <- unlist(read.csv(sampleFreqsFiles[i],header=FALSE,sep=','))
-    data[1:length(fileData)] <- fileData
-    data
+if(length(dataFiles) < 2){
+    numStimuli <- 2
+    sampleFreqs <- foreach(i=1:numStimuli, .combine=cbind)%do%{
+        data <- integer(maxSpikes+1)}
+} else {
+    numStimuli <- length(dataFiles)
+    sampleFreqs <- foreach(i=1:numStimuli, .combine=cbind)%do%{
+        data <- integer(maxSpikes+1)
+        fileData <- unlist(read.csv(dataFiles[i],header=FALSE,sep=','))
+        data[1:length(fileData)] <- fileData
+        data}
 }
 rownames(sampleFreqs) <- paste0(0:maxSpikes,'-counts')
 colnames(sampleFreqs) <- stimulusNames
 ##
-baseDistr <- baseDistr/sum(baseDistr)
 postAlphas <- baseWeight * baseDistr + sampleFreqs
-## post-samples: list, 1 item per stimulus; 1 row per spike count, 1 column per sample
+## samples: list, 1 item per stimulus; 1 row per spike count, 1 column per sample
 samplePairs <- lapply(1:numStimuli, function(x){
     t(rdirichlet(n=rootNumSamples^2, alpha=postAlphas[,x]))}
     )
@@ -140,22 +87,23 @@ mutualinfo <- function(freqs,base=2){##in bits
         na.rm=TRUE)/log2(base)
 }
 ##
-#### calculation of mutual info of posterior samples
+#### calculation of mutual info of samples
 miSamples <- foreach(i=1:rootNumSamples^2, .combine=c)%do%{
     mutualinfo(cbind(samplePairs[[1]][,i], samplePairs[[2]][,i]))
 }
-miDistr <- hist(miSamples, breaks=seq(0,1,length.out=41), plot=FALSE)
+miDistr <- hist(miSamples, breaks=seq(0,1,by=0.02), plot=FALSE)
+miQuantiles <- quantile(x=miSamples, probs=c(0.025,0.5,0.975))
 ##
 #### Plots of samples and long-run mutual-info distribution
 rg <- 0:maxSpikes
 ##
-#pdff(paste0('posterior_20bin_samplepairs_geom-distr_w', baseWeight))
-pdff(paste0('posterior_samplepairs_geom-distr_w', baseWeight))
+pdff(paste0(pdfName, baseWeight))
 ## Plot of mutual-info prob. distribution
 barplot(height=miDistr$density, names.arg=miDistr$mids,
         ylab='probability density', xlab='long-run mutual info')
-#title(paste0('Posteriors from 20 bins. Base distr: geometric with mean spike count = 40 Hz. Base weight = ', baseWeight))
-title(paste0('Posteriors from all bins. Base distr: geometric with mean spike count = 40 Hz. Base weight = ', baseWeight))
+    text(x=50, y=max(miDistr$density), labels=paste0('2.5%, 50%, 97.5%\n',paste(signif(miQuantiles,3),collapse=', ')),
+         adj=c(1,1), cex=1.5)
+title(paste0(plotTitle, baseWeight))
 ## Overlappig plot of samples
 sample <- samplePairs[[1]]
 matplot(x=rg, y=sample, type='p', pch=NA, cex=0.5,
@@ -179,6 +127,43 @@ for(i in 1:rootNumSamples^2){
 }
 ##
 dev.off()
+}
+#######################################
+
+
+
+#### Calls to plot function ####
+
+#### prior
+plotSuperdistrSamples(dataFiles=NULL,
+                      baseWeight=10,
+                      plotTitle='Prior. Base distr: geometric with mean spike count = 40 Hz. Base weight = ',
+                      pdfName='prior_samplepairs_geom-distr_w',
+                      meanSpikes=0.2, # 5Hz * (40Hz/1000s)
+                      maxSpikes=15,
+                      rootNumSamples=32 # rootNumSamples^2 samples
+                          )
+
+#### posterior, all bins
+plotSuperdistrSamples(dataFiles=c('HistogramSpikeCounts_north.csv', 'HistogramSpikeCounts_south.csv'),
+                      baseWeight=10,
+                      plotTitle='Posterior, all bins. Base distr: geometric with mean spike count = 40 Hz. Base weight = ',
+                      pdfName='posterior_allbins_samplepairs_geom-distr_w',
+                      meanSpikes=0.2, # 5Hz * (40Hz/1000s)
+                      maxSpikes=15,
+                      rootNumSamples=32 # rootNumSamples^2 samples
+                          )
+
+#### posterior, 20 bins
+plotSuperdistrSamples(dataFiles=c('HistogramSpikeCounts_north_20TimeBins.csv', 'HistogramSpikeCounts_south_20TimeBins.csv'),
+                      baseWeight=1,
+                      plotTitle='Posterior, 20 bins. Base distr: geometric with mean spike count = 40 Hz. Base weight = ',
+                      pdfName='posterior_20bins_samplepairs_geom-distr_w',
+                      meanSpikes=0.2, # 5Hz * (40Hz/1000s)
+                      maxSpikes=15,
+                      rootNumSamples=32 # rootNumSamples^2 samples
+                          )
+
 
 
 
