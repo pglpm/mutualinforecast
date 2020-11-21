@@ -1,5 +1,5 @@
 ## Author: Battistin, Gonzalo Cogno, Porta Mana
-## Last-Updated: 2020-11-21T06:17:27+0100
+## Last-Updated: 2020-11-21T08:01:44+0100
 ################
 ## Script for:
 ## - outputting samples of prior & posterior distributions
@@ -145,7 +145,7 @@ plotSuperdistrSamples(dataFiles=NULL,
                       baseWeight=10,
                       plotTitle='Prior. Base distr: geometric with mean spike count = 40 Hz. Base weight = ',
                       pdfName='prior_samplepairs_geom-distr_w',
-                      meanSpikes=0.2, # 5Hz * (40Hz/1000s)
+                      meanSpikes=0.2, # 5Hz * (40/1000)s
                       maxSpikes=15,
                       rootNumSamples=32 # rootNumSamples^2 samples
                           )
@@ -155,7 +155,7 @@ plotSuperdistrSamples(dataFiles=c('HistogramSpikeCounts_north.csv', 'HistogramSp
                       baseWeight=0.1,
                       plotTitle='Posterior, all bins. Base distr: geometric with mean spike count = 40 Hz. Base weight = ',
                       pdfName='posterior_allbins_samplepairs_geom-distr_w',
-                      meanSpikes=0.2, # 5Hz * (40Hz/1000s)
+                      meanSpikes=0.2, # 5Hz * (40/1000)s
                       maxSpikes=15,
                       rootNumSamples=32 # rootNumSamples^2 samples
                           )
@@ -165,7 +165,7 @@ test <- plotSuperdistrSamples(dataFiles=c('HistogramSpikeCounts_north_20TimeBins
                       baseWeight=0.1,
                       plotTitle='Posterior, 20 bins. Base distr: geometric with mean spike count = 40 Hz. Base weight = ',
                       pdfName='posterior_20bins_samplepairs_geom-distr_w',
-                      meanSpikes=0.2, # 5Hz * (40Hz/1000s)
+                      meanSpikes=0.2, # 5Hz * (40/1000)s
                       maxSpikes=15,
                       rootNumSamples=32 # rootNumSamples^2 samples
                           )
