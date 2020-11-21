@@ -1,5 +1,5 @@
 ## Author: Battistin, Gonzalo Cogno, Porta Mana
-## Last-Updated: 2020-11-20T19:44:29+0100
+## Last-Updated: 2020-11-21T06:17:27+0100
 ################
 ## Script for:
 ## - outputting samples of prior & posterior distributions
@@ -10,7 +10,8 @@
 #### Custom setup ####
 ## For colour-blind friendly palettes, from https://personal.sron.nl/~pault/
 ## (consider using khroma package instead)
-library('RColorBrewer') 
+library('RColorBrewer')
+
 mypurpleblue <- '#4477AA'
 myblue <- '#66CCEE'
 mygreen <- '#228833'
@@ -111,17 +112,15 @@ for(q in miQuantiles){
          adj=c(1,1), cex=1.5)
 title(paste0(plotTitle, baseWeight))
 ## Overlappig plot of samples
-sample <- samplePairs[[1]]
+## alternate samples from the two inputs for balanced transparency    
+sample <- cbind(samplePairs[[1]], -samplePairs[[2]])
+sample <- sample[, c(matrix(1:ncol(sample), nrow = 2, byrow = TRUE))] # https://stackoverflow.com/a/18861411/6090141
 matplot(x=rg, y=sample, type='p', pch=NA, cex=0.5,
-        col=mypurpleblue, ylim=c(-1,1),
+        col='#000000', ylim=c(-1,1),
         xlab='spike count', ylab='long-run frequency')
 lineStretch <- c(-1, 1) * 0.45
 for(i in rg){# hack to create longer lines
-    matlines(x=i+lineStretch, y=rbind(sample[i+1,],sample[i+1,]), type='l', lty=1, lwd=0.25, col=mypurpleblue) 
-}
-sample <- -samplePairs[[2]]
-for(i in rg){# hack to create longer lines
-    matlines(x=i+lineStretch, y=rbind(sample[i+1,],sample[i+1,]), type='l', lty=1, lwd=0.25, col=myred) 
+    matlines(x=i+lineStretch, y=rbind(sample[i+1,],sample[i+1,]), type='l', lty=1, lwd=1, col=c('#4477AA22','#EE667722')) 
 }
 ## Distinct plots of samples
 par(mar=c(1,1,1,1)*0.3, mfrow=c(rootNumSamples, rootNumSamples)) # prepare grid
@@ -153,7 +152,7 @@ plotSuperdistrSamples(dataFiles=NULL,
 
 #### posterior, all bins
 plotSuperdistrSamples(dataFiles=c('HistogramSpikeCounts_north.csv', 'HistogramSpikeCounts_south.csv'),
-                      baseWeight=10,
+                      baseWeight=0.1,
                       plotTitle='Posterior, all bins. Base distr: geometric with mean spike count = 40 Hz. Base weight = ',
                       pdfName='posterior_allbins_samplepairs_geom-distr_w',
                       meanSpikes=0.2, # 5Hz * (40Hz/1000s)
@@ -163,7 +162,7 @@ plotSuperdistrSamples(dataFiles=c('HistogramSpikeCounts_north.csv', 'HistogramSp
 
 #### posterior, 20 bins
 test <- plotSuperdistrSamples(dataFiles=c('HistogramSpikeCounts_north_20TimeBins.csv', 'HistogramSpikeCounts_south_20TimeBins.csv'),
-                      baseWeight=10,
+                      baseWeight=0.1,
                       plotTitle='Posterior, 20 bins. Base distr: geometric with mean spike count = 40 Hz. Base weight = ',
                       pdfName='posterior_20bins_samplepairs_geom-distr_w',
                       meanSpikes=0.2, # 5Hz * (40Hz/1000s)
