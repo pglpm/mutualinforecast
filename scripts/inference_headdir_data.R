@@ -1,5 +1,5 @@
 ## Author: Battistin, Gonzalo Cogno, Porta Mana
-## Last-Updated: 2020-11-21T08:01:44+0100
+## Last-Updated: 2020-11-26T11:37:39+0100
 ################
 ## Script for:
 ## - outputting samples of prior & posterior distributions
@@ -38,45 +38,8 @@ options(bitmapType='cairo')
 pdff <- function(filename){pdf(file=paste0(filename,'.pdf'),paper='a4r',height=11.7,width=16.5)} # to output in pdf format
 #### End custom setup ####
 
-
 #######################################
-#### MAIN FUNCTION TO PLOT SAMPLES ####
-plotSuperdistrSamples <- function(dataFiles=NULL, # NULL to plot prior samples
-                                  baseWeight=10,
-                                  plotTitle,
-                                  pdfName,
-                                  meanSpikes=0.2, # 5Hz * (40Hz/1000s)
-                                  maxSpikes=15,
-                                  rootNumSamples=32 # rootNumSamples^2 samples
-                                  ){
-#### Code for plotting prior or posterior samples ####
-set.seed(149)
-stimulusNames <- c('N', 'S')
-baseDistr <- foreach(i=0:maxSpikes, .combine=c)%do%{dgeom(x=i, prob=1/(meanSpikes+1), log=FALSE)}
-baseDistr <- baseDistr/sum(baseDistr)
-##
-#### Read data and update Dirichlet parameters
-if(length(dataFiles) < 2){
-    numStimuli <- 2
-    sampleFreqs <- foreach(i=1:numStimuli, .combine=cbind)%do%{
-        data <- integer(maxSpikes+1)}
-} else {
-    numStimuli <- length(dataFiles)
-    sampleFreqs <- foreach(i=1:numStimuli, .combine=cbind)%do%{
-        data <- integer(maxSpikes+1)
-        fileData <- unlist(read.csv(dataFiles[i],header=FALSE,sep=','))
-        data[1:length(fileData)] <- fileData
-        data}
-}
-rownames(sampleFreqs) <- paste0(0:maxSpikes,'-counts')
-colnames(sampleFreqs) <- stimulusNames
-##
-postAlphas <- baseWeight * baseDistr + sampleFreqs
-## samples: list, 1 item per stimulus; 1 row per spike count, 1 column per sample
-samplePairs <- lapply(1:numStimuli, function(x){
-    t(rdirichlet(n=rootNumSamples^2, alpha=postAlphas[,x]))}
-    )
-#### Function to calculate mutual info from frequency pairs
+#### FUNCTION TO CALCULATE MUTUAL INFO FROM FREQUENCY PAIRS
 ## freqs[,S] = response freqs for stimulus S: one column per stimulus
 ## assumes all stimuli equally probable
 mutualinfo <- function(freqs,base=2){##in bits
@@ -87,52 +50,100 @@ mutualinfo <- function(freqs,base=2){##in bits
         log2(jointFreqs/outer(responseFreqs,rep(stimulusFreqs,ncol(freqs)))),
         na.rm=TRUE)/log2(base)
 }
-##
+
+
+#######################################
+#### MAIN FUNCTION TO PLOT SAMPLES, GEOMETRIC BASE DISTR. ####
+plotSuperdistrSamplesGeom <- function(dataFiles=NULL, # NULL to plot prior samples
+                                  baseWeight=10,
+                                  plotTitle,
+                                  pdfName,
+                                  meanSpikes=0.2, # 5Hz * (40Hz/1000s)
+                                  maxSpikes=15,
+                                  rootNumSamples=32 # rootNumSamples^2 samples
+                                  ){
+#### Code for plotting prior or posterior samples ####
+    set.seed(149)
+    stimulusNames <- c('N', 'S')
+    baseDistr <- foreach(i=0:maxSpikes, .combine=c)%do%{dgeom(x=i, prob=1/(meanSpikes+1), log=FALSE)}
+    baseDistr <- baseDistr/sum(baseDistr)
+    ##
+#### Read data and update Dirichlet parameters
+    if(length(dataFiles) < 2){# no datafiles are given - plots for prior
+        numStimuli <- 2
+        sampleFreqs <- foreach(i=1:numStimuli, .combine=cbind)%do%{
+            data <- integer(maxSpikes+1)}
+        ## mutual info from observed data
+        miData <- NA
+    } else {# datafiles are given - plots for posterior
+        numStimuli <- length(dataFiles)
+        sampleFreqs <- foreach(i=1:numStimuli, .combine=cbind)%do%{
+            data <- integer(maxSpikes+1)
+            fileData <- unlist(read.csv(dataFiles[i],header=FALSE,sep=','))
+            data[1:length(fileData)] <- fileData
+            data}
+        ## mutual info from observed data
+        miData <- mutualinfo(t(t(sampleFreqs)/colSums(sampleFreqs)))
+    }
+    rownames(sampleFreqs) <- paste0(0:maxSpikes,'-counts')
+    colnames(sampleFreqs) <- stimulusNames
+    ##
+    postAlphas <- baseWeight * baseDistr + sampleFreqs
+    ## samples: list, 1 item per stimulus; 1 row per spike count, 1 column per sample
+    samplePairs <- lapply(1:numStimuli, function(x){
+        t(rdirichlet(n=rootNumSamples^2, alpha=postAlphas[,x]))}
+        )
 #### calculation of mutual info of samples
-miSamples <- foreach(i=1:rootNumSamples^2, .combine=c)%do%{
-    mutualinfo(cbind(samplePairs[[1]][,i], samplePairs[[2]][,i]))
-}
-miDistr <- hist(miSamples, breaks=seq(0,1,by=0.02), plot=FALSE)
-miQuantiles <- quantile(x=miSamples, probs=c(0.025,0.5,0.975))
-##
+    miSamples <- foreach(i=1:rootNumSamples^2, .combine=c)%do%{
+        mutualinfo(cbind(samplePairs[[1]][,i], samplePairs[[2]][,i]))
+    }
+    miDistr <- hist(miSamples, breaks=seq(0,1,by=0.02), plot=FALSE)
+    miQuantiles <- quantile(x=miSamples, probs=c(0.025,0.5,0.975))
+    ##
 #### Plots of samples and long-run mutual-info distribution
-rg <- 0:maxSpikes
-##
-pdff(paste0(pdfName, baseWeight))
-## Plot of mutual-info prob. distribution
-xmids <- barplot(height=miDistr$density, names.arg=miDistr$mids,
-                 ylab='probability density', xlab='long-run mutual info')
-## add vertical quantile lines and text
+    rg <- 0:maxSpikes
+    ##
+    pdff(paste0(pdfName, baseWeight))
+    ## Plot of mutual-info prob. distribution
+    xmids <- barplot(height=miDistr$density, names.arg=miDistr$mids,
+                     ylab='probability density', xlab='long-run mutual info')
+    ## add vertical quantile lines and text
     rb <- (xmids[length(xmids)]-xmids[1])/(miDistr$mids[length(miDistr$mids)]-miDistr$mids[1])
     ra <- xmids[1]-rb*miDistr$mids[1]
-for(q in miQuantiles){
-    matlines(x=rep(q*rb+ra,2),y=c(-1,1/2)*max(miDistr$density), lty=2, lwd=3, col=mygreen)
-}
-    text(x=50, y=max(miDistr$density), labels=paste0('2.5%, 50%, 97.5%\n',paste(signif(miQuantiles,3),collapse=', ')),
+    for(q in miQuantiles){
+        matlines(x=rep(q*rb+ra,2),y=c(-1,1/2)*max(miDistr$density), lty=2, lwd=3, col=mygreen)
+    }
+    text(x=50, y=max(miDistr$density), labels=paste0('(green dashed)\n2.5%, 50%, 97.5%\n',paste(signif(miQuantiles,3),collapse=', ')),
          adj=c(1,1), cex=1.5)
-title(paste0(plotTitle, baseWeight))
-## Overlappig plot of samples
-## alternate samples from the two inputs for balanced transparency    
-sample <- cbind(samplePairs[[1]], -samplePairs[[2]])
-sample <- sample[, c(matrix(1:ncol(sample), nrow = 2, byrow = TRUE))] # https://stackoverflow.com/a/18861411/6090141
-matplot(x=rg, y=sample, type='p', pch=NA, cex=0.5,
-        col='#000000', ylim=c(-1,1),
-        xlab='spike count', ylab='long-run frequency')
-lineStretch <- c(-1, 1) * 0.45
-for(i in rg){# hack to create longer lines
-    matlines(x=i+lineStretch, y=rbind(sample[i+1,],sample[i+1,]), type='l', lty=1, lwd=1, col=c('#4477AA22','#EE667722')) 
-}
-## Distinct plots of samples
-par(mar=c(1,1,1,1)*0.3, mfrow=c(rootNumSamples, rootNumSamples)) # prepare grid
-for(i in 1:rootNumSamples^2){
-    barplot(samplePairs[[1]][1:11,i], ylim=c(-1,1), col=mypurpleblue, border=NA,
-            axes=FALSE)
-    barplot(-samplePairs[[2]][1:11,i], ylim=c(-1,1), col=myred, border=NA,
-           axes=FALSE, add=TRUE)
-}
-##
+    ## If this is the posterior case, add line with mutual info of sample
+    if(length(dataFiles) >= 2){
+        matlines(x=rep(miData*rb+ra,2),y=c(-1,1/2)*max(miDistr$density), lty=1, lwd=4, col='black')
+        text(x=50, y=max(miDistr$density)*0.8, labels=paste0('(black solid)\nMI of sampled data = ', signif(miData,3)),
+             adj=c(1,1), cex=1.5)
+    }
+    title(paste0(plotTitle, baseWeight))
+    ## Overlappig plot of samples
+    ## alternate samples from the two inputs for balanced transparency    
+    sample <- cbind(samplePairs[[1]], -samplePairs[[2]])
+    sample <- sample[, c(matrix(1:ncol(sample), nrow = 2, byrow = TRUE))] # https://stackoverflow.com/a/18861411/6090141
+    matplot(x=rg, y=sample, type='p', pch=NA, cex=0.5,
+            col='#000000', ylim=c(-1,1),
+            xlab='spike count', ylab='long-run frequency')
+    lineStretch <- c(-1, 1) * 0.45
+    for(i in rg){# hack to create longer lines
+        matlines(x=i+lineStretch, y=rbind(sample[i+1,],sample[i+1,]), type='l', lty=1, lwd=1, col=c('#4477AA22','#EE667722')) 
+    }
+    ## Distinct plots of samples
+    par(mar=c(1,1,1,1)*0.3, mfrow=c(rootNumSamples, rootNumSamples)) # prepare grid
+    for(i in 1:rootNumSamples^2){
+        barplot(samplePairs[[1]][1:11,i], ylim=c(-1,1), col=mypurpleblue, border=NA,
+                axes=FALSE)
+        barplot(-samplePairs[[2]][1:11,i], ylim=c(-1,1), col=myred, border=NA,
+                axes=FALSE, add=TRUE)
+    }
+    ##
     dev.off()
-#    cbind(test,miDistr$mids)
+                                        #    cbind(test,miDistr$mids)
 }
 #######################################
 
@@ -141,7 +152,7 @@ for(i in 1:rootNumSamples^2){
 #### Calls to plot function ####
 
 #### prior
-plotSuperdistrSamples(dataFiles=NULL,
+plotSuperdistrSamplesGeom(dataFiles=NULL,
                       baseWeight=10,
                       plotTitle='Prior. Base distr: geometric with mean spike count = 40 Hz. Base weight = ',
                       pdfName='prior_samplepairs_geom-distr_w',
@@ -151,8 +162,8 @@ plotSuperdistrSamples(dataFiles=NULL,
                           )
 
 #### posterior, all bins
-plotSuperdistrSamples(dataFiles=c('HistogramSpikeCounts_north.csv', 'HistogramSpikeCounts_south.csv'),
-                      baseWeight=0.1,
+plotSuperdistrSamplesGeom(dataFiles=c('HistogramSpikeCounts_north.csv', 'HistogramSpikeCounts_south.csv'),
+                      baseWeight=10,
                       plotTitle='Posterior, all bins. Base distr: geometric with mean spike count = 40 Hz. Base weight = ',
                       pdfName='posterior_allbins_samplepairs_geom-distr_w',
                       meanSpikes=0.2, # 5Hz * (40/1000)s
@@ -161,10 +172,141 @@ plotSuperdistrSamples(dataFiles=c('HistogramSpikeCounts_north.csv', 'HistogramSp
                           )
 
 #### posterior, 20 bins
-test <- plotSuperdistrSamples(dataFiles=c('HistogramSpikeCounts_north_20TimeBins.csv', 'HistogramSpikeCounts_south_20TimeBins.csv'),
-                      baseWeight=0.1,
+test <- plotSuperdistrSamplesGeom(dataFiles=c('HistogramSpikeCounts_north_20TimeBins.csv', 'HistogramSpikeCounts_south_20TimeBins.csv'),
+                      baseWeight=10,
                       plotTitle='Posterior, 20 bins. Base distr: geometric with mean spike count = 40 Hz. Base weight = ',
                       pdfName='posterior_20bins_samplepairs_geom-distr_w',
+                      meanSpikes=0.2, # 5Hz * (40/1000)s
+                      maxSpikes=15,
+                      rootNumSamples=32 # rootNumSamples^2 samples
+                          )
+
+
+
+
+#######################################
+#### MAIN FUNCTION TO PLOT SAMPLES, UNIFORM BASE DISTR. ####
+plotSuperdistrSamplesUnif <- function(dataFiles=NULL, # NULL to plot prior samples
+                                  baseWeight=10,
+                                  plotTitle,
+                                  pdfName,
+                                  meanSpikes=0.2, # 5Hz * (40Hz/1000s)
+                                  maxSpikes=15,
+                                  rootNumSamples=32 # rootNumSamples^2 samples
+                                  ){
+#### Code for plotting prior or posterior samples ####
+    set.seed(149)
+    stimulusNames <- c('N', 'S')
+    baseDistr <- foreach(i=0:maxSpikes, .combine=c)%do%{1/(maxSpikes+1)}
+    ##baseDistr <- foreach(i=0:maxSpikes, .combine=c)%do%{dgeom(x=i, prob=1/(meanSpikes+1), log=FALSE)}
+    baseDistr <- baseDistr/sum(baseDistr)
+    ##
+#### Read data and update Dirichlet parameters
+    if(length(dataFiles) < 2){# no datafiles are given - plots for prior
+        numStimuli <- 2
+        sampleFreqs <- foreach(i=1:numStimuli, .combine=cbind)%do%{
+            data <- integer(maxSpikes+1)}
+        ## mutual info from observed data
+        miData <- NA
+    } else {# datafiles are given - plots for posterior
+        numStimuli <- length(dataFiles)
+        sampleFreqs <- foreach(i=1:numStimuli, .combine=cbind)%do%{
+            data <- integer(maxSpikes+1)
+            fileData <- unlist(read.csv(dataFiles[i],header=FALSE,sep=','))
+            data[1:length(fileData)] <- fileData
+            data}
+        ## mutual info from observed data
+        miData <- mutualinfo(t(t(sampleFreqs)/colSums(sampleFreqs)))
+    }
+    rownames(sampleFreqs) <- paste0(0:maxSpikes,'-counts')
+    colnames(sampleFreqs) <- stimulusNames
+    ##
+    postAlphas <- baseWeight * baseDistr + sampleFreqs
+    ## samples: list, 1 item per stimulus; 1 row per spike count, 1 column per sample
+    samplePairs <- lapply(1:numStimuli, function(x){
+        t(rdirichlet(n=rootNumSamples^2, alpha=postAlphas[,x]))}
+        )
+#### calculation of mutual info of samples
+    miSamples <- foreach(i=1:rootNumSamples^2, .combine=c)%do%{
+        mutualinfo(cbind(samplePairs[[1]][,i], samplePairs[[2]][,i]))
+    }
+    miDistr <- hist(miSamples, breaks=seq(0,1,by=0.02), plot=FALSE)
+    miQuantiles <- quantile(x=miSamples, probs=c(0.025,0.5,0.975))
+    ##
+#### Plots of samples and long-run mutual-info distribution
+    rg <- 0:maxSpikes
+    ##
+    pdff(paste0(pdfName, baseWeight))
+    ## Plot of mutual-info prob. distribution
+    xmids <- barplot(height=miDistr$density, names.arg=miDistr$mids,
+                     ylab='probability density', xlab='long-run mutual info')
+    ## add vertical quantile lines and text
+    rb <- (xmids[length(xmids)]-xmids[1])/(miDistr$mids[length(miDistr$mids)]-miDistr$mids[1])
+    ra <- xmids[1]-rb*miDistr$mids[1]
+    for(q in miQuantiles){
+        matlines(x=rep(q*rb+ra,2),y=c(-1,1/2)*max(miDistr$density), lty=2, lwd=3, col=mygreen)
+    }
+    text(x=50, y=max(miDistr$density), labels=paste0('(green dashed)\n2.5%, 50%, 97.5%\n',paste(signif(miQuantiles,3),collapse=', ')),
+         adj=c(1,1), cex=1.5)
+    ## If this is the posterior case, add line with mutual info of sample
+    if(length(dataFiles) >= 2){
+        matlines(x=rep(miData*rb+ra,2),y=c(-1,1/2)*max(miDistr$density), lty=1, lwd=4, col='black')
+        text(x=50, y=max(miDistr$density)*0.8, labels=paste0('(black solid)\nMI of sampled data = ', signif(miData,3)),
+             adj=c(1,1), cex=1.5)
+    }
+    title(paste0(plotTitle, baseWeight))
+    ## Overlappig plot of samples
+    ## alternate samples from the two inputs for balanced transparency    
+    sample <- cbind(samplePairs[[1]], -samplePairs[[2]])
+    sample <- sample[, c(matrix(1:ncol(sample), nrow = 2, byrow = TRUE))] # https://stackoverflow.com/a/18861411/6090141
+    matplot(x=rg, y=sample, type='p', pch=NA, cex=0.5,
+            col='#000000', ylim=c(-1,1),
+            xlab='spike count', ylab='long-run frequency')
+    lineStretch <- c(-1, 1) * 0.45
+    for(i in rg){# hack to create longer lines
+        matlines(x=i+lineStretch, y=rbind(sample[i+1,],sample[i+1,]), type='l', lty=1, lwd=1, col=c('#4477AA22','#EE667722')) 
+    }
+    ## Distinct plots of samples
+    par(mar=c(1,1,1,1)*0.3, mfrow=c(rootNumSamples, rootNumSamples)) # prepare grid
+    for(i in 1:rootNumSamples^2){
+        barplot(samplePairs[[1]][1:11,i], ylim=c(-1,1), col=mypurpleblue, border=NA,
+                axes=FALSE)
+        barplot(-samplePairs[[2]][1:11,i], ylim=c(-1,1), col=myred, border=NA,
+                axes=FALSE, add=TRUE)
+    }
+    ##
+    dev.off()
+                                        #    cbind(test,miDistr$mids)
+}
+#######################################
+
+
+#### Calls to plot function ####
+
+plotSuperdistrSamplesUnif(dataFiles=NULL,
+                      baseWeight=0.1,
+                      plotTitle='Prior. Base distr: uniform. Base weight = ',
+                      pdfName='prior_samplepairs_unif-distr_w',
+                      meanSpikes=0.2, # 5Hz * (40/1000)s
+                      maxSpikes=15,
+                      rootNumSamples=32 # rootNumSamples^2 samples
+                          )
+
+#### posterior, all bins
+plotSuperdistrSamplesUnif(dataFiles=c('HistogramSpikeCounts_north.csv', 'HistogramSpikeCounts_south.csv'),
+                      baseWeight=0.1,
+                      plotTitle='Posterior, all bins. Base distr: uniform. Base weight = ',
+                      pdfName='posterior_allbins_samplepairs_unif-distr_w',
+                      meanSpikes=0.2, # 5Hz * (40/1000)s
+                      maxSpikes=15,
+                      rootNumSamples=32 # rootNumSamples^2 samples
+                          )
+
+#### posterior, 20 bins
+test <- plotSuperdistrSamplesUnif(dataFiles=c('HistogramSpikeCounts_north_20TimeBins.csv', 'HistogramSpikeCounts_south_20TimeBins.csv'),
+                      baseWeight=0.1,
+                      plotTitle='Posterior, 20 bins. Base distr: uniform. Base weight = ',
+                      pdfName='posterior_20bins_samplepairs_unif-distr_w',
                       meanSpikes=0.2, # 5Hz * (40/1000)s
                       maxSpikes=15,
                       rootNumSamples=32 # rootNumSamples^2 samples
