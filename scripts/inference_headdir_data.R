@@ -1,5 +1,5 @@
 ## Author: Battistin, Gonzalo Cogno, Porta Mana
-## Last-Updated: 2020-11-26T11:37:39+0100
+## Last-Updated: 2020-11-26T11:54:48+0100
 ################
 ## Script for:
 ## - outputting samples of prior & posterior distributions
@@ -153,8 +153,8 @@ plotSuperdistrSamplesGeom <- function(dataFiles=NULL, # NULL to plot prior sampl
 
 #### prior
 plotSuperdistrSamplesGeom(dataFiles=NULL,
-                      baseWeight=10,
-                      plotTitle='Prior. Base distr: geometric with mean spike count = 40 Hz. Base weight = ',
+                      baseWeight=0.1,
+                      plotTitle='Prior. Base distr: geometric with mean spike count = 5 Hz. Base weight = ',
                       pdfName='prior_samplepairs_geom-distr_w',
                       meanSpikes=0.2, # 5Hz * (40/1000)s
                       maxSpikes=15,
@@ -163,8 +163,8 @@ plotSuperdistrSamplesGeom(dataFiles=NULL,
 
 #### posterior, all bins
 plotSuperdistrSamplesGeom(dataFiles=c('HistogramSpikeCounts_north.csv', 'HistogramSpikeCounts_south.csv'),
-                      baseWeight=10,
-                      plotTitle='Posterior, all bins. Base distr: geometric with mean spike count = 40 Hz. Base weight = ',
+                      baseWeight=0.1,
+                      plotTitle='Posterior, all bins. Base distr: geometric with mean spike count = 5 Hz. Base weight = ',
                       pdfName='posterior_allbins_samplepairs_geom-distr_w',
                       meanSpikes=0.2, # 5Hz * (40/1000)s
                       maxSpikes=15,
@@ -173,8 +173,8 @@ plotSuperdistrSamplesGeom(dataFiles=c('HistogramSpikeCounts_north.csv', 'Histogr
 
 #### posterior, 20 bins
 test <- plotSuperdistrSamplesGeom(dataFiles=c('HistogramSpikeCounts_north_20TimeBins.csv', 'HistogramSpikeCounts_south_20TimeBins.csv'),
-                      baseWeight=10,
-                      plotTitle='Posterior, 20 bins. Base distr: geometric with mean spike count = 40 Hz. Base weight = ',
+                      baseWeight=0.1,
+                      plotTitle='Posterior, 20 bins. Base distr: geometric with mean spike count = 5 Hz. Base weight = ',
                       pdfName='posterior_20bins_samplepairs_geom-distr_w',
                       meanSpikes=0.2, # 5Hz * (40/1000)s
                       maxSpikes=15,
@@ -190,7 +190,7 @@ plotSuperdistrSamplesUnif <- function(dataFiles=NULL, # NULL to plot prior sampl
                                   baseWeight=10,
                                   plotTitle,
                                   pdfName,
-                                  meanSpikes=0.2, # 5Hz * (40Hz/1000s)
+                                  meanSpikes=0.2, # 5Hz * (40ms/1000s)
                                   maxSpikes=15,
                                   rootNumSamples=32 # rootNumSamples^2 samples
                                   ){
