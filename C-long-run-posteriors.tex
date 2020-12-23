@@ -1,0 +1,21 @@
+\section{Posterior of long-run frequencies}\label{sec:pos_long-run}
+
+In section \ref{sec:likelihood} and Example \ref{example1_con1} we argued that for a limited sample estimating the MI by maximum likelihood might be a poor choice. As the mutual information, defined in ..., is a smooth function of the long-run frequency, the problem should be traced back to the estimation of the long-run frequencies from the sample. The issue of estimating the long-run frequencies can be approached logically as follows: 
+
+\begin{enumerate}
+
+\item \textbf{before conducting the experiment / looking at the data} find a set (space) of candidate long-run frequencies $\{\mathbf{f_s}^{(c)}\}_{c \in C}$ and attribute a probability $P(\mathbf{f_s}^{(c)})$ to each of these candidates. Set and probabilities must be chosen based of prior knowledge about the functional and physiological properties of the neural system of interest (e.g. for a single neuron average firing rate within the brain region and tuning to stimulus, if known). 
+
+\item \textbf{after conducting the experiment / looking at the data} update the probability of the candidate frequencies by means of the data $\hat{s}$ via the likelihood:
+
+\begin{equation}
+P(\mathbf{f_s}^{(c)}\vert\hat{s})=\frac{P(\hat{s}\vert \mathbf{f_s}^{(c)})*P(\mathbf{f_s}^{(c)})}{P(\hat{s})}
+\label{eq:posteriorBayes}
+\end{equation}
+where $P(\hat{s})=\sum_c P(\hat{s}\vert \mathbf{f_s}^{(c)})*P(\mathbf{f_s}^{(c)})$ is a normalization factor.
+
+\end{enumerate} 
+
+Equation \eqref{eq:posteriorBayes} in probability theory is known under the name of Bayes theorem and $P(\mathbf{f_s}^{(c)}\vert\hat{s})$ expresses our belief into the long-run frequencies $\mathbf{f_s}^{(c)}$ after having seen the data, once we start from $P(\mathbf{f_s}^{(c)})$. 
+
+Explain how this approach resolves all issues with maximum likelihood at least conceptually.
