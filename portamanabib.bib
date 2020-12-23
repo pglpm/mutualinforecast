@@ -6,7 +6,7 @@
 %% Home page: http://magnaspesmeretrix.org/
 %% Email (remove ZZ): pglZZ[at]portamana.org
 %% Created: 2000-08-23T16:53:30+0200
-%% Last-Updated: 2020-12-19T22:13:50+0100
+%% Last-Updated: 2020-12-23T00:18:36+0100
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % NB: This database contains also items whose content's validity I
@@ -754,6 +754,7 @@
 @String{nae = {\langnohyph{Nova acta eruditorum}}}
 @String{nams = {Notices of the AMS}}
 @String{nat = {Nature}}
+@String{natchem = {Nat.\ Chem.}}
 @String{natcomm = {Nat.\ Comm.}}
 @String{natgen = {Nat.\ Genet.}}
 @String{natgs = {Nat.\ Geosci.}}
@@ -42927,10 +42928,10 @@ publisher =    {Pergamon},
 year =	       {1964},
 address =      {Oxford},
 edition =      {2nd rev.\ ed.},
-note =	       {Transl.\ by N. Kemmer. First publ.\ in Russian 1955},
+note =	       {Transl.\ by N. Kemmer. \doi{10.1016/C2013-0-05319-4}. First publ.\ in Russian 1955},
+shortauthor =  {Fock},
 keywords =     {relativity, harmonic coordinates},
-origdate =     {1955},
-shortauthor =  {Fock}
+origdate =     {1955}
 }
 
 @Article{fock1957,
@@ -46794,11 +46795,15 @@ note =	       {See also discussion in \citebi{celeuxetal2017}},
 keywords =     {priors, Bayesian probability theory}
 }
 
-@Misc{gelmanetal2020,
+@Article{gelmanetal2020,
 author =       {Andrew Gelman and Yuling Yao},
 title =	       {Holes in {Bayesian} Statistics},
+journal =      jpg,
 year =	       {2020},
-note =	       {\arxiveprint{2002.06467}},
+volume =       {48},
+number =       {1},
+pages =	       {014002},
+note =	       {\doi{10.1088/1361-6471/abc3a5}},
 keywords =     {quantum theory, probability theory, conditional probability}
 }
 
@@ -57389,6 +57394,17 @@ year =	       {1979},
 volume =       {10},
 number =       {2},
 pages =	       {316--343}
+}
+
+@Article{hermannetal2020,
+author =       {Jan Hermann and Zeno Sch{\"a}tzle and Frank No{\'e}},
+title =	       {Deep-neural-network solution of the electronic {Schr{\"o}dinger} equation},
+journal =      natchem,
+year =	       {2020},
+volume =       {12},
+pages =	       {891--897},
+note =	       {\doi{10.1038/s41557-020-0544-y}},
+keywords =     {machine learning, deep networks, quantum theory, density functional theory, Monte Carlo integration}
 }
 
 @Article{hernandezetal1966,
@@ -94330,6 +94346,18 @@ note =	       {ChemRxiv \texttt{doi:\urlalt{https://doi.org/10.26434/chemrxiv.12
 keywords =     {continuum thermomechanics, second law, free energy, entropy}
 }
 
+@Book{pekaretal2014,
+author =       {Miloslav Peka{\v{r}} and Ivan Samoh{\'y}l},
+title =	       {The Thermodynamics of Linear Fluids and Fluid Mixtures},
+publisher =    {Springer},
+year =	       {2014},
+address =      {Cham},
+note =	       {\doi{10.1007/978-3-319-02514-8}},
+keywords =     {continuum thermomechanics, ideal gas, non-equilibrium thermodynamics, frame-indifference, inertia},
+mynote =       {\url{https://www.fch.vut.cz/vav/sapelite}},
+origdate =     {1987}
+}
+
 @Article{peleetal2008,
 author =       {Ofir Pele and Michael Werman},
 title =	       {A Linear Time Histogram Metric for Improved {SIFT} Matching},
@@ -97732,7 +97760,7 @@ keywords =     {convex spaces}
 author =       {Porta Mana, Piero Giovanni Luca},
 title =	       {In favour of the time variable in classical thermo\emph{dynamics}},
 year =	       {2011},
-note =	       {\arxiveprint{1012.3091}},
+note =	       {\osfeprint{cu4ad}, \arxiveprint{1012.3091}},
 keywords =     {thermodynamics}
 }
 
@@ -97846,7 +97874,7 @@ year =	       {2020},
 volume =       {**},
 number =       {**},
 pages =	       {**},
-note =	       {\doi{https://doi.org/10.1088/1361-6404/aba90b}. Updated version at \osfeprint{jmqnu}},
+note =	       {\doi{10.1088/1361-6404/aba90b}. Updated version at \osfeprint{jmqnu}},
 keywords =     {stress-energy-momentum tensor, curvature, connection, metric tensor, Einstein equations},
 mynote =       {\url{https://doi.org/10.1088/1361-6404/aba90b}}
 }
@@ -105581,7 +105609,7 @@ year =	       {1987},
 volume =       {12},
 series =       {Teubner-Texte zur Physik},
 address =      {Leipzig},
-note =	       {Partially rewritten as \citebi{samohyletal1987_r2014}.}
+mynote =       {Partially rewritten as \citebi{samohyletal1987_r2014}.}
 }
 
 @Article{samohyl1997,
@@ -105748,6 +105776,14 @@ year =	       {1997},
 volume =       {55},
 number =       {2},
 pages =	       {1358--1370}
+}
+
+@Book{sanderson2015,
+author =       {Brandon Sanderson},
+title =	       {Shadows of Self: A Mistborn Novel},
+publisher =    {Tom Doherty},
+year =	       {2015},
+address =      {New York}
 }
 
 @Book{sandler1977_r2006,
@@ -118946,6 +118982,7 @@ booktitle =    {\citein{hoffmann1966}},
 year =	       {1966},
 chapter =      {\chapb~42},
 pages =	       {413--425},
+note =	       {\doi{10.1007/978-3-642-86102-4\_8}},
 keywords =     {general relativity, Newton-Cartan theory, post-Newtonian, continuum mechanics}
 }
 
