@@ -1,7 +1,7 @@
 \pdfoutput=1
 %% Author: PGL  Porta Mana, C Battistin, S Gonzalo Cogno
 %% Created: 2015-05-01T20:53:34+0200
-%% Last-Updated: 2021-01-28T08:35:26+0100
+%% Last-Updated: 2021-03-15T10:46:39+0100
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \newif\ifarxiv
 \arxivfalse
@@ -632,7 +632,6 @@ citestyle=authoryear-comp,bibstyle=pglpm-authoryear,autopunct=false,sorting=ny,s
 
 \input{Introduction.tex}
 
-\input{L-Samples-are-misleading.tex}
 
 \input{S-Long-run-freqs.tex}
 
@@ -642,7 +641,8 @@ citestyle=authoryear-comp,bibstyle=pglpm-authoryear,autopunct=false,sorting=ny,s
 
 \input{C-long-run-posteriors.tex}
 
-\input{C-Number-of-samples.tex}
+\input{L-Number-of-samples.tex}% based on larger samples from the data --
+                               % see data sent by Soledad
 
 \input{S-Point-estimators.tex}
 
