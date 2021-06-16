@@ -1,13 +1,14 @@
-\section{Posterior of long-run frequencies}\label{sec:pos_long-run}
+\section{Posterior of mutual long-run frequencies and mutual information}\label{sec:pos_long-run}
 
-In section \ref{sec:likelihood} and Example \ref{example1_con1} we argued that for a limited sample estimating the MI by maximum likelihood might be a poor choice. As the mutual information, defined in ..., is a smooth function of the long-run frequency, the problem should be traced back to the estimation of the long-run frequencies from the sample. The issue of estimating the long-run frequencies can be approached logically as follows: 
+\mynote{I think this section should also introduce mutual information posteriors and its title changed accordingly.}
+
+In section \ref{sec:likelihood} we argued that estimating the MI by maximum likelihood might be a poor choice. As the mutual information, defined in ..., is a function of the long-run frequencies, the problem should be traced back to the estimation of the long-run frequencies from the sample. Estimating the long-run frequencies has to be approached logically as follows: 
 
 \begin{enumerate}
 
-\item \textbf{before conducting the experiment / looking at the data} find a set (space) of candidate long-run frequencies $\{\mathbf{f_s}^{(c)}\}_{c \in C}$ and attribute a probability $P(\mathbf{f_s}^{(c)})$ to each of these candidates. Set and probabilities must be chosen based of prior knowledge about the functional and physiological properties of the neural system of interest (e.g. for a single neuron average firing rate within the brain region and tuning to stimulus, if known). 
+\item \textbf{before conducting the experiment / collecting the data} choose a super distribution for the long-run frequencies, see section \ref{sec:prior}. This breaks down to identifying a set (space) of candidate long-run frequencies $\{\mathbf{f_s}^{(c)}\}_{c \in C}$ and attribute a probability $P(\mathbf{f_s}^{(c)})$ to each of these candidates. As explained in section \ref{sec:prior}, set and probabilities must reflect prior knowledge about the functional and physiological properties of the neural system of interest (e.g. average firing rate of neurons within the brain region and tuning to stimulus, if known).
 
-\item \textbf{after conducting the experiment / looking at the data} update the probability of the candidate frequencies by means of the data $\hat{s}$ via the likelihood:
-
+\item \textbf{after conducting the experiment / collecting the data} update the probability of the candidate long-run frequencies by means of the data $\hat{s}$ via the likelihood $P(\hat{s}\vert \mathbf{f_s}^{(c)}$:
 \begin{equation}
 P(\mathbf{f_s}^{(c)}\vert\hat{s})=\frac{P(\hat{s}\vert \mathbf{f_s}^{(c)})*P(\mathbf{f_s}^{(c)})}{P(\hat{s})}
 \label{eq:posteriorBayes}
@@ -16,6 +17,14 @@ where $P(\hat{s})=\sum_c P(\hat{s}\vert \mathbf{f_s}^{(c)})*P(\mathbf{f_s}^{(c)}
 
 \end{enumerate} 
 
-Equation \eqref{eq:posteriorBayes} in probability theory is known under the name of Bayes theorem and $P(\mathbf{f_s}^{(c)}\vert\hat{s})$ expresses our belief into the long-run frequencies $\mathbf{f_s}^{(c)}$ after having seen the data, once we start from $P(\mathbf{f_s}^{(c)})$. 
+Equation \eqref{eq:posteriorBayes} is known under the name of Bayes theorem and $P(\mathbf{f_s}^{(c)}\vert\hat{s})$ expresses our belief into the long-run frequencies $\mathbf{f_s}^{(c)}$ after having seen the data, once we started from our prior belief $P(\mathbf{f_s}^{(c)})$. Consequently $P(\mathbf{f_s}^{(c)}\vert\hat{s})$ takes the name of posterior distribution of the long-run frequencies $\{\mathbf{f_s}^{(c)}\}_{c \in C}$. \mynote{Here we may want to add an illustrative figure for the posteriors. I think this should mirror Soledad's Figure on the priors (maybe to be expanded) and set the basis for the next figure on posteriors of the mutual information.} Figure ... illustrated how different choices for the prior distribution result in different posteriors for the long-run frequencies, given the same sample data.
+
+Once the posterior distribution $P(\mathbf{f_s}^{(c)}\vert\hat{s})$ has been estimated, one proceeds to estimate the posterior distribution of the mutual information. By sampling \footnote{This works whether we are in possess of the analytical expression for the posterior of the long-run frequencies (rarely) or we can only sample from such a distribution.} long-run frequencies from their posterior one computes the mutual information from each of them and constructs the posterior.  
+
+Figure ... summarizes prior and posterior distributions of the long-run frequencies and mutual information after observing the spike count data for the north-south cell in Figure .... In this example Dirichlet priors for the long-run frequencies have been used. These priors have been chosen such that the average firing rate of cells is $5$Hz, the spike count is on average exponentially distributed and independent of the stimulus. The only one degree of freedom left for these super-distribution has to be fixed via the ´´weight'' parameter controlling the strength of our super-distribution, a proxy for the number of samples required to change our prior belief. 
+
+
+%Samples drawn from the long-run frequencies prior distribution are showcased in Figure ... A, while Figure ... B shows samples the posterior. Figures ...C and ...D display prior and posterior distribution of the mutual information respectively. 
+\mynote{Comment the figure.}
 
 \mynote{Explain how this approach resolves all issues with maximum likelihood at least conceptually.}
