@@ -1,5 +1,5 @@
 ## Author: Battistin, Gonzalo Cogno, Porta Mana
-## Last-Updated: 2021-07-25T09:12:35+0200
+## Last-Updated: 2021-07-25T09:57:22+0200
 ################
 ## Script for:
 ## - outputting samples of prior & posterior distributions
@@ -78,6 +78,7 @@ longrunData  <- as.data.table(t(read.csv(longrunDataFile,header=FALSE,sep=',')))
 colnames(longrunData) <- c('nspikes', 'stimulus')
 stimuli <- unique(longrunData[,stimulus])
 nStimuli <- length(stimuli)
+## longrunData <- longrunData[nspikes<=maxSpikes] # for debug, REMEMBER TO REMOVE
 ## frequencies of full recording
 longrunFreqs <- foreach(stim=stimuli, .combine=cbind)%do%{
     tabulate(longrunData[stimulus==stim,nspikes]+1, nbins=maxSpikes+1)
@@ -100,6 +101,36 @@ names(sampleMI) <- 'bit'
 ##
 ##
 ## posterior superdistribution samples
+
+## preparation of dataset
+outfile <- paste0('_mcoutput',chunk)
+covNames <- colnames(sampleData)
+## include all possible spike counts up to maxSpikes
+datamcr <- sampleData
+datum <- sampleData[,nspikes]
+datum <- datum[!is.na(datum)]
+levels <- 0:maxSpikes
+for(level in setdiff(0:maxSpikes, as.numeric(names(table(datum))))){
+                                        #print(paste0(val,' ',i,' ',level))
+    dt <- data.table(nspikes=level)
+    datamcr <- rbind(datamcr, dt, fill=TRUE)
+}
+## hyperparameters
+## hyper <- setHyperparams(aPhi=list(rep(1,maxSpikes+2), rep(1,2)))
+##
+testmc <- profRegr(excludeY=TRUE, xModel='Discrete', nSweeps=20e3, nBurn=1e3, nFilter=20, data=as.data.frame(datamcr), nClusInit=80, covNames=covNames, discreteCovs=covNames, nProgress=1e3, seed=148, output=outfile, useHyperpriorR1=FALSE, useNormInvWishPrior=TRUE, alpha=4) #, hyper=hyper)
+
+
+
+
+
+
+
+
+
+
+
+
 postAlphas <- sampleFreqs + priorWeight*priorBaseDistr
 postSamplePairs <- sapply(1:nStimuli, function(x){
     t(rdirichlet(n=nPostSamples, alpha=postAlphas[,x]))},
