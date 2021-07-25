@@ -1,5 +1,5 @@
 ## Author: Battistin, Gonzalo Cogno, Porta Mana
-## Last-Updated: 2021-07-25T19:58:16+0200
+## Last-Updated: 2021-07-25T23:14:49+0200
 ################
 ## Script for:
 ## - outputting samples of prior & posterior distributions
@@ -65,8 +65,13 @@ normalizecols <- function(freqs){t(t(freqs)/colSums(freqs))}
 longrunDataFile  <- 'SpikeCounts_and_direction.csv'
 sampleIndexFile  <- 'index_mat_160.csv'
 plan(sequential)
+rm(nores)
+gc()
 plan(multisession, workers = 6L)
-nores <- foreach(chunk=1:2)%dorng%{
+nores <- foreach(chunk=0:2)%dorng%{
+    pflag <- 0
+    if(chunk==0){chunk <- 1
+    pflag <- 1}
 maxSpikes <- 15
 priorMeanSpikes <- 0.2 # 5Hz * (40Hz/1000s)
 priorWeight <- 20
@@ -99,7 +104,7 @@ sampleFreqs <- foreach(stim=stimuli, .combine=cbind)%do%{
 colnames(sampleFreqs) <- colnames(longrunFreqs)
 rownames(sampleFreqs) <- rownames(longrunFreqs)
 nSamples <- sum(sampleFreqs)
-sampleMI <- mutualinfo(normalize(sampleFreqs))
+if(pflag==0){sampleMI <- mutualinfo(normalize(sampleFreqs))} else {sampleMI <- 2}
 names(sampleMI) <- 'bit'
 ##
 ##
@@ -110,26 +115,33 @@ priorMeanSpikes <- 0.2 # 5Hz * (40Hz/1000s)
 priorBaseDistr <- normalize(foreach(i=0:maxSpikes, .combine=c)%do%{dgeom(x=i, prob=1/(priorMeanSpikes+1), log=FALSE)})
 priorWeight <- 100
 priorBaseData <- foreach(count=0:maxSpikes, .combine=c)%do%{
-    rep(count, times=round(priorBaseDistr[count+1] * priorWeight))
+    rep(count, times=max(1,round(priorBaseDistr[count+1] * priorWeight)))
 }
 ## priorData <- data.table(nspikes=rep(priorBaseData, times=nStimuli),
 ##                         stimulus=rep(stimuli, each=length(priorBaseData)))
-priorData <- data.table(nspikes=priorBaseData,
-                        stimulus=rep(NA, times=length(priorBaseData)))
-datamcr <- rbind(priorData, sampleData)
+    priorData <- rbind(
+        data.table(nspikes=priorBaseData,
+                        stimulus=rep(NA, times=length(priorBaseData))),
+        data.table(nspikes=rep(NA,times=nStimuli),
+                   stimulus=stimuli)
+    )
+##     datum <- priorData[,nspikes]
+## datum <- datum[!is.na(datum)]
+## for(level in setdiff(0:maxSpikes, as.numeric(names(table(datum))))){
+##     datamcr <- rbind(priorData, data.table(nspikes=level), fill=TRUE)
+## }
+    if(pflag==0){datamcr <- rbind(priorData, sampleData)
+    } else {
+        datamcr <- priorData
+    chunk <- 0}
 ## include all possible spike counts up to maxSpikes
-datum <- datamcr[,nspikes]
-datum <- datum[!is.na(datum)]
-for(level in setdiff(0:maxSpikes, as.numeric(names(table(datum))))){
-    datamcr <- rbind(datamcr, data.table(nspikes=level), fill=TRUE)
-}
 ##
 ## hyperparameters
-hyper <- setHyperparams(aPhi=c(0.01,0.1))
+hyper <- setHyperparams(aPhi=c(0.01,0.01))
 ##
 covNames <- colnames(sampleData)
 outfile <- paste0('_mcoutput',chunk)
-mcmcrun <- profRegr(excludeY=TRUE, xModel='Discrete', nSweeps=20e3, nBurn=20e3, nFilter=20, data=as.data.frame(datamcr), nClusInit=80, covNames=covNames, discreteCovs=covNames, nProgress=1e3, seed=148, output=outfile, useHyperpriorR1=FALSE, useNormInvWishPrior=TRUE, alpha=-2, hyper=hyper)
+mcmcrun <- profRegr(excludeY=TRUE, xModel='Discrete', nSweeps=40e3, nBurn=20e3, nFilter=20, data=as.data.frame(datamcr), nClusInit=80, covNames=covNames, discreteCovs=covNames, nProgress=1e3, seed=148, output=outfile, useHyperpriorR1=FALSE, useNormInvWishPrior=TRUE, alpha=-2, hyper=hyper)
 ##
 ## Save MCMC samples
 ## log-likelihood and log-posteriors
@@ -166,6 +178,8 @@ for(i in 1:length(nList)){
     })
     names(phiList[[i]]) <- mcmcrun$covNames
 }
+        if(mcmcrun$alpha>0){rgalpha <- c(0, mcmcrun$alpha+1)
+    alphaList <- rep(mcmcrun$alpha,length(nList))}
 ## Save the samples above
 MCMCdata <- list(nList=nList, alphaList=alphaList, psiList=psiList, phiList=phiList, logPost=logPost)
 ##
@@ -173,7 +187,7 @@ save.image(file=paste0('_MCdata_chunk',chunk,'.RData'))
 ##
 ##
 ## Diagnostic plots
-pdff('mcsummary')
+pdff(paste0('mcsummary',chunk))
 matplot(MCMCdata$logPost[2,], type='l',ylim=range(MCMCdata$logPost[2,],na.rm=T,finite=T),ylab='log-likelihood')
 matplot(MCMCdata$nList,type='l',ylim=range(MCMCdata$nList,na.rm=T,finite=T),ylab='no. clusters')
 matplot(MCMCdata$alphaList,type='l',ylim=range(MCMCdata$alphaList,na.rm=T,finite=T),ylab='alpha')
@@ -314,7 +328,7 @@ for(i in 1:length(nList)){
 ## Save the samples above
 MCMCdata <- list(nList=nList, alphaList=alphaList, psiList=psiList, phiList=phiList, logPost=logPost)
 ##
-save.image(file=paste0('_MCdata_prior','.RData'))
+save.image(file=paste0('_MCdata_prior_chunk',chunk,'.RData'))
 ##
 ##
 ## Diagnostic plots
