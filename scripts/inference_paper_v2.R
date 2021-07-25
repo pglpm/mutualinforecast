@@ -1,5 +1,5 @@
 ## Author: Battistin, Gonzalo Cogno, Porta Mana
-## Last-Updated: 2021-07-25T11:03:29+0200
+## Last-Updated: 2021-07-25T12:32:00+0200
 ################
 ## Script for:
 ## - outputting samples of prior & posterior distributions
@@ -59,7 +59,8 @@ mutualinfo <- function(freqs,base=2){##in bits by default
 }
 ## function to normalize absolute frequencies
 normalize <- function(freqs){freqs/sum(freqs)}
-normalizem <- function(freqs){freqs/rowSums(freqs)}
+normalizerows <- function(freqs){freqs/rowSums(freqs)}
+normalizecols <- function(freqs){t(t(freqs)/colSums(freqs))}
 
 longrunDataFile  <- 'SpikeCounts_and_direction.csv'
 sampleIndexFile  <- 'index_mat_160.csv'
@@ -118,7 +119,7 @@ for(level in setdiff(0:maxSpikes, as.numeric(names(table(datum))))){
 ## hyperparameters
 ## hyper <- setHyperparams(aPhi=list(rep(1,maxSpikes+2), rep(1,2)))
 ##
-mcmcrun <- profRegr(excludeY=TRUE, xModel='Discrete', nSweeps=20e3, nBurn=20e3, nFilter=20, data=as.data.frame(datamcr), nClusInit=80, covNames=covNames, discreteCovs=covNames, nProgress=1e3, seed=148, output=outfile, useHyperpriorR1=FALSE, useNormInvWishPrior=TRUE, alpha=-2) #, hyper=hyper)
+mcmcrun <- profRegr(excludeY=TRUE, xModel='Discrete', nSweeps=5*20e3, nBurn=20e3, nFilter=20, data=as.data.frame(datamcr), nClusInit=80, covNames=covNames, discreteCovs=covNames, nProgress=1e3, seed=148, output=outfile, useHyperpriorR1=FALSE, useNormInvWishPrior=TRUE, alpha=-2) #, hyper=hyper)
 
 ## Save MCMC samples
 ## log-likelihood and log-posteriors
@@ -170,40 +171,64 @@ for(i in c(1,3)){matplot(MCMCdata$logPost[i,],type='l',ylim=range(MCMCdata$logPo
 dev.off()
 ##
 
-
-predictYX <- function(dataobj){
-##    X <- as.matrix(X[, c(discreteCovs,continuousCovs), with=FALSE])
-    freqs <- foreach(sample=seq_along(dataobj$nList), .combine=cbind, .inorder=FALSE)%dopar%{
-        colSums(exp(
-            log(dataobj$psiList[[sample]]) +
-            t(vapply(seq_len(dataobj$nList[sample]), function(cluster){
-                rowSums(log(
-                    vapply(discreteCovs, function(covariate){
-                        dataobj$phiList[[sample]][[covariate]][X[,covariate], cluster]
-                    }, numeric(nrow(X)))
-                )) +
-                    dmvnorm(X[,continuousCovs], mean=dataobj$muList[[sample]][continuousCovs,cluster], sigma=as.matrix(dataobj$sigmaList[[sample]][continuousCovs,continuousCovs,cluster]), log=TRUE)
-            }, numeric(nrow(X))))
-        ))
-        ## colSums(dataobj$psiList[[sample]] *
-        ##     t(sapply(seq_len(dataobj$nList[sample]),function(cluster){
-        ##     exp(rowSums(log(sapply(discreteCovs, function(covariate){
-        ##         dataobj$phiList[[sample]][[covariate]][X[,covariate], cluster]
-        ##     })))) *
-        ##         dmvnorm(X[,continuousCovs], mean=dataobj$muList[[sample]][continuousCovs,cluster], sigma=as.matrix(dataobj$sigmaList[[sample]][continuousCovs,continuousCovs,cluster]))
-        ##     }))
-        ##     )
-    }
-    me <- rowMeans(freqs)
-    freqs <- cbind(means=me, stds=sqrt(rowMeans(freqs^2) - me^2))
-    dim(freqs) <- c(nrow(X), length(rvals), 2)
-    dimnames(freqs)[[3]] <- c('means','stds')
-    dimnames(freqs)[[2]] <- paste0('binRMSD_',rvals)
-    freqs
+## Samples of conditional frequencies
+## dimensions: (sample, nspikes, stimulus)
+plan(sequential)
+plan(multisession, workers = 6L)
+condfreqSamples <- foreach(sample=seq_along(MCMCdata$nList), .combine=cbind, .inorder=FALSE)%dopar%{
+    ## weights <- normalizerows(t(t(MCMCdata$phiList[[sample]]$stimulus) * MCMCdata$psiList[[sample]]))
+    tcrossprod(
+        normalizecols(MCMCdata$phiList[[sample]]$nspikes),
+        normalizerows(t(t(MCMCdata$phiList[[sample]]$stimulus) * MCMCdata$psiList[[sample]]))
+    )
 }
+dim(condfreqSamples) <- c(maxSpikes+1, nStimuli, length(MCMCdata$nList))
+condfreqSamples <- aperm(condfreqSamples, c(3,1,2))
+dimnames(condfreqSamples) <- list(NULL, rownames(longrunFreqs), colnames(longrunFreqs))
+##
+plan(sequential)
+plan(multisession, workers = 6L)
+postMISamples <- foreach(sample=seq_along(MCMCdata$nList), .combine=c)%dopar%{
+    mutualinfo(condfreqSamples[sample,,])
+}
+postMIDistr <- hist(postMISamples, breaks=seq(0,1,by=0.02), plot=F)
+postMIQuantiles <- quantile(x=postMISamples, probs=c(0.025,0.5,0.975))
 
 
-
+## plot prior samples
+pdff(paste0('MCplots_samples',nSamples,'_chunk',chunk))
+##
+matplot(x=0:maxSpikes, y=t(condfreqSamples[round(seq(1,length(MCMCdata$nList),length.out=nPlotSamples)),,1]),
+        type='l', lty=1, lwd=2, col=paste0(mypurpleblue,'22'), ylim=c(-1,1),  xlim=c(0,maxX),
+        xlab='spikes/bin', ylab='freq', cex.lab=2, cex.axis=2)
+for(i in 2:nStimuli){
+matplot(x=0:maxSpikes, y=-t(condfreqSamples[round(seq(1,length(MCMCdata$nList),length.out=nPlotSamples)),,1]),
+        type='l', lty=1, lwd=1, col=paste0(myredpurple,'22'),
+        add=TRUE)
+}
+matplot(x=0:maxSpikes, y=normalize(sampleFreqs[,1]),
+        type='l', lty=3, lwd=4, col='black',
+        add=TRUE)
+matplot(x=0:maxSpikes, y=-normalize(sampleFreqs[,2]),
+        type='l', lty=3, lwd=5, col='black',
+        add=TRUE)
+title(paste0('(',nSamples,' data samples,',
+             ' chunk ', chunk,
+             ', prior weight = ', priorWeight, ')',
+             '\nprior superdistr'), cex.main=2)
+legend('topright',c('sample freqs'),lty=c(3,2),lwd=c(4,3),cex=1.5)
+## Posterior MI
+matplot(x=postMIDistr$mids, y=postMIDistr$density,
+        type='h', lty=1, lwd=15, col=paste0(mypurpleblue,'88'), xlim=c(0,1),
+        xlab='MI/bit', ylab='prob dens', cex.lab=2, cex.axis=2)
+for(q in postMIQuantiles){
+    matlines(x=rep(q,2),y=c(-1,1/2)*max(postMIDistr$density), lty=2, lwd=6, col=mygreen)
+    }
+    matlines(x=rep(sampleMI,2),y=c(-1,2/3)*max(postMIDistr$density), lty=1, lwd=6, col=myredpurple)
+    matlines(x=rep(longrunMI,2),y=c(-1,2/3)*max(postMIDistr$density), lty=1, lwd=6, col=myyellow)
+title('posterior MI distr', cex.main=2)
+legend('topright',c('sample MI', 'long-run MI'),lty=1,col=c(myredpurple,myyellow),lwd=4,cex=1.5)
+dev.off()
 
 
 
@@ -236,28 +261,8 @@ priorSamplePairs <- sapply(1:nStimuli, function(x){
 ##
 ## Plots
 ##
-## plot prior samples
-pdff(paste0('plots_samples',nSamples,'_chunk',chunk,'_weight',priorWeight))
-##
-matplot(x=0:maxSpikes, y=priorSamplePairs[,1:nPlotSamples,1],
-        type='l', lty=1, lwd=2, col=paste0(mypurpleblue,'22'), ylim=c(-1,1),  xlim=c(0,maxX),
-        xlab='spikes/bin', ylab='freq', cex.lab=2, cex.axis=2)
-for(i in 2:nStimuli){
-matplot(x=0:maxSpikes, y=-priorSamplePairs[,1:nPlotSamples,i],
-        type='l', lty=1, lwd=1, col=paste0(myredpurple,'22'),
-        add=TRUE)
-}
-matplot(x=0:maxSpikes, y=normalize(sampleFreqs[,1]),
-        type='l', lty=3, lwd=4, col='black',
-        add=TRUE)
-matplot(x=0:maxSpikes, y=-normalize(sampleFreqs[,2]),
-        type='l', lty=3, lwd=5, col='black',
-        add=TRUE)
-title(paste0('(',nSamples,' data samples,',
-             ' chunk ', chunk,
-             ', prior weight = ', priorWeight, ')',
-             '\nprior superdistr'), cex.main=2)
-legend('topright',c('sample freqs'),lty=c(3,2),lwd=c(4,3),cex=1.5)
+
+
 ## matplot(x=0:maxSpikes, y=normalize(longrunFreqs[,1]),
 ##         type='l', lty=2, lwd=4, col='black',
 ##         xlab='spikes', ylab='freq',add=TRUE)
