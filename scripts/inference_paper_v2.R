@@ -1,5 +1,5 @@
 ## Author: Battistin, Gonzalo Cogno, Porta Mana
-## Last-Updated: 2021-07-25T12:32:00+0200
+## Last-Updated: 2021-07-25T13:10:43+0200
 ################
 ## Script for:
 ## - outputting samples of prior & posterior distributions
@@ -64,7 +64,7 @@ normalizecols <- function(freqs){t(t(freqs)/colSums(freqs))}
 
 longrunDataFile  <- 'SpikeCounts_and_direction.csv'
 sampleIndexFile  <- 'index_mat_160.csv'
-chunk <- 1
+chunk <- 2
 maxSpikes <- 15
 priorMeanSpikes <- 0.2 # 5Hz * (40Hz/1000s)
 priorWeight <- 20
@@ -102,7 +102,7 @@ names(sampleMI) <- 'bit'
 ##
 ##
 ## posterior superdistribution samples
-
+##
 ## preparation of dataset
 outfile <- paste0('_mcoutput',chunk)
 covNames <- colnames(sampleData)
@@ -117,10 +117,10 @@ for(level in setdiff(0:maxSpikes, as.numeric(names(table(datum))))){
     datamcr <- rbind(datamcr, dt, fill=TRUE)
 }
 ## hyperparameters
-## hyper <- setHyperparams(aPhi=list(rep(1,maxSpikes+2), rep(1,2)))
+hyper <- setHyperparams(aPhi=c(1,1))
 ##
-mcmcrun <- profRegr(excludeY=TRUE, xModel='Discrete', nSweeps=5*20e3, nBurn=20e3, nFilter=20, data=as.data.frame(datamcr), nClusInit=80, covNames=covNames, discreteCovs=covNames, nProgress=1e3, seed=148, output=outfile, useHyperpriorR1=FALSE, useNormInvWishPrior=TRUE, alpha=-2) #, hyper=hyper)
-
+mcmcrun <- profRegr(excludeY=TRUE, xModel='Discrete', nSweeps=20e3, nBurn=20e3, nFilter=20, data=as.data.frame(datamcr), nClusInit=80, covNames=covNames, discreteCovs=covNames, nProgress=1e3, seed=148, output=outfile, useHyperpriorR1=FALSE, useNormInvWishPrior=TRUE, alpha=-2, hyper=hyper)
+##
 ## Save MCMC samples
 ## log-likelihood and log-posteriors
 fc <- file(paste0(outfile,"_logPost.txt"))
@@ -170,7 +170,7 @@ matplot(MCMCdata$alphaList,type='l',ylim=range(MCMCdata$alphaList,na.rm=T,finite
 for(i in c(1,3)){matplot(MCMCdata$logPost[i,],type='l',ylim=range(MCMCdata$logPost[i,],na.rm=T,finite=T))}
 dev.off()
 ##
-
+##
 ## Samples of conditional frequencies
 ## dimensions: (sample, nspikes, stimulus)
 plan(sequential)
@@ -193,9 +193,8 @@ postMISamples <- foreach(sample=seq_along(MCMCdata$nList), .combine=c)%dopar%{
 }
 postMIDistr <- hist(postMISamples, breaks=seq(0,1,by=0.02), plot=F)
 postMIQuantiles <- quantile(x=postMISamples, probs=c(0.025,0.5,0.975))
-
-
-## plot prior samples
+##
+## plot posterior samples
 pdff(paste0('MCplots_samples',nSamples,'_chunk',chunk))
 ##
 matplot(x=0:maxSpikes, y=t(condfreqSamples[round(seq(1,length(MCMCdata$nList),length.out=nPlotSamples)),,1]),
@@ -229,6 +228,197 @@ for(q in postMIQuantiles){
 title('posterior MI distr', cex.main=2)
 legend('topright',c('sample MI', 'long-run MI'),lty=1,col=c(myredpurple,myyellow),lwd=4,cex=1.5)
 dev.off()
+
+
+
+
+
+
+
+
+
+
+
+
+
+## Prior superdistribution samples
+##
+## preparation of dataset
+nPlotSamples <- 100
+outfile <- paste0('_priormcoutput')
+covNames <- colnames(sampleData)
+## include all possible spike counts up to maxSpikes
+priorData <- sampleData[1]
+priorData[1] <- priorData[1] *NA
+datamcr <- priorData
+datum <- sampleData[,nspikes]
+datum <- datum[!is.na(datum)]
+for(level in 0:maxSpikes){
+                                        #print(paste0(val,' ',i,' ',level))
+    dt <- data.table(nspikes=level)
+    datamcr <- rbind(datamcr, dt, fill=TRUE)
+}
+for(level in 0:1){
+                                        #print(paste0(val,' ',i,' ',level))
+    dt <- data.table(stimulus=level)
+    datamcr <- rbind(datamcr, dt, fill=TRUE)
+}
+datamcr <- datamcr[-1]
+## hyperparameters
+hyper <- setHyperparams(aPhi=c(0.1,1))
+##
+mcmcrun <- profRegr(excludeY=TRUE, xModel='Discrete', nSweeps=20e3, nBurn=20e3, nFilter=20, data=as.data.frame(datamcr), nClusInit=80, covNames=covNames, discreteCovs=covNames, nProgress=1e3, seed=148, output=outfile, useHyperpriorR1=FALSE, useNormInvWishPrior=TRUE, alpha=-2, hyper=hyper)
+##
+## Save MCMC samples
+## log-likelihood and log-posteriors
+fc <- file(paste0(outfile,"_logPost.txt"))
+logPost <- sapply(strsplit(readLines(fc), " +"), as.numeric)
+rownames(logPost) <- c('log-post','log-likelihood','log-prior')
+close(fc)
+## Samples of numbers of clusters
+fc <- file(paste0(outfile,'_nClusters.txt'))
+nList <- sapply(strsplit(readLines(fc), " +"), as.integer)
+close(fc)
+## Samples of Dirichlet-process alpha
+fc <- file(paste0(outfile,'_alpha.txt'))
+alphaList <- sapply(strsplit(readLines(fc), " +"), as.numeric)
+close(fc)
+## Samples of cluster weights
+fc <- file(paste0(outfile,'_psi.txt'))
+psiList <- lapply(strsplit(readLines(fc), " +"), function(x){x <- as.numeric(x); x[x>=0]})
+close(fc)
+##  Samples of Dirichlet-distribution phis (discrete covariates)
+fc <- file(paste0(outfile,'_phi.txt'))
+phiList <- lapply(strsplit(readLines(fc), " +"), function(x){x <- as.numeric(x); x[x>=0]})
+close(fc)
+nCat <- mcmcrun$nCategories
+cumcats <- c(0,cumsum(nCat))
+for(i in 1:length(nList)){
+    catgroups <- cumcats*nList[i]
+    datum <- phiList[[i]]
+    phiList[[i]] <- lapply(1:length(mcmcrun$nCategories), function(j){
+        y <- datum[(catgroups[j]+1):catgroups[j+1]]
+        dim(y) <- c(nList[i], mcmcrun$nCategories[j])
+        rownames(y) <- paste0('cluster',1:nList[i])
+        aperm(y)
+    })
+    names(phiList[[i]]) <- mcmcrun$covNames
+}
+## Save the samples above
+MCMCdata <- list(nList=nList, alphaList=alphaList, psiList=psiList, phiList=phiList, logPost=logPost)
+##
+save.image(file=paste0('_MCdata_prior','.RData'))
+##
+##
+## Diagnostic plots
+pdff('mcsummary_prior')
+matplot(MCMCdata$logPost[2,], type='l',ylim=range(MCMCdata$logPost[2,],na.rm=T,finite=T),ylab='log-likelihood')
+matplot(MCMCdata$nList,type='l',ylim=range(MCMCdata$nList,na.rm=T,finite=T),ylab='no. clusters')
+matplot(MCMCdata$alphaList,type='l',ylim=range(MCMCdata$alphaList,na.rm=T,finite=T),ylab='alpha')
+for(i in c(1,3)){matplot(MCMCdata$logPost[i,],type='l',ylim=range(MCMCdata$logPost[i,],na.rm=T,finite=T))}
+dev.off()
+##
+##
+## Samples of conditional frequencies
+## dimensions: (sample, nspikes, stimulus)
+plan(sequential)
+plan(multisession, workers = 6L)
+condfreqSamples <- foreach(sample=seq_along(MCMCdata$nList), .combine=cbind, .inorder=FALSE)%dopar%{
+    ## weights <- normalizerows(t(t(MCMCdata$phiList[[sample]]$stimulus) * MCMCdata$psiList[[sample]]))
+    tcrossprod(
+        normalizecols(MCMCdata$phiList[[sample]]$nspikes),
+        normalizerows(t(t(MCMCdata$phiList[[sample]]$stimulus) * MCMCdata$psiList[[sample]]))
+    )
+}
+dim(condfreqSamples) <- c(maxSpikes+1, nStimuli, length(MCMCdata$nList))
+condfreqSamples <- aperm(condfreqSamples, c(3,1,2))
+dimnames(condfreqSamples) <- list(NULL, rownames(longrunFreqs), colnames(longrunFreqs))
+##
+plan(sequential)
+plan(multisession, workers = 6L)
+postMISamples <- foreach(sample=seq_along(MCMCdata$nList), .combine=c)%dopar%{
+    mutualinfo(condfreqSamples[sample,,])
+}
+postMIDistr <- hist(postMISamples, breaks=seq(0,1,by=0.02), plot=F)
+postMIQuantiles <- quantile(x=postMISamples, probs=c(0.025,0.5,0.975))
+##
+## plot posterior samples
+pdff(paste0('MCplots_samples',nSamples,'_prior'))
+##
+matplot(x=0:maxSpikes, y=t(condfreqSamples[round(seq(1,length(MCMCdata$nList),length.out=nPlotSamples)),,1]),
+        type='l', lty=1, lwd=2, col=paste0(mypurpleblue,'22'), ylim=c(-1,1),  xlim=c(0,maxX),
+        xlab='spikes/bin', ylab='freq', cex.lab=2, cex.axis=2)
+for(i in 2:nStimuli){
+matplot(x=0:maxSpikes, y=-t(condfreqSamples[round(seq(1,length(MCMCdata$nList),length.out=nPlotSamples)),,1]),
+        type='l', lty=1, lwd=1, col=paste0(myredpurple,'22'),
+        add=TRUE)
+}
+matplot(x=0:maxSpikes, y=normalize(sampleFreqs[,1]),
+        type='l', lty=3, lwd=4, col='black',
+        add=TRUE)
+matplot(x=0:maxSpikes, y=-normalize(sampleFreqs[,2]),
+        type='l', lty=3, lwd=5, col='black',
+        add=TRUE)
+title(paste0('(',nSamples,' data samples,',
+             ', prior', ')',
+             '\nprior superdistr'), cex.main=2)
+legend('topright',c('sample freqs'),lty=c(3,2),lwd=c(4,3),cex=1.5)
+## Posterior MI
+matplot(x=postMIDistr$mids, y=postMIDistr$density,
+        type='h', lty=1, lwd=15, col=paste0(mypurpleblue,'88'), xlim=c(0,1),
+        xlab='MI/bit', ylab='prob dens', cex.lab=2, cex.axis=2)
+for(q in postMIQuantiles){
+    matlines(x=rep(q,2),y=c(-1,1/2)*max(postMIDistr$density), lty=2, lwd=6, col=mygreen)
+    }
+    matlines(x=rep(sampleMI,2),y=c(-1,2/3)*max(postMIDistr$density), lty=1, lwd=6, col=myredpurple)
+    matlines(x=rep(longrunMI,2),y=c(-1,2/3)*max(postMIDistr$density), lty=1, lwd=6, col=myyellow)
+title('posterior MI distr', cex.main=2)
+legend('topright',c('sample MI', 'long-run MI'),lty=1,col=c(myredpurple,myyellow),lwd=4,cex=1.5)
+dev.off()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
