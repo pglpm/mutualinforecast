@@ -1,5 +1,5 @@
 ## Author: Battistin, Gonzalo Cogno, Porta Mana
-## Last-Updated: 2021-07-25T09:57:22+0200
+## Last-Updated: 2021-07-25T11:03:29+0200
 ################
 ## Script for:
 ## - outputting samples of prior & posterior distributions
@@ -118,11 +118,89 @@ for(level in setdiff(0:maxSpikes, as.numeric(names(table(datum))))){
 ## hyperparameters
 ## hyper <- setHyperparams(aPhi=list(rep(1,maxSpikes+2), rep(1,2)))
 ##
-testmc <- profRegr(excludeY=TRUE, xModel='Discrete', nSweeps=20e3, nBurn=1e3, nFilter=20, data=as.data.frame(datamcr), nClusInit=80, covNames=covNames, discreteCovs=covNames, nProgress=1e3, seed=148, output=outfile, useHyperpriorR1=FALSE, useNormInvWishPrior=TRUE, alpha=4) #, hyper=hyper)
+mcmcrun <- profRegr(excludeY=TRUE, xModel='Discrete', nSweeps=20e3, nBurn=20e3, nFilter=20, data=as.data.frame(datamcr), nClusInit=80, covNames=covNames, discreteCovs=covNames, nProgress=1e3, seed=148, output=outfile, useHyperpriorR1=FALSE, useNormInvWishPrior=TRUE, alpha=-2) #, hyper=hyper)
+
+## Save MCMC samples
+## log-likelihood and log-posteriors
+fc <- file(paste0(outfile,"_logPost.txt"))
+logPost <- sapply(strsplit(readLines(fc), " +"), as.numeric)
+rownames(logPost) <- c('log-post','log-likelihood','log-prior')
+close(fc)
+## Samples of numbers of clusters
+fc <- file(paste0(outfile,'_nClusters.txt'))
+nList <- sapply(strsplit(readLines(fc), " +"), as.integer)
+close(fc)
+## Samples of Dirichlet-process alpha
+fc <- file(paste0(outfile,'_alpha.txt'))
+alphaList <- sapply(strsplit(readLines(fc), " +"), as.numeric)
+close(fc)
+## Samples of cluster weights
+fc <- file(paste0(outfile,'_psi.txt'))
+psiList <- lapply(strsplit(readLines(fc), " +"), function(x){x <- as.numeric(x); x[x>=0]})
+close(fc)
+##  Samples of Dirichlet-distribution phis (discrete covariates)
+fc <- file(paste0(outfile,'_phi.txt'))
+phiList <- lapply(strsplit(readLines(fc), " +"), function(x){x <- as.numeric(x); x[x>=0]})
+close(fc)
+nCat <- mcmcrun$nCategories
+cumcats <- c(0,cumsum(nCat))
+for(i in 1:length(nList)){
+    catgroups <- cumcats*nList[i]
+    datum <- phiList[[i]]
+    phiList[[i]] <- lapply(1:length(mcmcrun$nCategories), function(j){
+        y <- datum[(catgroups[j]+1):catgroups[j+1]]
+        dim(y) <- c(nList[i], mcmcrun$nCategories[j])
+        rownames(y) <- paste0('cluster',1:nList[i])
+        aperm(y)
+    })
+    names(phiList[[i]]) <- mcmcrun$covNames
+}
+## Save the samples above
+MCMCdata <- list(nList=nList, alphaList=alphaList, psiList=psiList, phiList=phiList, logPost=logPost)
+##
+save.image(file=paste0('_MCdata_chunk',chunk,'.RData'))
+##
+##
+## Diagnostic plots
+pdff('mcsummary')
+matplot(MCMCdata$logPost[2,], type='l',ylim=range(MCMCdata$logPost[2,],na.rm=T,finite=T),ylab='log-likelihood')
+matplot(MCMCdata$nList,type='l',ylim=range(MCMCdata$nList,na.rm=T,finite=T),ylab='no. clusters')
+matplot(MCMCdata$alphaList,type='l',ylim=range(MCMCdata$alphaList,na.rm=T,finite=T),ylab='alpha')
+for(i in c(1,3)){matplot(MCMCdata$logPost[i,],type='l',ylim=range(MCMCdata$logPost[i,],na.rm=T,finite=T))}
+dev.off()
+##
 
 
-
-
+predictYX <- function(dataobj){
+##    X <- as.matrix(X[, c(discreteCovs,continuousCovs), with=FALSE])
+    freqs <- foreach(sample=seq_along(dataobj$nList), .combine=cbind, .inorder=FALSE)%dopar%{
+        colSums(exp(
+            log(dataobj$psiList[[sample]]) +
+            t(vapply(seq_len(dataobj$nList[sample]), function(cluster){
+                rowSums(log(
+                    vapply(discreteCovs, function(covariate){
+                        dataobj$phiList[[sample]][[covariate]][X[,covariate], cluster]
+                    }, numeric(nrow(X)))
+                )) +
+                    dmvnorm(X[,continuousCovs], mean=dataobj$muList[[sample]][continuousCovs,cluster], sigma=as.matrix(dataobj$sigmaList[[sample]][continuousCovs,continuousCovs,cluster]), log=TRUE)
+            }, numeric(nrow(X))))
+        ))
+        ## colSums(dataobj$psiList[[sample]] *
+        ##     t(sapply(seq_len(dataobj$nList[sample]),function(cluster){
+        ##     exp(rowSums(log(sapply(discreteCovs, function(covariate){
+        ##         dataobj$phiList[[sample]][[covariate]][X[,covariate], cluster]
+        ##     })))) *
+        ##         dmvnorm(X[,continuousCovs], mean=dataobj$muList[[sample]][continuousCovs,cluster], sigma=as.matrix(dataobj$sigmaList[[sample]][continuousCovs,continuousCovs,cluster]))
+        ##     }))
+        ##     )
+    }
+    me <- rowMeans(freqs)
+    freqs <- cbind(means=me, stds=sqrt(rowMeans(freqs^2) - me^2))
+    dim(freqs) <- c(nrow(X), length(rvals), 2)
+    dimnames(freqs)[[3]] <- c('means','stds')
+    dimnames(freqs)[[2]] <- paste0('binRMSD_',rvals)
+    freqs
+}
 
 
 
