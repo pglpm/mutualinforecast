@@ -1,5 +1,5 @@
 ## Author: Battistin, Gonzalo Cogno, Porta Mana
-## Last-Updated: 2021-07-25T13:10:43+0200
+## Last-Updated: 2021-07-25T19:58:16+0200
 ################
 ## Script for:
 ## - outputting samples of prior & posterior distributions
@@ -64,13 +64,15 @@ normalizecols <- function(freqs){t(t(freqs)/colSums(freqs))}
 
 longrunDataFile  <- 'SpikeCounts_and_direction.csv'
 sampleIndexFile  <- 'index_mat_160.csv'
-chunk <- 2
+plan(sequential)
+plan(multisession, workers = 6L)
+nores <- foreach(chunk=1:2)%dorng%{
 maxSpikes <- 15
 priorMeanSpikes <- 0.2 # 5Hz * (40Hz/1000s)
 priorWeight <- 20
 priorBaseDistr <- normalize(foreach(i=0:maxSpikes, .combine=c)%do%{dgeom(x=i, prob=1/(priorMeanSpikes+1), log=FALSE)})
 nPostSamples <- 1000
-nPlotSamples <- 200
+nPlotSamples <- 100
 maxX <- 8
 set.seed(149)
 ##
@@ -103,22 +105,30 @@ names(sampleMI) <- 'bit'
 ##
 ## posterior superdistribution samples
 ##
-## preparation of dataset
-outfile <- paste0('_mcoutput',chunk)
-covNames <- colnames(sampleData)
-## include all possible spike counts up to maxSpikes
-datamcr <- sampleData
-datum <- sampleData[,nspikes]
-datum <- datum[!is.na(datum)]
-levels <- 0:maxSpikes
-for(level in setdiff(0:maxSpikes, as.numeric(names(table(datum))))){
-                                        #print(paste0(val,' ',i,' ',level))
-    dt <- data.table(nspikes=level)
-    datamcr <- rbind(datamcr, dt, fill=TRUE)
+## Preparation as prior as pseudocount data
+priorMeanSpikes <- 0.2 # 5Hz * (40Hz/1000s)
+priorBaseDistr <- normalize(foreach(i=0:maxSpikes, .combine=c)%do%{dgeom(x=i, prob=1/(priorMeanSpikes+1), log=FALSE)})
+priorWeight <- 100
+priorBaseData <- foreach(count=0:maxSpikes, .combine=c)%do%{
+    rep(count, times=round(priorBaseDistr[count+1] * priorWeight))
 }
-## hyperparameters
-hyper <- setHyperparams(aPhi=c(1,1))
+## priorData <- data.table(nspikes=rep(priorBaseData, times=nStimuli),
+##                         stimulus=rep(stimuli, each=length(priorBaseData)))
+priorData <- data.table(nspikes=priorBaseData,
+                        stimulus=rep(NA, times=length(priorBaseData)))
+datamcr <- rbind(priorData, sampleData)
+## include all possible spike counts up to maxSpikes
+datum <- datamcr[,nspikes]
+datum <- datum[!is.na(datum)]
+for(level in setdiff(0:maxSpikes, as.numeric(names(table(datum))))){
+    datamcr <- rbind(datamcr, data.table(nspikes=level), fill=TRUE)
+}
 ##
+## hyperparameters
+hyper <- setHyperparams(aPhi=c(0.01,0.1))
+##
+covNames <- colnames(sampleData)
+outfile <- paste0('_mcoutput',chunk)
 mcmcrun <- profRegr(excludeY=TRUE, xModel='Discrete', nSweeps=20e3, nBurn=20e3, nFilter=20, data=as.data.frame(datamcr), nClusInit=80, covNames=covNames, discreteCovs=covNames, nProgress=1e3, seed=148, output=outfile, useHyperpriorR1=FALSE, useNormInvWishPrior=TRUE, alpha=-2, hyper=hyper)
 ##
 ## Save MCMC samples
@@ -173,9 +183,7 @@ dev.off()
 ##
 ## Samples of conditional frequencies
 ## dimensions: (sample, nspikes, stimulus)
-plan(sequential)
-plan(multisession, workers = 6L)
-condfreqSamples <- foreach(sample=seq_along(MCMCdata$nList), .combine=cbind, .inorder=FALSE)%dopar%{
+condfreqSamples <- foreach(sample=seq_along(MCMCdata$nList), .combine=cbind, .inorder=FALSE)%do%{
     ## weights <- normalizerows(t(t(MCMCdata$phiList[[sample]]$stimulus) * MCMCdata$psiList[[sample]]))
     tcrossprod(
         normalizecols(MCMCdata$phiList[[sample]]$nspikes),
@@ -186,9 +194,7 @@ dim(condfreqSamples) <- c(maxSpikes+1, nStimuli, length(MCMCdata$nList))
 condfreqSamples <- aperm(condfreqSamples, c(3,1,2))
 dimnames(condfreqSamples) <- list(NULL, rownames(longrunFreqs), colnames(longrunFreqs))
 ##
-plan(sequential)
-plan(multisession, workers = 6L)
-postMISamples <- foreach(sample=seq_along(MCMCdata$nList), .combine=c)%dopar%{
+postMISamples <- foreach(sample=seq_along(MCMCdata$nList), .combine=c)%do%{
     mutualinfo(condfreqSamples[sample,,])
 }
 postMIDistr <- hist(postMISamples, breaks=seq(0,1,by=0.02), plot=F)
@@ -228,7 +234,7 @@ for(q in postMIQuantiles){
 title('posterior MI distr', cex.main=2)
 legend('topright',c('sample MI', 'long-run MI'),lty=1,col=c(myredpurple,myyellow),lwd=4,cex=1.5)
 dev.off()
-
+}
 
 
 
@@ -248,26 +254,27 @@ nPlotSamples <- 100
 outfile <- paste0('_priormcoutput')
 covNames <- colnames(sampleData)
 ## include all possible spike counts up to maxSpikes
-priorData <- sampleData[1]
-priorData[1] <- priorData[1] *NA
-datamcr <- priorData
-datum <- sampleData[,nspikes]
-datum <- datum[!is.na(datum)]
-for(level in 0:maxSpikes){
-                                        #print(paste0(val,' ',i,' ',level))
-    dt <- data.table(nspikes=level)
-    datamcr <- rbind(datamcr, dt, fill=TRUE)
+priorMeanSpikes <- 0.2 # 5Hz * (40Hz/1000s)
+priorBaseDistr <- normalize(foreach(i=0:maxSpikes, .combine=c)%do%{dgeom(x=i, prob=1/(priorMeanSpikes+1), log=FALSE)})
+priorWeight <- 100
+priorBaseData <- foreach(count=0:maxSpikes, .combine=c)%do%{
+    rep(count, times=round(priorBaseDistr[count+1] * priorWeight))
 }
-for(level in 0:1){
-                                        #print(paste0(val,' ',i,' ',level))
-    dt <- data.table(stimulus=level)
-    datamcr <- rbind(datamcr, dt, fill=TRUE)
+## priorData <- data.table(nspikes=rep(priorBaseData, times=nStimuli),
+##                         stimulus=rep(stimuli, each=length(priorBaseData)))
+priorData <- data.table(nspikes=priorBaseData,
+                        stimulus=rep(NA, times=length(priorBaseData)))
+datum <- priorData[,nspikes]
+for(level in setdiff(0:maxSpikes, as.numeric(names(table(datum))))){
+    priorData <- rbind(priorData, data.table(nspikes=level), fill=TRUE)
 }
-datamcr <- datamcr[-1]
+for(level in stimuli){
+    priorData <- rbind(priorData, data.table(stimulus=level), fill=TRUE)
+}
 ## hyperparameters
-hyper <- setHyperparams(aPhi=c(0.1,1))
+hyper <- setHyperparams(aPhi=c(0.1,10))
 ##
-mcmcrun <- profRegr(excludeY=TRUE, xModel='Discrete', nSweeps=20e3, nBurn=20e3, nFilter=20, data=as.data.frame(datamcr), nClusInit=80, covNames=covNames, discreteCovs=covNames, nProgress=1e3, seed=148, output=outfile, useHyperpriorR1=FALSE, useNormInvWishPrior=TRUE, alpha=-2, hyper=hyper)
+mcmcrun <- profRegr(excludeY=TRUE, xModel='Discrete', nSweeps=20e3, nBurn=20e3, nFilter=20, data=as.data.frame(priorData), nClusInit=80, covNames=covNames, discreteCovs=covNames, nProgress=1e3, seed=148, output=outfile, useHyperpriorR1=FALSE, useNormInvWishPrior=TRUE, alpha=4, hyper=hyper)
 ##
 ## Save MCMC samples
 ## log-likelihood and log-posteriors
@@ -353,12 +360,11 @@ matplot(x=0:maxSpikes, y=-t(condfreqSamples[round(seq(1,length(MCMCdata$nList),l
         type='l', lty=1, lwd=1, col=paste0(myredpurple,'22'),
         add=TRUE)
 }
-matplot(x=0:maxSpikes, y=normalize(sampleFreqs[,1]),
+for(i in 2:nStimuli){
+matplot(x=0:maxSpikes, y=normalize(sampleFreqs[,i]),
         type='l', lty=3, lwd=4, col='black',
         add=TRUE)
-matplot(x=0:maxSpikes, y=-normalize(sampleFreqs[,2]),
-        type='l', lty=3, lwd=5, col='black',
-        add=TRUE)
+}
 title(paste0('(',nSamples,' data samples,',
              ', prior', ')',
              '\nprior superdistr'), cex.main=2)
