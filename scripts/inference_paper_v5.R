@@ -1,5 +1,5 @@
 ## Author: Battistin, Gonzalo Cogno, Porta Mana
-## Last-Updated: 2021-07-26T21:02:08+0200
+## Last-Updated: 2021-07-26T22:24:25+0200
 ################
 ## Script for:
 ## - outputting samples of prior & posterior distributions
@@ -118,7 +118,7 @@ nores <- foreach(chunk=0:2, .inorder=F, .packages=c('data.table','LaplacesDemon'
     ##
     ## Alphas for Dirichlet distribution
     ##
-    dataAlphas <- c(if(pflag==0){sampleFreqs}else{0})
+    dataAlphas <- c(if(pflag==0){sampleFreqs}else{0*sampleFreqs})
     ## Generate samples
     set.seed(147+chunk)
     smoothness <- 1000
@@ -145,8 +145,9 @@ nores <- foreach(chunk=0:2, .inorder=F, .packages=c('data.table','LaplacesDemon'
     nspikesVals2 <- rep(nspikesVals,each=nStimuli)
     ##
     PGF <- function(data){
-        c(rgamma(n=2,shape=shapegamma, rate=rategamma),
-        maxSpikes2 * rdirichlet(n=1, alpha=c(dataAlphas)+1))
+        means <- rgamma(n=2,shape=shapegamma, rate=rategamma) 
+        c(means,
+        maxSpikes2 * rdirichlet(n=1, alpha=c(dataAlphas) + 1))# T * dgeom(nspikesVals2,prob=1/(rep(meangamma,2)+1))))
     }
     ##
     mydata <- list(y=1, PGF=PGF,
@@ -174,10 +175,10 @@ nores <- foreach(chunk=0:2, .inorder=F, .packages=c('data.table','LaplacesDemon'
         mi <- mutualinfo(FF/tFF)
         ##
         ##
-        lpf <- ddirichlet(x=c(FF)/tFF,
-                          alpha = dataAlphas +
-                              T * dgeom(nspikesVals2,prob=1/(means+1), log=FALSE),
-                          log=TRUE) + 
+        lpf <- sum(dataAlphas*log(FF/tFF), na.rm=TRUE) +
+            ddirichlet(x=c(FF)/tFF,
+                       alpha = T * dgeom(nspikesVals2,prob=1/(means+1), log=FALSE),
+                       log=TRUE) + 
             sum(dgamma(means, shape=shapegamma, rate=rategamma, log=TRUE)) -
             sum(tcrossprod(FF/sFF, smoothm)^2)
         ##
