@@ -1,5 +1,5 @@
 ## Author: Battistin, Gonzalo Cogno, Porta Mana
-## Last-Updated: 2021-07-25T23:14:49+0200
+## Last-Updated: 2021-07-26T07:41:37+0200
 ################
 ## Script for:
 ## - outputting samples of prior & posterior distributions
@@ -72,7 +72,7 @@ nores <- foreach(chunk=0:2)%dorng%{
     pflag <- 0
     if(chunk==0){chunk <- 1
     pflag <- 1}
-maxSpikes <- 15
+maxSpikes <- 12
 priorMeanSpikes <- 0.2 # 5Hz * (40Hz/1000s)
 priorWeight <- 20
 priorBaseDistr <- normalize(foreach(i=0:maxSpikes, .combine=c)%do%{dgeom(x=i, prob=1/(priorMeanSpikes+1), log=FALSE)})
@@ -113,7 +113,7 @@ names(sampleMI) <- 'bit'
 ## Preparation as prior as pseudocount data
 priorMeanSpikes <- 0.2 # 5Hz * (40Hz/1000s)
 priorBaseDistr <- normalize(foreach(i=0:maxSpikes, .combine=c)%do%{dgeom(x=i, prob=1/(priorMeanSpikes+1), log=FALSE)})
-priorWeight <- 100
+priorWeight <- 1000
 priorBaseData <- foreach(count=0:maxSpikes, .combine=c)%do%{
     rep(count, times=max(1,round(priorBaseDistr[count+1] * priorWeight)))
 }
@@ -137,11 +137,11 @@ priorBaseData <- foreach(count=0:maxSpikes, .combine=c)%do%{
 ## include all possible spike counts up to maxSpikes
 ##
 ## hyperparameters
-hyper <- setHyperparams(aPhi=c(0.01,0.01))
+hyper <- setHyperparams(aPhi=c(1/13,1/20))
 ##
 covNames <- colnames(sampleData)
 outfile <- paste0('_mcoutput',chunk)
-mcmcrun <- profRegr(excludeY=TRUE, xModel='Discrete', nSweeps=40e3, nBurn=20e3, nFilter=20, data=as.data.frame(datamcr), nClusInit=80, covNames=covNames, discreteCovs=covNames, nProgress=1e3, seed=148, output=outfile, useHyperpriorR1=FALSE, useNormInvWishPrior=TRUE, alpha=-2, hyper=hyper)
+mcmcrun <- profRegr(excludeY=TRUE, xModel='Discrete', nSweeps=160e3, nBurn=20e3, nFilter=80, data=as.data.frame(datamcr), nClusInit=80, covNames=covNames, discreteCovs=covNames, nProgress=5e3, seed=148, output=outfile, useHyperpriorR1=FALSE, useNormInvWishPrior=TRUE, alpha=-2, hyper=hyper)
 ##
 ## Save MCMC samples
 ## log-likelihood and log-posteriors
