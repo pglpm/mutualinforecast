@@ -1,5 +1,5 @@
 ## Author: Battistin, Gonzalo Cogno, Porta Mana
-## Last-Updated: 2021-07-26T13:41:40+0200
+## Last-Updated: 2021-07-26T15:42:30+0200
 ################
 ## Script for:
 ## - outputting samples of prior & posterior distributions
@@ -68,9 +68,10 @@ sampleIndexFile  <- 'index_mat_160.csv'
 plan(sequential)
 maxSpikes <- 12
 maxSpikes1 <- maxSpikes + 1
-T <- 50 ## prior weight
-priorMeanSpikes <- 0.2 # 0.2 = 5Hz * (40Hz/1000s)
-priorBaseDistr <- normalize(foreach(i=0:maxSpikes, .combine=c)%do%{dgeom(x=i, prob=1/(priorMeanSpikes+1), log=FALSE)})
+T <- 100 ## prior weight
+priorMeanSpikes <- 0.4 # 0.2 = 5Hz * (40Hz/1000s)
+#priorBaseDistr <- normalize(dpois(x=0:maxSpikes, lambda=priorMeanSpikes, log=FALSE))
+priorBaseDistr <- normalize(dgeom(x=0:maxSpikes, prob=1/(priorMeanSpikes+1), log=FALSE))
 ## priorBaseDistr <- normalize(rep(1,maxSpikes1))
 nDraws <- 2000
 nPlotSamples <- 100
@@ -276,7 +277,7 @@ mcoutput <- LaplacesDemon(logprob, mydata, Initial.Values,
     
 ## Preparation as prior as pseudocount data
 priorMeanSpikes <- 0.2 # 5Hz * (40Hz/1000s)
-priorBaseDistr <- normalize(foreach(i=0:maxSpikes, .combine=c)%do%{dgeom(x=i, prob=1/(priorMeanSpikes+1), log=FALSE)})
+priorBaseDistr <- normalize(dpois(x=0:maxSpikes, prob=1/(priorMeanSpikes+1), log=FALSE)})
 priorWeight <- 1000
 priorBaseData <- foreach(count=0:maxSpikes, .combine=c)%do%{
     rep(count, times=max(1,round(priorBaseDistr[count+1] * priorWeight)))
