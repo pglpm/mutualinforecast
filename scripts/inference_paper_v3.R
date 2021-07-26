@@ -1,5 +1,5 @@
 ## Author: Battistin, Gonzalo Cogno, Porta Mana
-## Last-Updated: 2021-07-26T08:03:42+0200
+## Last-Updated: 2021-07-26T10:18:32+0200
 ################
 ## Script for:
 ## - outputting samples of prior & posterior distributions
@@ -37,8 +37,8 @@ library('doFuture')
 registerDoFuture()
 library('doRNG')
 library('ash')
-library('extraDistr')
 library('LaplacesDemon') # used for Dirichlet generator
+library('extraDistr')
 options(bitmapType='cairo')
 pdff <- function(filename){pdf(file=paste0(filename,'.pdf'),paper='a4r',height=11.7,width=16.5)} # to output in pdf format
 pngf <- function(filename,res=300){png(file=paste0(filename,'.png'),height=11.7*1.2,width=16.5,units='in',res=res,pointsize=36)} # to output in png format
@@ -65,6 +65,7 @@ longrunDataFile  <- 'SpikeCounts_and_direction.csv'
 sampleIndexFile  <- 'index_mat_160.csv'
 plan(sequential)
 maxSpikes <- 12
+maxSpikes1 <- maxSpikes + 1
 priorMeanSpikes <- 0.2 # 5Hz * (40Hz/1000s)
 priorWeight <- 20
 priorBaseDistr <- normalize(foreach(i=0:maxSpikes, .combine=c)%do%{dgeom(x=i, prob=1/(priorMeanSpikes+1), log=FALSE)})
@@ -81,7 +82,7 @@ nStimuli <- length(stimuli)
 ## longrunData <- longrunData[nspikes<=maxSpikes] # for debug, REMEMBER TO REMOVE
 ## frequencies of full recording
 longrunFreqs <- foreach(stim=stimuli, .combine=cbind)%do%{
-    tabulate(longrunData[stimulus==stim,nspikes]+1, nbins=maxSpikes+1)
+    tabulate(longrunData[stimulus==stim,nspikes]+1, nbins=maxSpikes1)
 }
 colnames(longrunFreqs) <- nameStimulus <- paste0('stimulus',stimuli)
 rownames(longrunFreqs) <- nameNspikes <- paste0('nspikes',0:maxSpikes)
@@ -98,10 +99,9 @@ nores <- foreach(chunk=0:2)%dorng%{
 chunkIndices <- as.matrix(read.csv(sampleIndexFile,header=FALSE,sep=','))[chunk,]
 sampleData <- longrunData[chunkIndices,]
 sampleFreqs <- foreach(stim=stimuli, .combine=cbind)%do%{
-    tabulate(sampleData[stimulus==stim,nspikes]+1, nbins=maxSpikes+1)
+    tabulate(sampleData[stimulus==stim,nspikes]+1, nbins=maxSpikes1)
 }
-colnames(sampleFreqs) <- nameStimulus
-rownames(sampleFreqs) <- nameNspikes
+dimnames(sampleFreqs) <- dimnames(longrunFreqs)
 nSamples <- sum(sampleFreqs)
 if(pflag==0){sampleMI <- mutualinfo(normalize(sampleFreqs))} else {sampleMI <- 2}
 names(sampleMI) <- 'bit'
@@ -109,24 +109,36 @@ names(sampleMI) <- 'bit'
 ##
 ## posterior superdistribution samples
 ##
-thinning <- 10
-mcadapt <- 10e3
+
+priorMeanSpikes <- 0.2 # 5Hz * (40Hz/1000s)
+priorBaseDistr <- normalize(foreach(i=0:maxSpikes, .combine=c)%do%{dgeom(x=i, prob=1/(priorMeanSpikes+1), log=FALSE)})
+T <- 500 ## prior weight
+priorAlphas <- matrix(rep(priorBaseDistr, nstimuli),nrow=nstimuli)
+dimnames(priorAlphas) <- list(nameStimulus, nameNspikes)
+dAlphas <- T*priorAlphas - 1 + if(pflag==0){t(sampleFreqs)}else{0}
+smoothness <- 1000
+smoothm <- sqrt(smoothness)*diff(diag(maxSpikes1),differences=2)
+##
+outfile <- paste0('_LDoutput',chunk)
+thinning <- 2 #10
+mcadapt <- 1000 #10e3
 mcburnin <- mcadapt
-mciterations <- mcburnin + 10e3
-mcstatus <- 1e3
-parmnames <- 
-
+mciterations <- 2000 #mcburnin + 10e3
+mcstatus <- 100 #1e3
+parnames <- paste0('F',rep(0:maxSpikes,each=nStimuli),'_',rep(stimuli,times=maxSpikes1))
+stepwidth <- 1 #c(rep(nn/100,length(inu)),rep(nnyR/100,length(iR)))
+nsteps <- 100 #c(rep(nn/100,length(inu)),rep(nnyR/100,length(iR)))
+nprev <- 0
+covm <- list()
+B <- list()
+##
 PGF <- function(data){
-    ff <- rdirichlet(2,Fme*dirmult+dirbase)
-    R <- hh*(ff[2,])
-    rR <- colSums(R)/ft
-    R <- t(t(R)/rR)
-    c(nn*ff[1,],nnyR*R[rpos]) 
+    c(maxSpikes1 * t(normalize(t(rdirichlet(2,(dAlphas+1)*100+1)))))
 }
-
+##
 mydata <- list(y=1, PGF=PGF,
-               parm.names=c(nunames,Rnames),
-               mon.names=c('lpf')
+               parm.names=parnames,
+               mon.names=c('lpf','MI')
                ##nn=nn,
                ##L=L,
                ##T=T,
@@ -138,45 +150,39 @@ mydata <- list(y=1, PGF=PGF,
                ##smoothm=smoothm,
                ##nnyR=***
                )
-
+##
 logprob <- function(parm,data){
     parm <- interval(parm,0,Inf)
-
-    nu <- parm[inu]
-    rnu <- sum(nu)
-    nu <- nu/rnu
-
-    R <- rzeros
-    R[rpos] <- parm[iR]
-    rR <- colSums(R)/ft
-    R <- t(t(R)/rR) # flattening using [rpos] makes it slightly slower
-
-   lpf <- -T*sum(R*log(R/((hh*nu))),na.rm=TRUE)   -sum(crossprod(smoothm, nu)^2) #-sum(crossprod(smoothm, rowSums(R))^2) -L*sum(nu*log(nu),na.rm=TRUE)
-##    lpf <- -T*sum(R*log(R/((hh*nu))),na.rm=TRUE)
-    LP <- lpf - 5e5*((rnu-nn)^2+sum((rR-nnyR)^2)) ##-jacobian dep. on the rs
-
-    list(LP=LP, Dev=-2*LP, Monitor=lpf, yhat=1, parm=parm)
+    FF <- parm
+    dim(FF) <- c(nstimuli, maxSpikes1)
+    sFF <- rowSums(FF)
+    tFF <- sum(sFF)
+    mi <- mutualinfo(t(FF/tFF))
+    ##
+##
+    lpf <- sum(dAlphas*log(FF/tFF), na.rm=TRUE) - sum(tcrossprod(FF/sFF, smoothm)^2)
+##
+    LP <- lpf - 1e5*(tFF-maxSpikes1)^2
+##
+    list(LP=LP, Dev=-2*LP, Monitor=c(lpf,mi), yhat=1, parm=parm)
 }
-    
-
-
+##
 Initial.Values <- PGF(mydata)
 ## print('running Monte Carlo...')
 mcoutput <- LaplacesDemon(logprob, mydata, Initial.Values,
-                      ##Covar=NULL,
-                      Covar=covm,
+                      Covar=NULL,
+                      ##Covar=covm,
                       Thinning=thinning,
                       Iterations=mciterations, Status=mcstatus,
                       Debug=list(DB.chol=FALSE, DB.eigen=FALSE,
                                  DB.MCSE=FALSE, DB.Model=FALSE),
-                      LogFile=paste0('_LDlog',jobid,fileid), #Type="MPI", #Packages=c('MASS'),
+                      LogFile=paste0('_LDlog',outfile), #Type="MPI", #Packages=c('MASS'),
                       ##Algorithm="RDMH"#, Specs=list(B=list(1:d,d1:d2,d3:dnp))
                       ##Algorithm="Slice", Specs=list(B=NULL, Bounds=c(0,1), m=Inf, Type="Continuous", w=0.001)
                       ##Algorithm="MALA", Specs=list(A=1e7, alpha.star=0.574, gamma=mcadapt, delta=1, epsilon=c(1e-6,1e-7))
                       ##Algorithm="pCN", Specs=list(beta=0.001)
                       Algorithm="AFSS", Specs=list(A=mcadapt, B=B, m=nsteps, n=nprev, w=stepwidth)
-                      ##Algorithm="AIES", Specs=list(Nc=4*nparm, Z=NULL, beta=2, CPUs=1, Packages=NULL, Dyn.libs=NULL)
-                      
+                      ##Algorithm="AIES", Specs=list(Nc=4*nparm, Z=NULL, beta=2, CPUs=1, Packages=NULL, Dyn.libs=NULL)                      
                       ##Algorithm="DRM", Specs=NULL
                       )
 
@@ -280,7 +286,7 @@ condfreqSamples <- foreach(sample=seq_along(MCMCdata$nList), .combine=cbind, .in
         normalizerows(t(t(MCMCdata$phiList[[sample]]$stimulus) * MCMCdata$psiList[[sample]]))
     )
 }
-dim(condfreqSamples) <- c(maxSpikes+1, nStimuli, length(MCMCdata$nList))
+dim(condfreqSamples) <- c(maxSpikes1, nStimuli, length(MCMCdata$nList))
 condfreqSamples <- aperm(condfreqSamples, c(3,1,2))
 dimnames(condfreqSamples) <- list(NULL, rownames(longrunFreqs), colnames(longrunFreqs))
 ##
@@ -429,7 +435,7 @@ condfreqSamples <- foreach(sample=seq_along(MCMCdata$nList), .combine=cbind, .in
         normalizerows(t(t(MCMCdata$phiList[[sample]]$stimulus) * MCMCdata$psiList[[sample]]))
     )
 }
-dim(condfreqSamples) <- c(maxSpikes+1, nStimuli, length(MCMCdata$nList))
+dim(condfreqSamples) <- c(maxSpikes1, nStimuli, length(MCMCdata$nList))
 condfreqSamples <- aperm(condfreqSamples, c(3,1,2))
 dimnames(condfreqSamples) <- list(NULL, rownames(longrunFreqs), colnames(longrunFreqs))
 ##
