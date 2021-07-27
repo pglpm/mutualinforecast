@@ -1,5 +1,5 @@
 ## Author: Battistin, Gonzalo Cogno, Porta Mana
-## Last-Updated: 2021-07-26T22:24:25+0200
+## Last-Updated: 2021-07-27T08:11:04+0200
 ################
 ## Script for:
 ## - outputting samples of prior & posterior distributions
@@ -71,8 +71,11 @@ maxSpikes1 <- maxSpikes + 1
 maxSpikes2 <- 2 * maxSpikes1
 T <- 100 ## prior weight
 priorMeanSpikes <- 0.4 # 0.2 = 5Hz * (40Hz/1000s)
+priorSdSpikes <- 0.4 # 0.2 = 5Hz * (40Hz/1000s)
+    ## shapegamma <- (priorMeanSpikes/priorSdSpikes)^2
+    ## rategamma <- priorMeanSpikes/priorSdSpikes^2
 #priorBaseDistr <- normalize(dpois(x=0:maxSpikes, lambda=priorMeanSpikes, log=FALSE))
-priorBaseDistr <- normalize(dgeom(x=0:maxSpikes, prob=1/(priorMeanSpikes+1), log=FALSE))
+#priorBaseDistr <- normalize(dgeom(x=0:maxSpikes, prob=1/(priorMeanSpikes+1), log=FALSE))
 ## priorBaseDistr <- normalize(rep(1,maxSpikes1))
 nDraws <- 2000
 nPlotSamples <- 100
@@ -89,7 +92,6 @@ nspikesVals <- 0:maxSpikes
 longrunFreqs <- foreach(stim=stimulusVals, .combine=rbind)%do%{
     tabulate(longrunData[stimulus==stim,nspikes]+1, nbins=maxSpikes1)
 }
-##priorBaseDistr <- normalize(c(colSums(longrunFreqs))+0.1)
 rownames(longrunFreqs) <- nameStimulus <- paste0('stimulus',stimulusVals)
 colnames(longrunFreqs) <- nameNspikes <- paste0('nspikes',nspikesVals)
 longrunMI <- c(bit=mutualinfo(longrunFreqs))
@@ -97,7 +99,7 @@ longrunMI <- c(bit=mutualinfo(longrunFreqs))
 gc()
 plan(sequential)
 plan(multisession, workers = 6L)
-nores <- foreach(chunk=0:2, .inorder=F, .packages=c('data.table','LaplacesDemon','extraDistr'))%dorng%{
+allmcoutput <- foreach(chunk=0:0, .inorder=F, .packages=c('data.table','LaplacesDemon','extraDistr'))%do%{
     pflag <- 0
     if(chunk==0){chunk <- 1
         pflag <- 1}
@@ -118,15 +120,13 @@ nores <- foreach(chunk=0:2, .inorder=F, .packages=c('data.table','LaplacesDemon'
     ##
     ## Alphas for Dirichlet distribution
     ##
-    dataAlphas <- c(if(pflag==0){sampleFreqs}else{0*sampleFreqs})
+    dataAlphas <- sampleFreqs * (pflag==0)
     ## Generate samples
     set.seed(147+chunk)
     smoothness <- 1000
     smoothm <- sqrt(smoothness)*diff(diag(maxSpikes1),differences=4)
-    meangamma <- 0.5
-    sdgamma <- 0.5
-    shapegamma <- (meangamma/sdgamma)^2
-    rategamma <- meangamma/sdgamma^2
+    shapegamma <- (priorMeanSpikes/priorSdSpikes)^2
+    rategamma <- priorMeanSpikes/priorSdSpikes^2
     ##
     outfile <- paste0('_LDoutput',chunk)
     thinning <- 2 #10
@@ -135,19 +135,19 @@ nores <- foreach(chunk=0:2, .inorder=F, .packages=c('data.table','LaplacesDemon'
     mciterations <- mcburnin + 2e3
     mcstatus <- 100 #1e3
     Fnames <- paste0('F',rep(nspikesVals,each=nStimuli),'_',rep(stimulusVals,times=maxSpikes1))
-    Mnames <- paste0('mean',stimuli)
+    Mnames <- paste0('mean',stimulusVals)
     stepwidth <- 1 #c(rep(nn/100,length(inu)),rep(nnyR/100,length(iR)))
     nsteps <- 100 #c(rep(nn/100,length(inu)),rep(nnyR/100,length(iR)))
     nprev <- 0
-    covm <- list()
-    B <- list()
     meansInd <- 1:2
+    B <- list(meansInd,2+(1:(maxSpikes1*nStimuli)))
+    covm <- lapply(B,function(x){diag(length(x))})
     nspikesVals2 <- rep(nspikesVals,each=nStimuli)
     ##
     PGF <- function(data){
-        means <- rgamma(n=2,shape=shapegamma, rate=rategamma) 
+        means <- rgamma(n=2, shape=shapegamma, rate=rategamma)
         c(means,
-        maxSpikes2 * rdirichlet(n=1, alpha=c(dataAlphas) + 1))# T * dgeom(nspikesVals2,prob=1/(rep(meangamma,2)+1))))
+        maxSpikes2 * rdirichlet(n=1, alpha=1/(maxSpikes1*10)+T*dgeom(nspikesVals2,prob=1/(rep(means,2)+1))))
     }
     ##
     mydata <- list(y=1, PGF=PGF,
@@ -172,17 +172,17 @@ nores <- foreach(chunk=0:2, .inorder=F, .packages=c('data.table','LaplacesDemon'
         dim(FF) <- c(nstimuli, maxSpikes1)
         sFF <- rowSums(FF)
         tFF <- sum(sFF)
-        mi <- mutualinfo(FF/tFF)
+        mi <- mutualinfo(FF)
         ##
         ##
         lpf <- sum(dataAlphas*log(FF/tFF), na.rm=TRUE) +
             ddirichlet(x=c(FF)/tFF,
                        alpha = T * dgeom(nspikesVals2,prob=1/(means+1), log=FALSE),
                        log=TRUE) + 
-            sum(dgamma(means, shape=shapegamma, rate=rategamma, log=TRUE)) -
-            sum(tcrossprod(FF/sFF, smoothm)^2)
+            sum(dgamma(means, shape=shapegamma, rate=rategamma, log=TRUE)) # -
+            #sum(tcrossprod(FF/sFF, smoothm)^2)
         ##
-        LP <- lpf - 1e5*(tFF-maxSpikes1)^2
+        LP <- lpf - 1e5*(tFF-maxSpikes2)^2
         ##
         list(LP=LP, Dev=-2*LP, Monitor=c(lpf,mi), yhat=1, parm=parm)
     }
@@ -190,8 +190,8 @@ nores <- foreach(chunk=0:2, .inorder=F, .packages=c('data.table','LaplacesDemon'
     Initial.Values <- PGF(mydata)
     ## print('running Monte Carlo...')
     mcoutput <- LaplacesDemon(logprob, mydata, Initial.Values,
-                              Covar=NULL,
-                              ##Covar=covm,
+                              #Covar=NULL,
+                              Covar=covm,
                               Thinning=thinning,
                               Iterations=mciterations, Status=mcstatus,
                               Debug=list(DB.chol=FALSE, DB.eigen=FALSE,
@@ -260,5 +260,12 @@ nores <- foreach(chunk=0:2, .inorder=F, .packages=c('data.table','LaplacesDemon'
     legend('topright',c('sample MI', 'long-run MI'),lty=1,col=c(myyellow,myredpurple),lwd=4,cex=1.5)
     dev.off()
     ##
-    NULL
+    ## Plot MCMC diagnostics
+    pdff(paste0('LD_summary',chunk))
+    matplot(mcoutput$Monitor[,1],type='l',main='log-likelihood')
+    matplot(mcoutput$Monitor[,2],type='l',main='MI')
+    matplot(mcoutput$Posterior1[,meanInd],type='l',main='means of geom. distr.')
+    dev.off()
+    ##
+    mcoutput
 }
