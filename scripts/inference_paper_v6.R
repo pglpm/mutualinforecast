@@ -1,5 +1,5 @@
 ## Author: Battistin, Gonzalo Cogno, Porta Mana
-## Last-Updated: 2021-07-27T11:26:49+0200
+## Last-Updated: 2021-07-27T14:45:32+0200
 ################
 ## Script for:
 ## - outputting samples of prior & posterior distributions
@@ -98,7 +98,7 @@ longrunMI <- c(bit=mutualinfo(longrunFreqs))
 ## frequencies of sample
 gc()
 plan(sequential)
-plan(multisession, workers = 6L)
+#plan(multisession, workers = 6L)
 allmcoutput <- foreach(chunk=0:0, .inorder=F, .packages=c('data.table','LaplacesDemon','extraDistr'))%do%{
     pflag <- 0
     if(chunk==0){chunk <- 1
@@ -129,15 +129,15 @@ allmcoutput <- foreach(chunk=0:0, .inorder=F, .packages=c('data.table','Laplaces
     rategamma <- priorMeanSpikes/priorSdSpikes^2
     ##
     outfile <- paste0('_LDoutput',chunk)
-    thinning <- 10 #10
+    thinning <- 2 #10
     mcadapt <- 2000 #10e3
     mcburnin <- mcadapt
-    mciterations <- mcburnin + 10000
+    mciterations <- mcburnin + 2000
     mcstatus <- 200 #1e3
     Fnames <- paste0('F',rep(nspikesVals,each=nStimuli),'_',rep(stimulusVals,times=maxSpikes1))
     Mnames <- paste0('mean',stimulusVals)
     stepwidth <- 1 #c(rep(nn/100,length(inu)),rep(nnyR/100,length(iR)))
-    nsteps <- 100 #c(rep(nn/100,length(inu)),rep(nnyR/100,length(iR)))
+    nsteps <- 1000 #c(rep(nn/100,length(inu)),rep(nnyR/100,length(iR)))
     nprev <- 0
     meansInd <- 1:2
     dimjointfreq <- c(nStimuli, maxSpikes1)
@@ -145,8 +145,14 @@ allmcoutput <- foreach(chunk=0:0, .inorder=F, .packages=c('data.table','Laplaces
     ##     indices <- 2+(1:(maxSpikes1*nStimuli))
     ##     dim(indices) <- dimjointfreq
     ##     indices[i,]})
-    B <- list(meansInd, 2+(1:(maxSpikes1*nStimuli)))
+    indices <- matrix(1:(nStimuli+maxSpikes1*nStimuli),nrow=2)
+    ## B <- c(list(meansInd), foreach(i=1:nStimuli, .combine=list)%do%{
+    ##     indices[i,-1]
+    ## })
+    B <- foreach(i=1:nStimuli, .combine=list)%do%{indices[i,]}
     covm <- lapply(B,function(x){diag(length(x))})
+    ## B <- list(meansInd, 2+(1:(maxSpikes1*nStimuli)))
+    ## covm <- lapply(B,function(x){diag(length(x))})
     ## B <- NULL
     ## covm <- NULL
     nspikesVals2 <- rep(nspikesVals,each=nStimuli)
@@ -163,12 +169,12 @@ allmcoutput <- foreach(chunk=0:0, .inorder=F, .packages=c('data.table','Laplaces
         dgeo <- dgeom(nspikesVals2, prob=1/(means+1), log=FALSE)
         dim(dgeo) <- dimjointfreq
         c(means,
-        maxSpikes1 * rdirichlet(n=2, alpha=1/(maxSpikes1/10)+T*dgeo))
+        maxSpikes1 * rdirichlet(n=2, alpha=1/(maxSpikes1/100)+T*dgeo))
     }
     ##
     mydata <- list(y=1, PGF=PGF,
                    parm.names=c(Mnames,Fnames),
-                   mon.names='lpf' #c('lpf','MI')
+                   mon.names=c('lpf',paste0('G',0:maxSpikes)) #c('lpf','MI')
                    ##nn=nn,
                    ##L=L,
                    ##T=T,
@@ -191,18 +197,21 @@ allmcoutput <- foreach(chunk=0:0, .inorder=F, .packages=c('data.table','Laplaces
         ## mi <- mutualinfo(FF)
         ##
         ##
-        dgeo <- dgeom(nspikesVals2, prob=1/(means+1), log=FALSE)
+        prob <- 1/(means+1)
+        dgeo <- ((1-prob)^nspikesVals2) * prob
+        ## dgeom(nspikesVals2, prob=1/(means+1), log=FALSE)
         dim(dgeo) <- dimjointfreq
-        lpf <- sum(dataAlphas*log(FF), na.rm=TRUE) +
-            sum(ddirichlet(x=FF,
-                       alpha = T * dgeo,
-                       log=TRUE) + 
-            dgamma(means, shape=shapegamma, rate=rategamma, log=TRUE)) # -
-            #sum(tcrossprod(FF/sFF, smoothm)^2)
+        dgeo <- T * dgeo/rowSums(dgeo)
+        lpf <- sum((dgeo+dataAlphas-1+1/maxSpikes1)*log(FF), na.rm=F) -
+            sum(lgamma(dgeo)) +
+            ## sum(ddirichlet(x=FF, alpha = T * dgeo, log=TRUE) + 
+            sum((shapegamma-1)*log(means),na.rm=TRUE) - sum(rategamma*means)
+        ## dgamma(means, shape=shapegamma, rate=rategamma, log=TRUE)) # -
+            #sum(tcrossprod(FF, smoothm)^2)
         ##
         LP <- lpf - 1e3*sum((sFF-maxSpikes1)^2)
         ##
-        list(LP=LP, Dev=-2*LP, Monitor=lpf, yhat=1, parm=parm)
+        list(LP=LP, Dev=-2*LP, Monitor=c(lpf,dgeo[1,]), yhat=1, parm=parm)
     }
     ##
     Initial.Values <- PGF(mydata)
@@ -225,7 +234,10 @@ allmcoutput <- foreach(chunk=0:0, .inorder=F, .packages=c('data.table','Laplaces
                               )
     ##
     ##
-    mcmcrun <- mcoutput$Posterior1[-round((1:mcburnin)/thinning),-meansInd]
+#    remsummary <- -1e10 # -(1:10)
+    remsummary <- -round((1:mcburnin)/thinning)
+    mcmcrun <- mcoutput$Posterior1[remsummary## -round((1:mcburnin)/thinning)
+                                  ,-meansInd]
     nDraws <- nrow(mcmcrun)
     dim(mcmcrun) <- c(nDraws,nStimuli,maxSpikes1)
     dimnames(mcmcrun) <- list(NULL, nameStimulus, nameNspikes)
@@ -279,28 +291,28 @@ allmcoutput <- foreach(chunk=0:0, .inorder=F, .packages=c('data.table','Laplaces
     dev.off()
     ##
     ## Plot MCMC diagnostics
-    testsamples <- mcoutput$Posterior1[-(1:10),-meansInd]
+    testsamples <- mcoutput$Posterior1[remsummary,-meansInd]
     dim(testsamples) <- c(nrow(testsamples),nStimuli,maxSpikes1)
     pdff(paste0('LD_MCsummary',chunk))
-    matplot(mcoutput$Monitor[-(1:10)],type='l',ylab='log-likelihood')
+    matplot(mcoutput$Monitor[remsummary,1],type='l',ylab='log-likelihood')
+    matplot(t(mcoutput$Monitor[remsummary,-1]),type='l',ylab='geom distr')
     matplot(postMISamples,type='l',ylab='MI')
-    matplot(mcoutput$Posterior1[-(1:10),meansInd],type='l',ylab='means of geom. distr.')
+    matplot(mcoutput$Posterior1[remsummary,meansInd],type='l',ylab='means of geom. distr.')
     matplot(normal <- rowSums(testsamples[,1,]),type='l',ylab='normalization 0')
     ## matplot(testsamples[,1,]/normal,type='l',ylab='freq. stimulus 0')
-    matplot(-mcoutput$Deviance[-(1:10)]/2,type='l',ylab='full log-likelihood')
+    matplot(-mcoutput$Deviance[remsummary]/2,type='l',ylab='full log-likelihood')
     dev.off()
     ##
     mcoutput
 }
-
-
-
-
+##
+testplots <- function(){
     testoutput <- foreach(i=1:2000, .combine=rbind)%do%{
         means <- rgamma(n=2,shape=shapegamma,rate=rategamma)
         dgeo <- dgeom(nspikesVals2, prob=1/(means+1), log=FALSE)
         dim(dgeo) <- dimjointfreq
-        FF <- rdirichlet(n=2,alpha=T*dgeo)
+        dgeo <- T * dgeo/rowSums(dgeo)
+        FF <- rdirichlet(n=2,alpha=dgeo+dataAlphas+1/maxSpikes1)
         c(means,FF)
     }
     mcmcrun <- testoutput[,-meansInd]
@@ -368,3 +380,26 @@ allmcoutput <- foreach(chunk=0:0, .inorder=F, .packages=c('data.table','Laplaces
     title('posterior MI distr', cex.main=2)
     legend('topright',c('sample MI', 'long-run MI'),lty=1,col=c(myyellow,myredpurple),lwd=4,cex=1.5)
     dev.off()
+}
+testplots()
+
+
+    ## logprob <- function(parm,data){
+    ##     parm <- interval(parm,0,Inf)
+    ##     LP <- sum(sapply(1:nStimuli,function(ii){
+    ##         parm0 <- parm[indices[ii,]]
+    ##         means <- parm0[1]
+    ##         FF <- parm0[-1]
+    ##         tFF <- sum(FF)
+    ##         FF <- FF/tFF
+    ##         dgeo <- dgeom(nspikesVals, prob=1/(means+1), log=FALSE)
+    ##         ##
+    ##         sum(dataAlphas[ii,]*log(FF), na.rm=TRUE) +
+    ##         ddirichlet(x=FF, alpha = T * dgeo, log=TRUE) + 
+    ##         dgamma(means, shape=shapegamma, rate=rategamma, log=TRUE) -
+    ##         ##sum(tcrossprod(FF, smoothm)^2) -
+    ##         1e3*(tFF-maxSpikes1)^2
+    ##     }))
+    ##     ##
+    ##     list(LP=LP, Dev=-2*LP, Monitor=LP, yhat=1, parm=parm)
+    ## }
