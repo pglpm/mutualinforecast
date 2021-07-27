@@ -1,5 +1,5 @@
 ## Author: Battistin, Gonzalo Cogno, Porta Mana
-## Last-Updated: 2021-07-27T10:17:22+0200
+## Last-Updated: 2021-07-27T11:09:51+0200
 ################
 ## Script for:
 ## - outputting samples of prior & posterior distributions
@@ -69,7 +69,7 @@ plan(sequential)
 maxSpikes <- 12
 maxSpikes1 <- maxSpikes + 1
 maxSpikes2 <- 2 * maxSpikes1
-T <- 1 ## prior weight
+T <- 10 ## prior weight
 priorMeanSpikes <- 0.4 # 0.2 = 5Hz * (40Hz/1000s)
 priorSdSpikes <- 0.4 # 0.2 = 5Hz * (40Hz/1000s)
     ## shapegamma <- (priorMeanSpikes/priorSdSpikes)^2
@@ -137,25 +137,30 @@ allmcoutput <- foreach(chunk=0:0, .inorder=F, .packages=c('data.table','Laplaces
     Fnames <- paste0('F',rep(nspikesVals,each=nStimuli),'_',rep(stimulusVals,times=maxSpikes1))
     Mnames <- paste0('mean',stimulusVals)
     stepwidth <- 1 #c(rep(nn/100,length(inu)),rep(nnyR/100,length(iR)))
-    nsteps <- 1000 #c(rep(nn/100,length(inu)),rep(nnyR/100,length(iR)))
+    nsteps <- 100 #c(rep(nn/100,length(inu)),rep(nnyR/100,length(iR)))
     nprev <- 0
     meansInd <- 1:2
-    B <- list(meansInd,2+(1:(maxSpikes1*nStimuli)))
+    dimjointfreq <- c(nStimuli, maxSpikes1)
+    B <- c(list(meansInd), foreach(i=1:nStimuli, .combine=list)%do%{
+        indices <- 2+(1:(maxSpikes1*nStimuli))
+        dim(indices) <- dimjointfreq
+        indices[i,]})
     covm <- lapply(B,function(x){diag(length(x))})
     nspikesVals2 <- rep(nspikesVals,each=nStimuli)
     ##
     parm2FF <- function(parm){
-        if(length(parm2FF)>nStimuli*maxSpikes1){parm <- parm[-meansInd]}
+        if(length(parm)>nStimuli*maxSpikes1){parm <- parm[-meansInd]}
         FF <- parm
-        dim(FF) <- c(nStimuli, maxSpikes1)
+        dim(FF) <- dimjointfreq
         sFF <- rowSums(FF)
-        tFF <- sum(sFF)
-        FF/tFF
+        FF/sFF
     }
     PGF <- function(data){
         means <- rgamma(n=2, shape=shapegamma, rate=rategamma)
+        dgeo <- dgeom(nspikesVals2, prob=1/(means+1), log=FALSE)
+        dim(dgeo) <- dimjointfreq
         c(means,
-        maxSpikes2 * rdirichlet(n=1, alpha=1/(maxSpikes1)+T*dgeom(nspikesVals2,prob=1/(rep(means,2)+1))))
+        maxSpikes1 * rdirichlet(n=2, alpha=1/(maxSpikes1/10)+T*dgeo))
     }
     ##
     mydata <- list(y=1, PGF=PGF,
@@ -177,20 +182,22 @@ allmcoutput <- foreach(chunk=0:0, .inorder=F, .packages=c('data.table','Laplaces
         parm <- interval(parm,0,Inf)
         means <- parm[meansInd]
         FF <- parm[-meansInd]
-        dim(FF) <- c(nStimuli, maxSpikes1)
+        dim(FF) <- dimjointfreq
         sFF <- rowSums(FF)
-        tFF <- sum(sFF)
+        FF <- FF/sFF
         ## mi <- mutualinfo(FF)
         ##
         ##
-        lpf <- sum(dataAlphas*log(FF/tFF), na.rm=TRUE) +
-            ddirichlet(x=c(FF)/tFF,
-                       alpha = T * dgeom(nspikesVals2, prob=1/(means+1), log=FALSE),
-                       log=TRUE) + 
+        dgeo <- dgeom(nspikesVals2, prob=1/(means+1), log=FALSE)
+        dim(dgeo) <- dimjointfreq
+        lpf <- sum(dataAlphas*log(FF), na.rm=TRUE) +
+            sum(ddirichlet(x=FF,
+                       alpha = T * dgeo,
+                       log=TRUE)) + 
             sum(dgamma(means, shape=shapegamma, rate=rategamma, log=TRUE)) # -
             #sum(tcrossprod(FF/sFF, smoothm)^2)
         ##
-        LP <- lpf - 1e3*(tFF-maxSpikes2)^2
+        LP <- lpf - 1e3*sum((sFF-maxSpikes1)^2)
         ##
         list(LP=LP, Dev=-2*LP, Monitor=lpf, yhat=1, parm=parm)
     }
@@ -286,7 +293,9 @@ allmcoutput <- foreach(chunk=0:0, .inorder=F, .packages=c('data.table','Laplaces
 
     testoutput <- foreach(i=1:2000, .combine=rbind)%do%{
         means <- rgamma(n=2,shape=shapegamma,rate=rategamma)
-        FF <- rdirichlet(n=1,alpha=5*dgeom(nspikesVals2,prob=1/(means+1), log=FALSE))
+        dgeo <- dgeom(nspikesVals2, prob=1/(means+1), log=FALSE)
+        dim(dgeo) <- dimjointfreq
+        FF <- rdirichlet(n=2,alpha=T*dgeo)
         c(means,FF)
     }
     mcmcrun <- testoutput[,-meansInd]
