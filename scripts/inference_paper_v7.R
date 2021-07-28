@@ -1,5 +1,5 @@
 ## Author: Battistin, Gonzalo Cogno, Porta Mana
-## Last-Updated: 2021-07-28T13:19:07+0200
+## Last-Updated: 2021-07-28T13:58:23+0200
 ################
 ## Script for:
 ## - outputting samples of prior & posterior distributions
@@ -287,7 +287,7 @@ matplot(cbind(llsamples[round(seq(1,nrow(mcsamples2),length.out=100))],
 ##     t2f <- identity
 ##
     ##
-    dsmoothdirch <- nimbleFunction(
+     dsmoothdirch <- nimbleFunction(
         run = function(x=double(1), alpha=double(1), smatrix=double(2), normconstant=double(0, default=0), normstrength=double(0, default=1000), log=integer(0, default=0)){
             returnType(double(0))
             tx <- sum(x)
@@ -328,6 +328,51 @@ matplot(cbind(llsamples[round(seq(1,nrow(mcsamples2),length.out=100))],
     matplot(t(fsamples[round(seq(1,nrow(fsamples),length.out=100)),]),type='l', lty=1,ylim=c(0,max(fsamples)),ylab='freq')
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+library('nimble')
+dmymnorm <- nimbleFunction(
+    run = function(x=double(1), means=double(1), log=integer(0, default=0)){
+        returnType(double(0))
+        logprob <- -sum((x-means)^2)/2
+        if(log) return(logprob)
+        else return(exp(logprob))
+    })
+assign('dmymnorm', dmymnorm, envir = .GlobalEnv)
+mycode <- nimbleCode({
+    X[1:2] ~ dmymnorm(means=means[1:2])
+})
+myconstants <- list(means=0:1)
+myinits <- list(X=0:1)
+mymodel <- nimbleModel(code=mycode, name='mymodel', constants=myconstants, inits=myinits, data=list())
+Cmymodel <- compileNimble(mymodel, resetFunctions = TRUE)
+myconf <- configureMCMC(Cmymodel, nodes=NULL)
+myconf$addSampler(target='X', type='AF_slice', control=list())
+mymcmc <- buildMCMC(myconf)
+Cmymcmc <- compileNimble(mymcmc, resetFunctions = TRUE)
+myMCsamples <- runMCMC(Cmymcmc)
+hist(myMCsamples[,1])
 
 
 
