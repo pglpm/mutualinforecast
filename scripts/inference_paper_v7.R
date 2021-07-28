@@ -1,5 +1,5 @@
 ## Author: Battistin, Gonzalo Cogno, Porta Mana
-## Last-Updated: 2021-07-28T18:06:35+0200
+## Last-Updated: 2021-07-28T19:37:04+0200
 ################
 ## Script for:
 ## - outputting samples of prior & posterior distributions
@@ -180,7 +180,8 @@ Ctestf3 <- compileNimble(testf3)
             returnType(double(2))
         })
 
-    Ncentropy <- nimbleFunction(run = function(x=double(1), y=double(1, default=x), base=double(0, default=2)){
+    Ncentropy <- nimbleFunction(
+        run = function(x=double(1), y=double(1, default=x), base=double(0, default=2)){
         nzero <- which(x>0)
         return(sum(x[nzero] * log(y[nzero])/log(base)))
         returnType(double(0))
@@ -189,16 +190,20 @@ Ccentropy <- compileNimble(Ncentropy)
     
     Nmutualinfo <- nimbleFunction(
         run = function(x=double(2), base=double(0, default=2)){
-            #newx <- matrix(value=0,init=FALSE,nrow=dim(x)[1],ncol=dim(x)[2])
-            newx <- Nnormrows(x)/(dim(x)[1])
+            #x <- matrix(value=0,init=FALSE,nrow=dim(x)[1],ncol=dim(x)[2])
+            x <- Nnormrows(x)/(dim(x)[1])
             marg <- numeric(value=0, length=dim(x)[2])
-            for(i in 1:(dim(x)[1])){marg <- marg + newx[i,]}
-            mi <- Ncentropy(x=c(newx), y=c(newx), base=base) - Ncentropy(x=marg, y=marg, base=base) + log(dim(x)[1])/log(base)
+            for(i in 1:(dim(x)[1])){marg <- marg + x[i,]}
+            mi <- Ncentropy(x=c(x), y=c(x), base=base) - Ncentropy(x=marg, y=marg, base=base) + log(dim(x)[1])/log(base)
             return(mi)
             returnType(double(0))
         })
     Cmutualinfo <- compileNimble(Nmutualinfo)
 
+    Nx2f <- nimbleFunction(
+        run = function(x=double(2)){
+            
+        })
             
     jointFreqs <- (jointFreqs/rowSums(jointFreqs)) * stimulusFreqs
     sum(jointFreqs *
