@@ -1,5 +1,5 @@
 ## Author: Battistin, Gonzalo Cogno, Porta Mana
-## Last-Updated: 2021-07-28T16:26:27+0200
+## Last-Updated: 2021-07-28T18:06:35+0200
 ################
 ## Script for:
 ## - outputting samples of prior & posterior distributions
@@ -172,23 +172,32 @@ Ctestf2 <- compileNimble(testf2)
 Ctestf3 <- compileNimble(testf3)
 
 
+    Nnormrows <- nimbleFunction(
+        run = function(x=double(2)){
+            newx <- matrix(value=0,init=FALSE,nrow=dim(x)[1],ncol=dim(x)[2])
+            for(i in 1:(dim(x)[1])){ newx[i,] <- x[i,]/sum(x[i,]) }
+            return(newx)
+            returnType(double(2))
+        })
+
+    Ncentropy <- nimbleFunction(run = function(x=double(1), y=double(1, default=x), base=double(0, default=2)){
+        nzero <- which(x>0)
+        return(sum(x[nzero] * log(y[nzero])/log(base)))
+        returnType(double(0))
+})
+Ccentropy <- compileNimble(Ncentropy)    
     
     Nmutualinfo <- nimbleFunction(
         run = function(x=double(2), base=double(0, default=2)){
-            stimulusFreqs <- 1/(dim(x)[1])
-            ## (conditional freqs B|S) * (new freq S)
-            newx <- array(value=0,init=FALSE,dim=dim(x))
-            rowsx <- numeric(value=0,init=FALSE,length=dim(x)[1])
-            margx <- numeric(value=0,length=dim(x)[2])
-            for(i in 1:dim(x)[1]){
-                newx[i,] <- x[i,]/sum(x[i,])
-                margx <- margx + newx[i,]
-            }
-            newx <- newx * stimulusFreqs
-            sum(newx*(log(newx)-log(matrix(value=stimulusFreqs,nrow=dim(x)[1],ncol=1) %*% asRow(margx))
-            return(newx*stimulusFreqs)
-            returnType(double(2))
-            })
+            #newx <- matrix(value=0,init=FALSE,nrow=dim(x)[1],ncol=dim(x)[2])
+            newx <- Nnormrows(x)/(dim(x)[1])
+            marg <- numeric(value=0, length=dim(x)[2])
+            for(i in 1:(dim(x)[1])){marg <- marg + newx[i,]}
+            mi <- Ncentropy(x=c(newx), y=c(newx), base=base) - Ncentropy(x=marg, y=marg, base=base) + log(dim(x)[1])/log(base)
+            return(mi)
+            returnType(double(0))
+        })
+    Cmutualinfo <- compileNimble(Nmutualinfo)
 
             
     jointFreqs <- (jointFreqs/rowSums(jointFreqs)) * stimulusFreqs
