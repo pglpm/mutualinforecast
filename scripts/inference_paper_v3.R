@@ -1,5 +1,5 @@
 ## Author: Battistin, Gonzalo Cogno, Porta Mana
-## Last-Updated: 2021-07-26T10:18:32+0200
+## Last-Updated: 2021-07-26T15:42:08+0200
 ################
 ## Script for:
 ## - outputting samples of prior & posterior distributions
@@ -99,7 +99,7 @@ nores <- foreach(chunk=0:2)%dorng%{
 chunkIndices <- as.matrix(read.csv(sampleIndexFile,header=FALSE,sep=','))[chunk,]
 sampleData <- longrunData[chunkIndices,]
 sampleFreqs <- foreach(stim=stimuli, .combine=cbind)%do%{
-    tabulate(sampleData[stimulus==stim,nspikes]+1, nbins=maxSpikes1)
+    tabulate(samplrownames(longrunFreqs)eData[stimulus==stim,nspikes]+1, nbins=maxSpikes1)
 }
 dimnames(sampleFreqs) <- dimnames(longrunFreqs)
 nSamples <- sum(sampleFreqs)
