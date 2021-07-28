@@ -1,5 +1,5 @@
 ## Author: Battistin, Gonzalo Cogno, Porta Mana
-## Last-Updated: 2021-07-28T13:15:31+0200
+## Last-Updated: 2021-07-28T13:19:07+0200
 ################
 ## Script for:
 ## - outputting samples of prior & posterior distributions
@@ -139,7 +139,8 @@ smoothdim <- nrow(smoothm)
     ## Log-probability
 ##
     ##
-    dsmoothdirch <- nimbleFunction(
+
+dsmoothdirch <- nimbleFunction(
         run = function(x=double(1), alpha=double(1), smatrix=double(2), normconstant=double(0, default=0), normstrength=double(0, default=1000), log=integer(0, default=0)){
             returnType(double(0))
             tx <- sum(x)
@@ -166,11 +167,11 @@ logprob <- nimbleCode({
     model <- nimbleModel(code=logprob, name='model', constants=constants, data=list(), inits=initialvalues)
     Cmodel <- compileNimble(model, showCompilerOutput = TRUE, resetFunctions = TRUE)
     confmodel <- configureMCMC(Cmodel, nodes=NULL)
-confmodel$addSampler(target='F', type='AF_slice', control=list(sliceAdaptFactorMaxIter=10000, sliceAdaptFactorInterval=1000, sliceAdaptWidthMaxIter=1000, sliceMaxSteps=100, maxContractions=1000))
+confmodel$addSampler(target='F', type='AF_slice', control=list(sliceAdaptFactorMaxIter=20000, sliceAdaptFactorInterval=1000, sliceAdaptWidthMaxIter=1000, sliceMaxSteps=100, maxContractions=1000))
 confmodel$addMonitors('logProb_F')
     mcmcsampler <- buildMCMC(confmodel)
     Cmcmcsampler <- compileNimble(mcmcsampler, resetFunctions = TRUE)
-    mcsamples <- runMCMC(Cmcmcsampler, nburnin=10000, niter=20000, thin=10)
+    mcsamples <- runMCMC(Cmcmcsampler, nburnin=20000, niter=40000, thin=20)
     fsamples <- t(apply(mcsamples[,-ncol(mcsamples)],1,t2f))
     matplot(t(fsamples[round(seq(1,nrow(fsamples),length.out=100)),]),type='l', lty=1,ylim=c(0,max(fsamples)),ylab='freq')
 
@@ -226,11 +227,11 @@ constants <- list(maxSpikes1=maxSpikes1, smoothdim=smoothdim, alphac=dgeo1, smat
     model2 <- nimbleModel(code=logprob2, name='model2', constants=constants, data=list(), inits=initialvalues)
     Cmodel2 <- compileNimble(model2, showCompilerOutput = TRUE, resetFunctions = TRUE)
     confmodel2 <- configureMCMC(Cmodel2, nodes=NULL)
-    confmodel2$addSampler(target='F', type='AF_slice', control=list(sliceAdaptFactorMaxIter=10000, sliceAdaptFactorInterval=1000, sliceAdaptWidthMaxIter=1000, sliceMaxSteps=100, maxContractions=1000))
+    confmodel2$addSampler(target='F', type='AF_slice', control=list(sliceAdaptFactorMaxIter=20000, sliceAdaptFactorInterval=1000, sliceAdaptWidthMaxIter=1000, sliceMaxSteps=100, maxContractions=1000))
 confmodel2$addMonitors('logProb_F')
     mcmcsampler2 <- buildMCMC(confmodel2)
     Cmcmcsampler2 <- compileNimble(mcmcsampler2, resetFunctions = TRUE)
-    mcsamples2 <- runMCMC(Cmcmcsampler2, nburnin=10000, niter=20000, thin=10)
+    mcsamples2 <- runMCMC(Cmcmcsampler2, nburnin=20000, niter=40000, thin=20)
     fsamples2 <- t(apply(mcsamples2[,-ncol(mcsamples2)],1,normalize))
     matplot(t(fsamples2[round(seq(1,nrow(fsamples2),length.out=100)),]),type='l', lty=1,ylim=c(0,max(fsamples2)),ylab='freq')
 
