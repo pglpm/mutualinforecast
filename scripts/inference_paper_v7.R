@@ -1,5 +1,5 @@
 ## Author: Battistin, Gonzalo Cogno, Porta Mana
-## Last-Updated: 2021-07-28T07:52:05+0200
+## Last-Updated: 2021-07-28T08:04:10+0200
 ################
 ## Script for:
 ## - outputting samples of prior & posterior distributions
@@ -145,14 +145,17 @@ allmcoutput <- foreach(chunk=0:0, .inorder=F, .packages=c('data.table','Laplaces
             F[1:maxSpikes1] ~ dsmoothdirch(alpha[1:maxSpikes1])
             }
     })
+    logprob <- nimbleCode({
+            F[1:maxSpikes1] ~ ddirch(alpha[1:maxSpikes1])
+    })
     ## logprob <- nimbleCode({
     ##     for(i in 1:nStimuli){
     ##         FF[i,1:maxSpikes1] ~ ddirch(dgeo1[1:maxSpikes1])
     ##     }
     ## })
     ##
-    constants <- list(alpha=c(1,1))
-    initialvalues <- list(F=c(0.1,-0.1))
+    constants <- list(alpha=dgeo1, maxSpikes1=maxSpikes1)
+    initialvalues <- list(F=normalize(dgeo1+1))
     ##
     model <- nimbleModel(code = logprob, name = 'logprob', constants = constants, data = list(), inits = initialvalues)
     confmodel <- configureMCMC(model, nodes=NULL)
