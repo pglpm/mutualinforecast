@@ -1,5 +1,5 @@
 ## Author: Battistin, Gonzalo Cogno, Porta Mana
-## Last-Updated: 2021-07-28T13:58:23+0200
+## Last-Updated: 2021-07-28T16:26:27+0200
 ################
 ## Script for:
 ## - outputting samples of prior & posterior distributions
@@ -66,17 +66,17 @@ normalizecols <- function(freqs){t(t(freqs)/colSums(freqs))}
 longrunDataFile  <- 'SpikeCounts_and_direction.csv'
 sampleIndexFile  <- 'index_mat_160.csv'
 plan(sequential)
-maxSpikes <- 12
-maxSpikes1 <- maxSpikes + 1
-maxSpikes2 <- 2 * maxSpikes1
+maxS <- 12
+maxS1 <- maxS + 1
+maxS2 <- 2 * maxS1
 T <- 10 ## prior weight
 priorMeanSpikes <- 0.4 # 0.2 = 5Hz * (40Hz/1000s)
 priorSdSpikes <- 0.2 # 0.2 = 5Hz * (40Hz/1000s)
 shapegamma <- (priorMeanSpikes/priorSdSpikes)^2
 rategamma <- priorMeanSpikes/priorSdSpikes^2
-#priorBaseDistr <- normalize(dpois(x=0:maxSpikes, lambda=priorMeanSpikes, log=FALSE))
-#priorBaseDistr <- normalize(dgeom(x=0:maxSpikes, prob=1/(priorMeanSpikes+1), log=FALSE))
-## priorBaseDistr <- normalize(rep(1,maxSpikes1))
+#priorBaseDistr <- normalize(dpois(x=0:maxS, lambda=priorMeanSpikes, log=FALSE))
+#priorBaseDistr <- normalize(dgeom(x=0:maxS, prob=1/(priorMeanSpikes+1), log=FALSE))
+## priorBaseDistr <- normalize(rep(1,maxS1))
 nDraws <- 2000
 nPlotSamples <- 100
 maxX <- 8
@@ -86,11 +86,11 @@ longrunData  <- as.data.table(t(read.csv(longrunDataFile,header=FALSE,sep=',')))
 colnames(longrunData) <- c('nspikes', 'stimulus')
 stimulusVals <- unique(longrunData[,stimulus])
 nStimuli <- length(stimulusVals)
-nspikesVals <- 0:maxSpikes
-## longrunData <- longrunData[nspikes<=maxSpikes] # for debug, REMEMBER TO REMOVE
+nspikesVals <- 0:maxS
+## longrunData <- longrunData[nspikes<=maxS] # for debug, REMEMBER TO REMOVE
 ## frequencies of full recording
 longrunFreqs <- foreach(stim=stimulusVals, .combine=rbind)%do%{
-    tabulate(longrunData[stimulus==stim,nspikes]+1, nbins=maxSpikes1)
+    tabulate(longrunData[stimulus==stim,nspikes]+1, nbins=maxS1)
 }
 rownames(longrunFreqs) <- nameStimulus <- paste0('stimulus',stimulusVals)
 colnames(longrunFreqs) <- nameNspikes <- paste0('nspikes',nspikesVals)
@@ -100,7 +100,7 @@ gc()
 chunk <- 0
 #plan(sequential)
 #plan(multisession, workers = 6L)
-#allmcoutput <- foreach(chunk=0:0, .inorder=F, .packages=c('data.table','LaplacesDemon','extraDistr'))%do%{
+allmcoutput <- foreach(chunk=0:0, .inorder=F, .packages=c('data.table','LaplacesDemon','extraDistr'))%do%{
     pflag <- 0
     if(chunk==0){chunk <- 1
         pflag <- 1}
@@ -108,7 +108,7 @@ chunk <- 0
     sampleData <- longrunData[chunkIndices,]
     ##print(str(sampleData))
     sampleFreqs <- foreach(stim=stimulusVals, .combine=rbind)%do%{
-        tabulate(sampleData[stimulus==stim,nspikes]+1, nbins=maxSpikes1)
+        tabulate(sampleData[stimulus==stim,nspikes]+1, nbins=maxS1)
     } 
     dimnames(sampleFreqs) <- dimnames(longrunFreqs)
     nSamples <- sum(sampleFreqs)
@@ -120,26 +120,122 @@ chunk <- 0
     ##
     ##
     ## MONTE CARLO sampling for prior and posterior
-##
-
-
+    ##
     T <- 10
-    dimjointfreq <- c(nStimuli, maxSpikes1)
+    smoothness <- 10
+    dimjointfreq <- c(nStimuli, maxS1)
     nspikesVals2 <- rep(nspikesVals,each=nStimuli)
     prob <- 1/(priorMeanSpikes+1)
     dgeo <- ((1-prob)^nspikesVals2) * prob
     ## dgeom(nspikesVals2, prob=1/(means+1), log=FALSE)
     dim(dgeo) <- dimjointfreq
-    dgeo <- T * dgeo/rowSums(dgeo)
+    dgeo <- T * dgeo/rowSums(dgeo) + sampleFreqs
     dgeo1 <- dgeo[1,]
-    smoothness <- 10
-smoothm <- diff(diag(maxSpikes1),differences=2)
-smoothdim <- nrow(smoothm)
-    ##
-    ## Log-probability
-##
+    smoothm <- diff(diag(maxS1),differences=2)
+    smoothdim <- nrow(smoothm)
     ##
 
+
+
+    testf <- nimbleFunction(
+        run = function(x=double(2)){
+            returnType(double(1))
+            a <- dim(x)[2]
+            return(c(x %*% numeric(value=1,length=a)))
+        }
+    )
+Ctestf <- compileNimble(testf)
+
+    testf2 <- nimbleFunction(
+        run = function(x=double(2)){
+            returnType(double(1))
+            y <- numeric(value=0,length=dim(x)[1])
+            for(i in 1:(dim(x)[1])){
+                y[i] <- sum(x[i,])
+            }
+            return(y)
+        }
+    )
+Ctestf2 <- compileNimble(testf2)
+
+        testf3 <- nimbleFunction(
+        run = function(x=double(2)){
+            returnType(double(1))
+            d <- dim(x)[1]
+            y <- numeric(value=0,length=d)
+            for(i in 1:d){
+                y[i] <- sum(x[i,])
+            }
+            return(y)
+        }
+    )
+Ctestf3 <- compileNimble(testf3)
+
+
+    
+    Nmutualinfo <- nimbleFunction(
+        run = function(x=double(2), base=double(0, default=2)){
+            stimulusFreqs <- 1/(dim(x)[1])
+            ## (conditional freqs B|S) * (new freq S)
+            newx <- array(value=0,init=FALSE,dim=dim(x))
+            rowsx <- numeric(value=0,init=FALSE,length=dim(x)[1])
+            margx <- numeric(value=0,length=dim(x)[2])
+            for(i in 1:dim(x)[1]){
+                newx[i,] <- x[i,]/sum(x[i,])
+                margx <- margx + newx[i,]
+            }
+            newx <- newx * stimulusFreqs
+            sum(newx*(log(newx)-log(matrix(value=stimulusFreqs,nrow=dim(x)[1],ncol=1) %*% asRow(margx))
+            return(newx*stimulusFreqs)
+            returnType(double(2))
+            })
+
+            
+    jointFreqs <- (jointFreqs/rowSums(jointFreqs)) * stimulusFreqs
+    sum(jointFreqs *
+        log2(jointFreqs/outer(rowSums(jointFreqs), colSums(jointFreqs))),
+        na.rm=TRUE)/log2(base)
+            
+            tx <- sum(x)
+            f <- exp(x)/sum(exp(x))
+            logp <- sum(alpha %*% log(f)) - sum((smatrix %*% log(f))^2) - normstrength * (tx-normconstant)^2 
+            if(log) return(logp)
+            else return(exp(logp))
+        })
+    mutualinfo <- function(jointFreqs,base=2){##in bits by default
+    stimulusFreqs <- 1/nrow(jointFreqs)
+    ## (conditional freqs B|S) * (new freq S)
+    jointFreqs <- (jointFreqs/rowSums(jointFreqs)) * stimulusFreqs
+    sum(jointFreqs *
+        log2(jointFreqs/outer(rowSums(jointFreqs), colSums(jointFreqs))),
+        na.rm=TRUE)/log2(base)
+}
+
+    ## Probability density
+    dlogsmoothdirch <- nimbleFunction(
+        run = function(x=double(1), alpha=double(1), smatrix=double(2), normconstant=double(0, default=0), normstrength=double(0, default=1000), log=integer(0, default=0)){
+            returnType(double(0))
+            tx <- sum(x)
+            f <- exp(x)/sum(exp(x))
+            logp <- sum(alpha %*% log(f)) - sum((smatrix %*% log(f))^2) - normstrength * (tx-normconstant)^2 
+            if(log) return(logp)
+            else return(exp(logp))
+        })
+    ##
+    assign('dlogsmoothdirch', dlogsmoothdirch, envir = .GlobalEnv)
+    lnprob <- nimbleCode({
+        for(i in 1:nStimuli){
+            X[i,1:maxS1] ~ dsmoothdirch(alpha=alphac[1:maxS1], smatrix=smatrixc[1:smoothdim,1:maxS1], normconstant=0, normstrength=1000)
+        }
+        mutualinfo <- 
+    })
+
+
+}
+
+############################################################
+############################################################
+#### exponential parametrization
 dsmoothdirch <- nimbleFunction(
         run = function(x=double(1), alpha=double(1), smatrix=double(2), normconstant=double(0, default=0), normstrength=double(0, default=1000), log=integer(0, default=0)){
             returnType(double(0))
@@ -152,14 +248,14 @@ dsmoothdirch <- nimbleFunction(
     ##
     assign('dsmoothdirch', dsmoothdirch, envir = .GlobalEnv)
 ##
-constants <- list(maxSpikes1=maxSpikes1, smoothdim=smoothdim, alphac=dgeo1, smatrixc=smoothness*smoothm)
+constants <- list(maxS1=maxS1, smoothdim=smoothdim, alphac=dgeo1, smatrixc=smoothness*smoothm)
     ##
-    initF <- normalize(dgeo1+1/(maxSpikes1))
-    initF <- log(initF) - sum(log(initF))/maxSpikes1
+    initF <- normalize(dgeo1+1/(maxS1))
+    initF <- log(initF) - sum(log(initF))/maxS1
     initialvalues <- list(F=initF)
     ##
 logprob <- nimbleCode({
-            F[1:maxSpikes1] ~ dsmoothdirch(alpha=alphac[1:maxSpikes1], smatrix=smatrixc[1:smoothdim,1:maxSpikes1], normconstant=0, normstrength=1000)
+            F[1:maxS1] ~ dsmoothdirch(alpha=alphac[1:maxS1], smatrix=smatrixc[1:smoothdim,1:maxS1], normconstant=0, normstrength=1000)
     })
     t2f <- function(t){exp(t)/sum(exp(t))}
     ##
@@ -173,8 +269,8 @@ confmodel$addMonitors('logProb_F')
     Cmcmcsampler <- compileNimble(mcmcsampler, resetFunctions = TRUE)
     mcsamples <- runMCMC(Cmcmcsampler, nburnin=20000, niter=40000, thin=20)
     fsamples <- t(apply(mcsamples[,-ncol(mcsamples)],1,t2f))
-    matplot(t(fsamples[round(seq(1,nrow(fsamples),length.out=100)),]),type='l', lty=1,ylim=c(0,max(fsamples)),ylab='freq')
-
+    ##matplot(t(fsamples[round(seq(1,nrow(fsamples),length.out=100)),]),type='l', lty=1,ylim=c(0,max(fsamples)),ylab='freq')
+summ1 <- summary(fsamples[,1:4])
 llsamples <- mcsamples[,'logProb_F[1]']
     matplot(llsamples[round(seq(1,nrow(mcsamples),length.out=100))],type='l', lty=1,ylab='freq')
 
@@ -183,23 +279,9 @@ llsamples <- mcsamples[,'logProb_F[1]']
 mcmcConf$addMonitors("logProb_alpha", "logProb_sigma_mu", "logProb_Y")
 
 
-##### no exp, boundaries
-    T <- 10
-    dimjointfreq <- c(nStimuli, maxSpikes1)
-    nspikesVals2 <- rep(nspikesVals,each=nStimuli)
-    prob <- 1/(priorMeanSpikes+1)
-    dgeo <- ((1-prob)^nspikesVals2) * prob
-    ## dgeom(nspikesVals2, prob=1/(means+1), log=FALSE)
-    dim(dgeo) <- dimjointfreq
-    dgeo <- T * dgeo/rowSums(dgeo)
-    dgeo1 <- dgeo[1,]
-    smoothness <- 10
-smoothm <- diff(diag(maxSpikes1),differences=2)
-smoothdim <- nrow(smoothm)
-    ##
-    ## Log-probability
-##
-    ##
+############################################################
+############################################################
+#### linear bounded parametrization (seems to incur into problems)
     dsmoothdirch2 <- nimbleFunction(
         run = function(x=double(1), alpha=double(1), smatrix=double(2), normconstant=double(0, default=1), normstrength=double(0, default=1000), log=integer(0, default=0)){
             returnType(double(0))
@@ -212,14 +294,14 @@ smoothdim <- nrow(smoothm)
     ##
     assign('dsmoothdirch2', dsmoothdirch2, envir = .GlobalEnv)
 ##
-constants <- list(maxSpikes1=maxSpikes1, smoothdim=smoothdim, alphac=dgeo1, smatrixc=smoothness*smoothm, constraintdata=rep(1,maxSpikes1))
+constants <- list(maxS1=maxS1, smoothdim=smoothdim, alphac=dgeo1, smatrixc=smoothness*smoothm, constraintdata=rep(1,maxS1))
     ##
-    initF <- maxSpikes1 * normalize(dgeo1+1/(maxSpikes1))
+    initF <- maxS1 * normalize(dgeo1+1/(maxS1))
     initialvalues <- list(F=initF)
     ##
     logprob2 <- nimbleCode({
-        F[1:maxSpikes1] ~ dsmoothdirch2(alpha=alphac[1:maxSpikes1], smatrix=smatrixc[1:smoothdim,1:maxSpikes1], normconstant=maxSpikes1, normstrength=1000)
-        for(i in 1:maxSpikes1){ constraintdata[i] ~ dconstraint(F[i]>0)}
+        F[1:maxS1] ~ dsmoothdirch2(alpha=alphac[1:maxS1], smatrix=smatrixc[1:smoothdim,1:maxS1], normconstant=maxS1, normstrength=1000)
+        for(i in 1:maxS1){ constraintdata[i] ~ dconstraint(F[i]>0)}
     })
     ##t2f <- function(t){exp(t)/sum(exp(t))}
     ##
@@ -227,16 +309,19 @@ constants <- list(maxSpikes1=maxSpikes1, smoothdim=smoothdim, alphac=dgeo1, smat
     model2 <- nimbleModel(code=logprob2, name='model2', constants=constants, data=list(), inits=initialvalues)
     Cmodel2 <- compileNimble(model2, showCompilerOutput = TRUE, resetFunctions = TRUE)
     confmodel2 <- configureMCMC(Cmodel2, nodes=NULL)
-    confmodel2$addSampler(target='F', type='AF_slice', control=list(sliceAdaptFactorMaxIter=20000, sliceAdaptFactorInterval=1000, sliceAdaptWidthMaxIter=1000, sliceMaxSteps=100, maxContractions=1000))
+    confmodel2$addSampler(target='F', type='AF_slice', control=list(sliceAdaptFactorMaxIter=20000, sliceAdaptFactorInterval=1000, sliceAdaptWidthMaxIter=1000, sliceMaxSteps=100, maxContractions=10000))
 confmodel2$addMonitors('logProb_F')
     mcmcsampler2 <- buildMCMC(confmodel2)
     Cmcmcsampler2 <- compileNimble(mcmcsampler2, resetFunctions = TRUE)
     mcsamples2 <- runMCMC(Cmcmcsampler2, nburnin=20000, niter=40000, thin=20)
     fsamples2 <- t(apply(mcsamples2[,-ncol(mcsamples2)],1,normalize))
-    matplot(t(fsamples2[round(seq(1,nrow(fsamples2),length.out=100)),]),type='l', lty=1,ylim=c(0,max(fsamples2)),ylab='freq')
-
+    ##matplot(t(fsamples2[round(seq(1,nrow(fsamples2),length.out=100)),]),type='l', lty=1,ylim=c(0,max(fsamples2)),ylab='freq')
+summ2 <- summary(fsamples2[,1:4])
 llsamples2 <- mcsamples2[,'logProb_F[1]']
     matplot(llsamples2[round(seq(1,nrow(mcsamples2),length.out=100))],type='l', lty=1,ylab='freq')
+
+
+
 
 matplot(cbind(llsamples[round(seq(1,nrow(mcsamples2),length.out=100))],
               llsamples2[round(seq(1,nrow(mcsamples2),length.out=100))])
@@ -247,7 +332,7 @@ matplot(cbind(llsamples[round(seq(1,nrow(mcsamples2),length.out=100))],
 
 
     T <- 100
-    dimjointfreq <- c(nStimuli, maxSpikes1)
+    dimjointfreq <- c(nStimuli, maxS1)
     nspikesVals2 <- rep(nspikesVals,each=nStimuli)
     prob <- 1/(priorMeanSpikes+1)
     dgeo <- ((1-prob)^nspikesVals2) * prob
@@ -256,7 +341,7 @@ matplot(cbind(llsamples[round(seq(1,nrow(mcsamples2),length.out=100))],
     dgeo <- 1 + 0 * T * dgeo/rowSums(dgeo)
     dgeo1 <- dgeo[1,]
     smoothness <- 0
-    smoothm <- diff(diag(maxSpikes1),differences=2)
+    smoothm <- diff(diag(maxS1),differences=2)
     ##
     ## Log-probability
 ##     dsmoothdirch <- nimbleFunction(
@@ -276,13 +361,13 @@ matplot(cbind(llsamples[round(seq(1,nrow(mcsamples2),length.out=100))],
 ##                             range=c(0,1))
 ##     ))
 ##     ##
-##     constants <- list(maxSpikes1=maxSpikes1, smoothdim=nrow(smoothm), alpha=dgeo1, smatrix=smoothness*smoothm)
+##     constants <- list(maxS1=maxS1, smoothdim=nrow(smoothm), alpha=dgeo1, smatrix=smoothness*smoothm)
 ##     ##
-##     initF <- normalize(dgeo1+1/(maxSpikes1))
+##     initF <- normalize(dgeo1+1/(maxS1))
 ##     initialvalues <- list(F=initF)
 ##     ##
 ##     logprob <- nimbleCode({
-##             F[1:maxSpikes1] ~ dsmoothdirch(alpha=alpha[1:maxSpikes1], smatrix=smoothmatrix[1:smoothdim,1:maxSpikes1])
+##             F[1:maxS1] ~ dsmoothdirch(alpha=alpha[1:maxS1], smatrix=smoothmatrix[1:smoothdim,1:maxS1])
 ##     })
 ##     t2f <- identity
 ##
@@ -305,14 +390,14 @@ matplot(cbind(llsamples[round(seq(1,nrow(mcsamples2),length.out=100))],
                             range=c(-Inf,Inf))
     ))
     ##
-    constants <- list(maxSpikes1=maxSpikes1, smoothdim=nrow(smoothm), alpha=dgeo1, smatrix=smoothness*smoothm)
+    constants <- list(maxS1=maxS1, smoothdim=nrow(smoothm), alpha=dgeo1, smatrix=smoothness*smoothm)
     ##
-    initF <- normalize(dgeo1+1/(maxSpikes))
-    initF <- log(initF) - sum(log(initF))/maxSpikes1
+    initF <- normalize(dgeo1+1/(maxS))
+    initF <- log(initF) - sum(log(initF))/maxS1
     initialvalues <- list(F=initF)
     ##
     logprob <- nimbleCode({
-            F[1:maxSpikes1] ~ dsmoothdirch(alpha=alpha[1:maxSpikes1], smatrix=smatrix[1:smoothdim, 1:maxSpikes1], normconstant=0, normstrength=1000)
+            F[1:maxS1] ~ dsmoothdirch(alpha=alpha[1:maxS1], smatrix=smatrix[1:smoothdim, 1:maxS1], normconstant=0, normstrength=1000)
     })
     t2f <- function(t){exp(t)/sum(exp(t))}
     ##
@@ -391,7 +476,7 @@ hist(myMCsamples[,1])
     ## Generate samples
     set.seed(147+chunk)
     smoothness <- 100
-    smoothm <- sqrt(smoothness)*diff(diag(maxSpikes1),differences=4)
+    smoothm <- sqrt(smoothness)*diff(diag(maxS1),differences=4)
     shapegamma <- (priorMeanSpikes/priorSdSpikes)^2
     rategamma <- priorMeanSpikes/priorSdSpikes^2
     ##
@@ -401,31 +486,31 @@ hist(myMCsamples[,1])
     mcburnin <- mcadapt
     mciterations <- mcburnin + 10000
     mcstatus <- 200 #1e3
-    Fnames <- paste0('F',rep(nspikesVals,each=nStimuli),'_',rep(stimulusVals,times=maxSpikes1))
+    Fnames <- paste0('F',rep(nspikesVals,each=nStimuli),'_',rep(stimulusVals,times=maxS1))
     Mnames <- paste0('mean',stimulusVals)
     stepwidth <- 1 #c(rep(nn/100,length(inu)),rep(nnyR/100,length(iR)))
     nsteps <- 1000 #c(rep(nn/100,length(inu)),rep(nnyR/100,length(iR)))
     nprev <- 0
     meansInd <- 1:2
-    dimjointfreq <- c(nStimuli, maxSpikes1)
+    dimjointfreq <- c(nStimuli, maxS1)
     ## B <- c(list(meansInd), foreach(i=1:nStimuli, .combine=list)%do%{
-    ##     indices <- 2+(1:(maxSpikes1*nStimuli))
+    ##     indices <- 2+(1:(maxS1*nStimuli))
     ##     dim(indices) <- dimjointfreq
     ##     indices[i,]})
-    indices <- matrix(1:(nStimuli+maxSpikes1*nStimuli),nrow=2)
+    indices <- matrix(1:(nStimuli+maxS1*nStimuli),nrow=2)
     B <- c(list(meansInd), foreach(i=1:nStimuli, .combine=list)%do%{
         indices[i,-1]
     })
     ## B <- foreach(i=1:nStimuli, .combine=list)%do%{indices[i,]}
     covm <- lapply(B,function(x){diag(length(x))})
-    ## B <- list(meansInd, 2+(1:(maxSpikes1*nStimuli)))
+    ## B <- list(meansInd, 2+(1:(maxS1*nStimuli)))
     ## covm <- lapply(B,function(x){diag(length(x))})
      ## B <- NULL
      ## covm <- NULL
     nspikesVals2 <- rep(nspikesVals,each=nStimuli)
     ##
     parm2FF <- function(parm){
-        if(length(parm)>nStimuli*maxSpikes1){parm <- parm[-meansInd]}
+        if(length(parm)>nStimuli*maxS1){parm <- parm[-meansInd]}
         FF <- parm
         dim(FF) <- dimjointfreq
         sFF <- rowSums(FF)
@@ -439,12 +524,12 @@ hist(myMCsamples[,1])
     PGF <- function(data){
         means <- rgamma(n=2, shape=shapegamma, rate=rategamma)
         c(means,
-        1 * rdirichlet(n=2, alpha=1/(maxSpikes1/100)+T*dgeo))
+        1 * rdirichlet(n=2, alpha=1/(maxS1/100)+T*dgeo))
     }
     ##
     mydata <- list(y=1, PGF=PGF,
                    parm.names=c(Mnames,Fnames),
-                   mon.names=c('lpf',paste0('G',0:maxSpikes)) #c('lpf','MI')
+                   mon.names=c('lpf',paste0('G',0:maxS)) #c('lpf','MI')
                    ##nn=nn,
                    ##L=L,
                    ##T=T,
@@ -467,7 +552,7 @@ hist(myMCsamples[,1])
         ## mi <- mutualinfo(FF)
         ##
         ##
-        lpf <- sum((dgeo+dataAlphas-1+1/maxSpikes1)*log(FF), na.rm=F) -
+        lpf <- sum((dgeo+dataAlphas-1+1/maxS1)*log(FF), na.rm=F) -
             sum(lgamma(dgeo)) +
             ## sum(ddirichlet(x=FF, alpha = T * dgeo, log=TRUE) + 
             sum((shapegamma-1)*log(means),na.rm=TRUE) - sum(rategamma*means) 
@@ -504,13 +589,13 @@ hist(myMCsamples[,1])
     mcmcrun <- mcoutput$Posterior1[remsummary## -round((1:mcburnin)/thinning)
                                   ,-meansInd]
     nDraws <- nrow(mcmcrun)
-    dim(mcmcrun) <- c(nDraws,nStimuli,maxSpikes1)
+    dim(mcmcrun) <- c(nDraws,nStimuli,maxS1)
     dimnames(mcmcrun) <- list(NULL, nameStimulus, nameNspikes)
     postMISamples <- apply(mcmcrun,1,mutualinfo)
     postMIDistr <- hist(postMISamples, breaks=seq(0,1,by=0.02), plot=F)
     postMIQuantiles <- quantile(x=postMISamples, probs=c(0.025,0.5,0.975))
     condfreqSamples <- t(apply(mcmcrun,1,normalizerows))
-    dim(condfreqSamples) <- c(nDraws, nStimuli, maxSpikes1)
+    dim(condfreqSamples) <- c(nDraws, nStimuli, maxS1)
     dimnames(condfreqSamples) <- dimnames(mcmcrun)
     ##
     ##
@@ -557,7 +642,7 @@ hist(myMCsamples[,1])
     ##
     ## Plot MCMC diagnostics
     testsamples <- mcoutput$Posterior1[remsummary,-meansInd]
-    dim(testsamples) <- c(nrow(testsamples),nStimuli,maxSpikes1)
+    dim(testsamples) <- c(nrow(testsamples),nStimuli,maxS1)
     pdff(paste0('LD_MCsummary',chunk))
     matplot(mcoutput$Monitor[remsummary,1],type='l',ylab='log-likelihood')
     matplot(t(mcoutput$Monitor[remsummary,-1]),type='l',ylab='geom distr')
@@ -577,13 +662,13 @@ testplots <- function(){
         ## dgeo <- dgeom(nspikesVals2, prob=1/(means+1), log=FALSE)
         ## dim(dgeo) <- dimjointfreq
         ## dgeo <- T * dgeo/rowSums(dgeo)
-        FF <- rdirichlet(n=2,alpha=dgeo+dataAlphas+1/maxSpikes1)
+        FF <- rdirichlet(n=2,alpha=dgeo+dataAlphas+1/maxS1)
         c(means,FF)
     }
     mcmcrun <- testoutput[,-meansInd]
         ## means <- parm[meansInd]
         ## FF <- parm[-meansInd]
-        ## dim(FF) <- c(nStimuli, maxSpikes1)
+        ## dim(FF) <- c(nStimuli, maxS1)
         ## sFF <- rowSums(FF)
         ## tFF <- sum(sFF)
         ## ## mi <- mutualinfo(FF)
@@ -595,13 +680,13 @@ testplots <- function(){
         ##                log=TRUE) + 
         ##     sum(dgamma(means, shape=shapegamma, rate=rategamma, log=TRUE)) # -
     nDraws <- nrow(mcmcrun)
-    dim(mcmcrun) <- c(nDraws,nStimuli,maxSpikes1)
+    dim(mcmcrun) <- c(nDraws,nStimuli,maxS1)
     dimnames(mcmcrun) <- list(NULL, nameStimulus, nameNspikes)
     postMISamples <- apply(mcmcrun,1,mutualinfo)
     postMIDistr <- hist(postMISamples, breaks=seq(0,1,by=0.02), plot=F)
     postMIQuantiles <- quantile(x=postMISamples, probs=c(0.025,0.5,0.975))
     condfreqSamples <- t(apply(mcmcrun,1,normalizerows))
-    dim(condfreqSamples) <- c(nDraws, nStimuli, maxSpikes1)
+    dim(condfreqSamples) <- c(nDraws, nStimuli, maxS1)
     dimnames(condfreqSamples) <- dimnames(mcmcrun)
     ##
     ##
@@ -663,7 +748,7 @@ testplots()
     ##         ddirichlet(x=FF, alpha = T * dgeo, log=TRUE) + 
     ##         dgamma(means, shape=shapegamma, rate=rategamma, log=TRUE) -
     ##         ##sum(tcrossprod(FF, smoothm)^2) -
-    ##         1e3*(tFF-maxSpikes1)^2
+    ##         1e3*(tFF-maxS1)^2
     ##     }))
     ##     ##
     ##     list(LP=LP, Dev=-2*LP, Monitor=LP, yhat=1, parm=parm)
