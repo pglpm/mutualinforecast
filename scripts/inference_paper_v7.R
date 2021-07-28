@@ -1,5 +1,5 @@
 ## Author: Battistin, Gonzalo Cogno, Porta Mana
-## Last-Updated: 2021-07-28T08:04:10+0200
+## Last-Updated: 2021-07-28T13:15:31+0200
 ################
 ## Script for:
 ## - outputting samples of prior & posterior distributions
@@ -97,9 +97,10 @@ colnames(longrunFreqs) <- nameNspikes <- paste0('nspikes',nspikesVals)
 longrunMI <- c(bit=mutualinfo(longrunFreqs))
 ## frequencies of sample
 gc()
-plan(sequential)
+chunk <- 0
+#plan(sequential)
 #plan(multisession, workers = 6L)
-allmcoutput <- foreach(chunk=0:0, .inorder=F, .packages=c('data.table','LaplacesDemon','extraDistr'))%do%{
+#allmcoutput <- foreach(chunk=0:0, .inorder=F, .packages=c('data.table','LaplacesDemon','extraDistr'))%do%{
     pflag <- 0
     if(chunk==0){chunk <- 1
         pflag <- 1}
@@ -119,7 +120,10 @@ allmcoutput <- foreach(chunk=0:0, .inorder=F, .packages=c('data.table','Laplaces
     ##
     ##
     ## MONTE CARLO sampling for prior and posterior
-    ##
+##
+
+
+    T <- 10
     dimjointfreq <- c(nStimuli, maxSpikes1)
     nspikesVals2 <- rep(nspikesVals,each=nStimuli)
     prob <- 1/(priorMeanSpikes+1)
@@ -128,42 +132,207 @@ allmcoutput <- foreach(chunk=0:0, .inorder=F, .packages=c('data.table','Laplaces
     dim(dgeo) <- dimjointfreq
     dgeo <- T * dgeo/rowSums(dgeo)
     dgeo1 <- dgeo[1,]
+    smoothness <- 10
+smoothm <- diff(diag(maxSpikes1),differences=2)
+smoothdim <- nrow(smoothm)
+    ##
+    ## Log-probability
+##
     ##
     dsmoothdirch <- nimbleFunction(
-        run = function(x=double(1), alpha=double(1), smoothm=double(2), log=integer(0)){
+        run = function(x=double(1), alpha=double(1), smatrix=double(2), normconstant=double(0, default=0), normstrength=double(0, default=1000), log=integer(0, default=0)){
             returnType(double(0))
-            logp <- ddirch(x=x, alpha=alpha, log=TRUE) + sum((smoothm %*% x)^2)
+            tx <- sum(x)
+            f <- exp(x)/sum(exp(x))
+            logp <- sum(alpha %*% log(f)) - sum((smatrix %*% log(f))^2) - normstrength * (tx-normconstant)^2 #+ sum(log(f))
             if(log) return(logp)
             else return(exp(logp))
         })
-    registerDistributions(list(
-        dsmoothdirch = list(BUGSdist='dsmoothdirch(alpha,smoothm)',
-                       Rdist = 'dsmoothdirch(alpha,smoothm)',
-                       pqAvail = FALSE)
-    ))
-    logprob <- nimbleCode({
-            F[1:maxSpikes1] ~ dsmoothdirch(alpha[1:maxSpikes1])
-            }
-    })
-    logprob <- nimbleCode({
-            F[1:maxSpikes1] ~ ddirch(alpha[1:maxSpikes1])
-    })
-    ## logprob <- nimbleCode({
-    ##     for(i in 1:nStimuli){
-    ##         FF[i,1:maxSpikes1] ~ ddirch(dgeo1[1:maxSpikes1])
-    ##     }
-    ## })
     ##
-    constants <- list(alpha=dgeo1, maxSpikes1=maxSpikes1)
-    initialvalues <- list(F=normalize(dgeo1+1))
+    assign('dsmoothdirch', dsmoothdirch, envir = .GlobalEnv)
+##
+constants <- list(maxSpikes1=maxSpikes1, smoothdim=smoothdim, alphac=dgeo1, smatrixc=smoothness*smoothm)
     ##
-    model <- nimbleModel(code = logprob, name = 'logprob', constants = constants, data = list(), inits = initialvalues)
-    confmodel <- configureMCMC(model, nodes=NULL)
-    confmodel$addSampler(target='F',type='AF_slice')    
+    initF <- normalize(dgeo1+1/(maxSpikes1))
+    initF <- log(initF) - sum(log(initF))/maxSpikes1
+    initialvalues <- list(F=initF)
+    ##
+logprob <- nimbleCode({
+            F[1:maxSpikes1] ~ dsmoothdirch(alpha=alphac[1:maxSpikes1], smatrix=smatrixc[1:smoothdim,1:maxSpikes1], normconstant=0, normstrength=1000)
+    })
+    t2f <- function(t){exp(t)/sum(exp(t))}
+    ##
+    ##
+    model <- nimbleModel(code=logprob, name='model', constants=constants, data=list(), inits=initialvalues)
+    Cmodel <- compileNimble(model, showCompilerOutput = TRUE, resetFunctions = TRUE)
+    confmodel <- configureMCMC(Cmodel, nodes=NULL)
+confmodel$addSampler(target='F', type='AF_slice', control=list(sliceAdaptFactorMaxIter=10000, sliceAdaptFactorInterval=1000, sliceAdaptWidthMaxIter=1000, sliceMaxSteps=100, maxContractions=1000))
+confmodel$addMonitors('logProb_F')
     mcmcsampler <- buildMCMC(confmodel)
-    Cmodel <- compileNimble(model)
-    Cmcmcsampler <- compileNimble(mcmcsampler)
-    mcsamples <- runMCMC(Cmcmcsampler, nburnin=100, niter=1100)
+    Cmcmcsampler <- compileNimble(mcmcsampler, resetFunctions = TRUE)
+    mcsamples <- runMCMC(Cmcmcsampler, nburnin=10000, niter=20000, thin=10)
+    fsamples <- t(apply(mcsamples[,-ncol(mcsamples)],1,t2f))
+    matplot(t(fsamples[round(seq(1,nrow(fsamples),length.out=100)),]),type='l', lty=1,ylim=c(0,max(fsamples)),ylab='freq')
+
+llsamples <- mcsamples[,'logProb_F[1]']
+    matplot(llsamples[round(seq(1,nrow(mcsamples),length.out=100))],type='l', lty=1,ylab='freq')
+
+
+
+mcmcConf$addMonitors("logProb_alpha", "logProb_sigma_mu", "logProb_Y")
+
+
+##### no exp, boundaries
+    T <- 10
+    dimjointfreq <- c(nStimuli, maxSpikes1)
+    nspikesVals2 <- rep(nspikesVals,each=nStimuli)
+    prob <- 1/(priorMeanSpikes+1)
+    dgeo <- ((1-prob)^nspikesVals2) * prob
+    ## dgeom(nspikesVals2, prob=1/(means+1), log=FALSE)
+    dim(dgeo) <- dimjointfreq
+    dgeo <- T * dgeo/rowSums(dgeo)
+    dgeo1 <- dgeo[1,]
+    smoothness <- 10
+smoothm <- diff(diag(maxSpikes1),differences=2)
+smoothdim <- nrow(smoothm)
+    ##
+    ## Log-probability
+##
+    ##
+    dsmoothdirch2 <- nimbleFunction(
+        run = function(x=double(1), alpha=double(1), smatrix=double(2), normconstant=double(0, default=1), normstrength=double(0, default=1000), log=integer(0, default=0)){
+            returnType(double(0))
+            tx <- sum(x)
+            f <- x/tx
+            logp <- sum((alpha-1) %*% log(f)) - sum((smatrix %*% log(f))^2) - normstrength * (tx-normconstant)^2 
+            if(log) return(logp)
+            else return(exp(logp))
+        })
+    ##
+    assign('dsmoothdirch2', dsmoothdirch2, envir = .GlobalEnv)
+##
+constants <- list(maxSpikes1=maxSpikes1, smoothdim=smoothdim, alphac=dgeo1, smatrixc=smoothness*smoothm, constraintdata=rep(1,maxSpikes1))
+    ##
+    initF <- maxSpikes1 * normalize(dgeo1+1/(maxSpikes1))
+    initialvalues <- list(F=initF)
+    ##
+    logprob2 <- nimbleCode({
+        F[1:maxSpikes1] ~ dsmoothdirch2(alpha=alphac[1:maxSpikes1], smatrix=smatrixc[1:smoothdim,1:maxSpikes1], normconstant=maxSpikes1, normstrength=1000)
+        for(i in 1:maxSpikes1){ constraintdata[i] ~ dconstraint(F[i]>0)}
+    })
+    ##t2f <- function(t){exp(t)/sum(exp(t))}
+    ##
+    ##
+    model2 <- nimbleModel(code=logprob2, name='model2', constants=constants, data=list(), inits=initialvalues)
+    Cmodel2 <- compileNimble(model2, showCompilerOutput = TRUE, resetFunctions = TRUE)
+    confmodel2 <- configureMCMC(Cmodel2, nodes=NULL)
+    confmodel2$addSampler(target='F', type='AF_slice', control=list(sliceAdaptFactorMaxIter=10000, sliceAdaptFactorInterval=1000, sliceAdaptWidthMaxIter=1000, sliceMaxSteps=100, maxContractions=1000))
+confmodel2$addMonitors('logProb_F')
+    mcmcsampler2 <- buildMCMC(confmodel2)
+    Cmcmcsampler2 <- compileNimble(mcmcsampler2, resetFunctions = TRUE)
+    mcsamples2 <- runMCMC(Cmcmcsampler2, nburnin=10000, niter=20000, thin=10)
+    fsamples2 <- t(apply(mcsamples2[,-ncol(mcsamples2)],1,normalize))
+    matplot(t(fsamples2[round(seq(1,nrow(fsamples2),length.out=100)),]),type='l', lty=1,ylim=c(0,max(fsamples2)),ylab='freq')
+
+llsamples2 <- mcsamples2[,'logProb_F[1]']
+    matplot(llsamples2[round(seq(1,nrow(mcsamples2),length.out=100))],type='l', lty=1,ylab='freq')
+
+matplot(cbind(llsamples[round(seq(1,nrow(mcsamples2),length.out=100))],
+              llsamples2[round(seq(1,nrow(mcsamples2),length.out=100))])
+       ,type='l', lty=1,ylab='freq')
+
+    matplot(t(fsamples2[round(seq(1,nrow(fsamples2),length.out=10)),]),type='l', lty=1,ylim=c(0,max(c(fsamples2,fsamples))),col=myred,ylab='freq')
+    matplot(t(fsamples[round(seq(1,nrow(fsamples2),length.out=10)),]),type='l', lty=1,ylim=c(0,max(c(fsamples2,fsamples))),col=myblue,ylab='freq',add=T)
+
+
+    T <- 100
+    dimjointfreq <- c(nStimuli, maxSpikes1)
+    nspikesVals2 <- rep(nspikesVals,each=nStimuli)
+    prob <- 1/(priorMeanSpikes+1)
+    dgeo <- ((1-prob)^nspikesVals2) * prob
+    ## dgeom(nspikesVals2, prob=1/(means+1), log=FALSE)
+    dim(dgeo) <- dimjointfreq
+    dgeo <- 1 + 0 * T * dgeo/rowSums(dgeo)
+    dgeo1 <- dgeo[1,]
+    smoothness <- 0
+    smoothm <- diff(diag(maxSpikes1),differences=2)
+    ##
+    ## Log-probability
+##     dsmoothdirch <- nimbleFunction(
+##         run = function(x=double(1), alpha=double(1), smatrix=double(2), #normconstant=double(0, default=1), normstrength=double(0, default=1000),
+##                        log=integer(0, default=0)){
+##             returnType(double(0))
+## ##            logp <- ddirch(x=x, alpha=alpha, log=TRUE) - sum((smatrix %*% log(x))^2) #- normstrength * (tx-normconstant)^2 #+ sum(log(f))
+##             logp <- sum((alpha-1) %*% log(x)) - sum((smatrix %*% log(x))^2) #- normstrength * (tx-normconstant)^2 #+ sum(log(f))
+##             if(log) return(logp)
+##             else return(exp(logp))
+##         })
+##     ##
+##     registerDistributions(list(
+##         dsmoothdirch = list(BUGSdist='dsmoothdirch(alpha, smatrix)',
+##                             pqAvail = FALSE,
+##                             types=c('value = double(1)', 'alpha = double(1)', 'smatrix = double(2)'),
+##                             range=c(0,1))
+##     ))
+##     ##
+##     constants <- list(maxSpikes1=maxSpikes1, smoothdim=nrow(smoothm), alpha=dgeo1, smatrix=smoothness*smoothm)
+##     ##
+##     initF <- normalize(dgeo1+1/(maxSpikes1))
+##     initialvalues <- list(F=initF)
+##     ##
+##     logprob <- nimbleCode({
+##             F[1:maxSpikes1] ~ dsmoothdirch(alpha=alpha[1:maxSpikes1], smatrix=smoothmatrix[1:smoothdim,1:maxSpikes1])
+##     })
+##     t2f <- identity
+##
+    ##
+    dsmoothdirch <- nimbleFunction(
+        run = function(x=double(1), alpha=double(1), smatrix=double(2), normconstant=double(0, default=0), normstrength=double(0, default=1000), log=integer(0, default=0)){
+            returnType(double(0))
+            tx <- sum(x)
+            f <- exp(x)/sum(exp(x))
+            logp <- sum(alpha %*% log(f)) - sum((smatrix %*% log(f))^2) - normstrength * (tx-normconstant)^2 #+ sum(log(f))
+            if(log) return(logp)
+            else return(exp(logp))
+        })
+    ##
+    assign('dsmoothdirch', dsmoothdirch, envir = .GlobalEnv)
+    registerDistributions(list(
+        dsmoothdirch = list(BUGSdist='dsmoothdirch(alpha,smatrix,normconstant,normstrength)',
+                            pqAvail = FALSE,
+#                            types=c('value = double(1)', 'alpha = double(1)', 'smatrix = double(2)', 'normconstant = double(0)', 'normstrength = double(0)'),
+                            range=c(-Inf,Inf))
+    ))
+    ##
+    constants <- list(maxSpikes1=maxSpikes1, smoothdim=nrow(smoothm), alpha=dgeo1, smatrix=smoothness*smoothm)
+    ##
+    initF <- normalize(dgeo1+1/(maxSpikes))
+    initF <- log(initF) - sum(log(initF))/maxSpikes1
+    initialvalues <- list(F=initF)
+    ##
+    logprob <- nimbleCode({
+            F[1:maxSpikes1] ~ dsmoothdirch(alpha=alpha[1:maxSpikes1], smatrix=smatrix[1:smoothdim, 1:maxSpikes1], normconstant=0, normstrength=1000)
+    })
+    t2f <- function(t){exp(t)/sum(exp(t))}
+    ##
+    ##
+    model <- nimbleModel(code=logprob, name='logprob', constants=constants, data=list(), inits=initialvalues)
+    Cmodel <- compileNimble(model, resetFunctions = TRUE)
+    confmodel <- configureMCMC(Cmodel, nodes=NULL)
+    confmodel$addSampler(target='F', type='AF_slice', control=list(sliceAdaptFactorMaxIter=10000, sliceAdaptFactorInterval=1000, sliceAdaptWidthMaxIter=1000, sliceMaxSteps=100, maxContractions=1000))
+    mcmcsampler <- buildMCMC(confmodel)
+    Cmcmcsampler <- compileNimble(mcmcsampler, resetFunctions = TRUE)
+    mcsamples <- runMCMC(Cmcmcsampler, nburnin=10000, niter=20000, thin=10)
+    fsamples <- t(apply(mcsamples,1,t2f))
+    matplot(t(fsamples[round(seq(1,nrow(fsamples),length.out=100)),]),type='l', lty=1,ylim=c(0,max(fsamples)),ylab='freq')
+
+
+
+
+
+
+
+
 
     
     mcsamples <- nimbleMCMC(code = logprob, 
