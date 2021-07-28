@@ -1,5 +1,5 @@
 ## Author: Battistin, Gonzalo Cogno, Porta Mana
-## Last-Updated: 2021-07-27T19:18:15+0200
+## Last-Updated: 2021-07-27T19:14:51+0200
 ################
 ## Script for:
 ## - outputting samples of prior & posterior distributions
@@ -129,10 +129,10 @@ allmcoutput <- foreach(chunk=0:0, .inorder=F, .packages=c('data.table','Laplaces
     rategamma <- priorMeanSpikes/priorSdSpikes^2
     ##
     outfile <- paste0('_LDoutput',chunk)
-    thinning <- 3 #10
+    thinning <- 10 #10
     mcadapt <- 2600 #10e3
     mcburnin <- mcadapt
-    mciterations <- mcburnin + 3000
+    mciterations <- mcburnin + 10000
     mcstatus <- 200 #1e3
     Fnames <- paste0('F',rep(nspikesVals,each=nStimuli),'_',rep(stimulusVals,times=maxSpikes1))
     Mnames <- paste0('mean',stimulusVals)
@@ -170,9 +170,7 @@ allmcoutput <- foreach(chunk=0:0, .inorder=F, .packages=c('data.table','Laplaces
         dim(dgeo) <- dimjointfreq
         dgeo <- T * dgeo/rowSums(dgeo)
     PGF <- function(data){
-        means <- rgamma(n=2, shape=shapegamma, rate=rategamma)
-        c(means,
-        1 * rdirichlet(n=2, alpha=1/(maxSpikes1*10)+dgeo))
+        c(1 * rdirichlet(n=2, alpha=1/(maxSpikes1*100)+T*dgeo))
     }
     ##
     mydata <- list(y=1, PGF=PGF,
@@ -200,8 +198,8 @@ allmcoutput <- foreach(chunk=0:0, .inorder=F, .packages=c('data.table','Laplaces
         ## mi <- mutualinfo(FF)
         ##
         ##
-        lpf <- sum((dgeo+dataAlphas-1+1/(maxSpikes1*10))*log(FF), na.rm=F) +
-            ##-sum(lgamma(dgeo)) +
+        lpf <- sum((dgeo+dataAlphas-1+1/(maxSpikes1*100))*log(FF), na.rm=F) -
+            sum(lgamma(dgeo)) +
             ## sum(ddirichlet(x=FF, alpha = T * dgeo, log=TRUE) + 
             sum((shapegamma-1)*log(means),na.rm=TRUE) - sum(rategamma*means) 
         ## dgamma(means, shape=shapegamma, rate=rategamma, log=TRUE)) # -
@@ -310,7 +308,7 @@ testplots <- function(){
         ## dgeo <- dgeom(nspikesVals2, prob=1/(means+1), log=FALSE)
         ## dim(dgeo) <- dimjointfreq
         ## dgeo <- T * dgeo/rowSums(dgeo)
-        FF <- rdirichlet(n=2,alpha=dgeo+dataAlphas+1/(maxSpikes1*10))
+        FF <- rdirichlet(n=2,alpha=dgeo+dataAlphas+1/maxSpikes1)
         c(means,FF)
     }
     mcmcrun <- testoutput[,-meansInd]

@@ -1,5 +1,5 @@
 ## Author: Battistin, Gonzalo Cogno, Porta Mana
-## Last-Updated: 2021-07-27T19:18:15+0200
+## Last-Updated: 2021-07-28T07:52:05+0200
 ################
 ## Script for:
 ## - outputting samples of prior & posterior distributions
@@ -37,8 +37,8 @@ library('doFuture')
 registerDoFuture()
 library('doRNG')
 library('ash')
-library('LaplacesDemon') # used for Dirichlet generator
-library('extraDistr')
+library('nimble')
+#library('extraDistr')
 options(bitmapType='cairo')
 pdff <- function(filename){pdf(file=paste0(filename,'.pdf'),paper='a4r',height=11.7,width=16.5)} # to output in pdf format
 pngf <- function(filename,res=300){png(file=paste0(filename,'.png'),height=11.7*1.2,width=16.5,units='in',res=res,pointsize=36)} # to output in png format
@@ -118,8 +118,57 @@ allmcoutput <- foreach(chunk=0:0, .inorder=F, .packages=c('data.table','Laplaces
         chunk <- 0}
     ##
     ##
-    ## Alphas for Dirichlet distribution
+    ## MONTE CARLO sampling for prior and posterior
     ##
+    dimjointfreq <- c(nStimuli, maxSpikes1)
+    nspikesVals2 <- rep(nspikesVals,each=nStimuli)
+    prob <- 1/(priorMeanSpikes+1)
+    dgeo <- ((1-prob)^nspikesVals2) * prob
+    ## dgeom(nspikesVals2, prob=1/(means+1), log=FALSE)
+    dim(dgeo) <- dimjointfreq
+    dgeo <- T * dgeo/rowSums(dgeo)
+    dgeo1 <- dgeo[1,]
+    ##
+    dsmoothdirch <- nimbleFunction(
+        run = function(x=double(1), alpha=double(1), smoothm=double(2), log=integer(0)){
+            returnType(double(0))
+            logp <- ddirch(x=x, alpha=alpha, log=TRUE) + sum((smoothm %*% x)^2)
+            if(log) return(logp)
+            else return(exp(logp))
+        })
+    registerDistributions(list(
+        dsmoothdirch = list(BUGSdist='dsmoothdirch(alpha,smoothm)',
+                       Rdist = 'dsmoothdirch(alpha,smoothm)',
+                       pqAvail = FALSE)
+    ))
+    logprob <- nimbleCode({
+            F[1:maxSpikes1] ~ dsmoothdirch(alpha[1:maxSpikes1])
+            }
+    })
+    ## logprob <- nimbleCode({
+    ##     for(i in 1:nStimuli){
+    ##         FF[i,1:maxSpikes1] ~ ddirch(dgeo1[1:maxSpikes1])
+    ##     }
+    ## })
+    ##
+    constants <- list(alpha=c(1,1))
+    initialvalues <- list(F=c(0.1,-0.1))
+    ##
+    model <- nimbleModel(code = logprob, name = 'logprob', constants = constants, data = list(), inits = initialvalues)
+    confmodel <- configureMCMC(model, nodes=NULL)
+    confmodel$addSampler(target='F',type='AF_slice')    
+    mcmcsampler <- buildMCMC(confmodel)
+    Cmodel <- compileNimble(model)
+    Cmcmcsampler <- compileNimble(mcmcsampler)
+    mcsamples <- runMCMC(Cmcmcsampler, nburnin=100, niter=1100)
+
+    
+    mcsamples <- nimbleMCMC(code = logprob, 
+                            constants = constants, 
+                                 data = list(), 
+                                 inits = initialvalues,
+                                 nburnin = 1000, niter = 1000)
+    
     dataAlphas <- sampleFreqs * (pflag==0)
     ## Generate samples
     set.seed(147+chunk)
@@ -129,10 +178,10 @@ allmcoutput <- foreach(chunk=0:0, .inorder=F, .packages=c('data.table','Laplaces
     rategamma <- priorMeanSpikes/priorSdSpikes^2
     ##
     outfile <- paste0('_LDoutput',chunk)
-    thinning <- 3 #10
+    thinning <- 10 #10
     mcadapt <- 2600 #10e3
     mcburnin <- mcadapt
-    mciterations <- mcburnin + 3000
+    mciterations <- mcburnin + 10000
     mcstatus <- 200 #1e3
     Fnames <- paste0('F',rep(nspikesVals,each=nStimuli),'_',rep(stimulusVals,times=maxSpikes1))
     Mnames <- paste0('mean',stimulusVals)
@@ -172,7 +221,7 @@ allmcoutput <- foreach(chunk=0:0, .inorder=F, .packages=c('data.table','Laplaces
     PGF <- function(data){
         means <- rgamma(n=2, shape=shapegamma, rate=rategamma)
         c(means,
-        1 * rdirichlet(n=2, alpha=1/(maxSpikes1*10)+dgeo))
+        1 * rdirichlet(n=2, alpha=1/(maxSpikes1/100)+T*dgeo))
     }
     ##
     mydata <- list(y=1, PGF=PGF,
@@ -200,8 +249,8 @@ allmcoutput <- foreach(chunk=0:0, .inorder=F, .packages=c('data.table','Laplaces
         ## mi <- mutualinfo(FF)
         ##
         ##
-        lpf <- sum((dgeo+dataAlphas-1+1/(maxSpikes1*10))*log(FF), na.rm=F) +
-            ##-sum(lgamma(dgeo)) +
+        lpf <- sum((dgeo+dataAlphas-1+1/maxSpikes1)*log(FF), na.rm=F) -
+            sum(lgamma(dgeo)) +
             ## sum(ddirichlet(x=FF, alpha = T * dgeo, log=TRUE) + 
             sum((shapegamma-1)*log(means),na.rm=TRUE) - sum(rategamma*means) 
         ## dgamma(means, shape=shapegamma, rate=rategamma, log=TRUE)) # -
@@ -310,7 +359,7 @@ testplots <- function(){
         ## dgeo <- dgeom(nspikesVals2, prob=1/(means+1), log=FALSE)
         ## dim(dgeo) <- dimjointfreq
         ## dgeo <- T * dgeo/rowSums(dgeo)
-        FF <- rdirichlet(n=2,alpha=dgeo+dataAlphas+1/(maxSpikes1*10))
+        FF <- rdirichlet(n=2,alpha=dgeo+dataAlphas+1/maxSpikes1)
         c(means,FF)
     }
     mcmcrun <- testoutput[,-meansInd]
