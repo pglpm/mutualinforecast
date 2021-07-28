@@ -1,5 +1,5 @@
 ## Author: Battistin, Gonzalo Cogno, Porta Mana
-## Last-Updated: 2021-07-28T19:37:04+0200
+## Last-Updated: 2021-07-28T21:58:53+0200
 ################
 ## Script for:
 ## - outputting samples of prior & posterior distributions
@@ -131,47 +131,14 @@ allmcoutput <- foreach(chunk=0:0, .inorder=F, .packages=c('data.table','Laplaces
     dim(dgeo) <- dimjointfreq
     dgeo <- T * dgeo/rowSums(dgeo) + sampleFreqs
     dgeo1 <- dgeo[1,]
-    smoothm <- diff(diag(maxS1),differences=2)
-    smoothdim <- nrow(smoothm)
+    smoothm <- t(diff(diag(maxS1),differences=2))
+    smoothdim <- ncol(smoothm)
     ##
-
-
-
-    testf <- nimbleFunction(
-        run = function(x=double(2)){
-            returnType(double(1))
-            a <- dim(x)[2]
-            return(c(x %*% numeric(value=1,length=a)))
-        }
-    )
-Ctestf <- compileNimble(testf)
-
-    testf2 <- nimbleFunction(
-        run = function(x=double(2)){
-            returnType(double(1))
-            y <- numeric(value=0,length=dim(x)[1])
-            for(i in 1:(dim(x)[1])){
-                y[i] <- sum(x[i,])
-            }
-            return(y)
-        }
-    )
-Ctestf2 <- compileNimble(testf2)
-
-        testf3 <- nimbleFunction(
-        run = function(x=double(2)){
-            returnType(double(1))
-            d <- dim(x)[1]
-            y <- numeric(value=0,length=d)
-            for(i in 1:d){
-                y[i] <- sum(x[i,])
-            }
-            return(y)
-        }
-    )
-Ctestf3 <- compileNimble(testf3)
-
-
+    ## Functions definitions
+    ##
+    t2f <- function(t){exp(t)/sum(exp(t))}
+    ##
+    ## Normalize rows
     Nnormrows <- nimbleFunction(
         run = function(x=double(2)){
             newx <- matrix(value=0,init=FALSE,nrow=dim(x)[1],ncol=dim(x)[2])
@@ -179,73 +146,86 @@ Ctestf3 <- compileNimble(testf3)
             return(newx)
             returnType(double(2))
         })
-
-    Ncentropy <- nimbleFunction(
+    ## Cross-entropy
+    Ncrossentropy <- nimbleFunction(
         run = function(x=double(1), y=double(1, default=x), base=double(0, default=2)){
-        nzero <- which(x>0)
-        return(sum(x[nzero] * log(y[nzero])/log(base)))
-        returnType(double(0))
-})
-Ccentropy <- compileNimble(Ncentropy)    
-    
+            nzero <- which(x>0)
+            return(sum(x[nzero] * log(y[nzero])/log(base)))
+            returnType(double(0))
+        })
+    ##Ccentropy <- compileNimble(Ncentropy)    
+    ##
+    ## Mutual info
     Nmutualinfo <- nimbleFunction(
         run = function(x=double(2), base=double(0, default=2)){
-            #x <- matrix(value=0,init=FALSE,nrow=dim(x)[1],ncol=dim(x)[2])
             x <- Nnormrows(x)/(dim(x)[1])
             marg <- numeric(value=0, length=dim(x)[2])
             for(i in 1:(dim(x)[1])){marg <- marg + x[i,]}
-            mi <- Ncentropy(x=c(x), y=c(x), base=base) - Ncentropy(x=marg, y=marg, base=base) + log(dim(x)[1])/log(base)
-            return(mi)
+            return(Ncrossentropy(x=c(x), y=c(x), base=base) - Ncrossentropy(x=marg, y=marg, base=base) + log(dim(x)[1])/log(base))
             returnType(double(0))
         })
-    Cmutualinfo <- compileNimble(Nmutualinfo)
-
+    ## Cmutualinfo <- compileNimble(Nmutualinfo)
+    ##
+    ## Transform log-frequencies to frequencies
     Nx2f <- nimbleFunction(
         run = function(x=double(2)){
-            
-        })
-            
-    jointFreqs <- (jointFreqs/rowSums(jointFreqs)) * stimulusFreqs
-    sum(jointFreqs *
-        log2(jointFreqs/outer(rowSums(jointFreqs), colSums(jointFreqs))),
-        na.rm=TRUE)/log2(base)
-            
-            tx <- sum(x)
-            f <- exp(x)/sum(exp(x))
-            logp <- sum(alpha %*% log(f)) - sum((smatrix %*% log(f))^2) - normstrength * (tx-normconstant)^2 
-            if(log) return(logp)
-            else return(exp(logp))
-        })
-    mutualinfo <- function(jointFreqs,base=2){##in bits by default
-    stimulusFreqs <- 1/nrow(jointFreqs)
-    ## (conditional freqs B|S) * (new freq S)
-    jointFreqs <- (jointFreqs/rowSums(jointFreqs)) * stimulusFreqs
-    sum(jointFreqs *
-        log2(jointFreqs/outer(rowSums(jointFreqs), colSums(jointFreqs))),
-        na.rm=TRUE)/log2(base)
-}
-
-    ## Probability density
-    dlogsmoothdirch <- nimbleFunction(
-        run = function(x=double(1), alpha=double(1), smatrix=double(2), normconstant=double(0, default=0), normstrength=double(0, default=1000), log=integer(0, default=0)){
-            returnType(double(0))
-            tx <- sum(x)
-            f <- exp(x)/sum(exp(x))
-            logp <- sum(alpha %*% log(f)) - sum((smatrix %*% log(f))^2) - normstrength * (tx-normconstant)^2 
-            if(log) return(logp)
-            else return(exp(logp))
+            return(Nnormrows(exp(x)))
+            returnType(double(2))
         })
     ##
+    ##
+    ## Probability density
+    ## dlogsmoothdirch2 <- nimbleFunction(
+    ##     run = function(x=double(2), alpha=double(2), smatrix=double(2), normstrength=double(0, default=1000), log=integer(0, default=0)){
+    ##         returnType(double(0))
+    ##         tx <- sum(x)
+    ##         x <- Nnormrows(exp(x))
+    ##         logp <- sum(alpha * log(x)) - sum((log(x) %*% smatrix)^2) - normstrength  * tx^2 
+    ##         if(log) return(logp)
+    ##         else return(exp(logp))
+    ##     })
+    ## assign('dlogsmoothdirch2', dlogsmoothdirch2, envir = .GlobalEnv)
+    dlogsmoothdirch <- nimbleFunction(
+        run = function(x=double(1), alpha=double(1), smatrix=double(2), normstrength=double(0, default=10000), log=integer(0, default=0)){
+            returnType(double(0))
+            tx <- sum(x)
+            x <- x - log(sum(exp(x)))
+            logp <- sum(alpha * x) - sum((x %*% smatrix)^2) - normstrength  * tx^2 
+            ## x <- exp(x)/sum(exp(x)) # this is slower
+            ## logp <- sum(alpha * log(x)) - sum((log(x) %*% smatrix)^2) - normstrength  * tx^2 
+            if(log) return(logp)
+            else return(exp(logp))
+        })
     assign('dlogsmoothdirch', dlogsmoothdirch, envir = .GlobalEnv)
+    ## Cdlogsmoothdirch <- compileNimble(dlogsmoothdirch)
+    ##
     lnprob <- nimbleCode({
         for(i in 1:nStimuli){
-            X[i,1:maxS1] ~ dsmoothdirch(alpha=alphac[1:maxS1], smatrix=smatrixc[1:smoothdim,1:maxS1], normconstant=0, normstrength=1000)
+            X[i,1:maxS1] ~ dlogsmoothdirch(alpha=alphac[1:maxS1], smatrix=smatrixc[1:maxS1,1:smoothdim], normstrength=1000)
         }
-        mutualinfo <- 
     })
-
-
-}
+    ##
+    constants <- list(maxS1=maxS1, smoothdim=smoothdim, alphac=dgeo1, smatrixc=smoothness*smoothm, nStimuli=nStimuli)
+    ##
+    initX <- normalizerows(dgeo+1/(maxS1))
+    initX <- log(initX) - rowSums(log(initX))/maxS1
+    inits <- list(X=initX)
+    ##
+    ##
+    model <- nimbleModel(code=lnprob, name='model', constants=constants, inits=inits, data=list())
+    Cmodel <- compileNimble(model, showCompilerOutput = TRUE, resetFunctions = TRUE)
+    confmodel <- configureMCMC(Cmodel, nodes=NULL)
+confmodel$addSampler(target='X[1,]', type='AF_slice', control=list(sliceAdaptFactorMaxIter=20000, sliceAdaptFactorInterval=1000, sliceAdaptWidthMaxIter=1000, sliceMaxSteps=100, maxContractions=1000))
+confmodel$addSampler(target='X[2,]', type='AF_slice', control=list(sliceAdaptFactorMaxIter=20000, sliceAdaptFactorInterval=1000, sliceAdaptWidthMaxIter=1000, sliceMaxSteps=100, maxContractions=100000))
+confmodel$addMonitors('logProb_X')
+    mcmcsampler <- buildMCMC(confmodel)
+    Cmcmcsampler <- compileNimble(mcmcsampler, resetFunctions = TRUE)
+    mcsamples <- runMCMC(Cmcmcsampler, nburnin=20000, niter=40000, thin=20)
+    fsamples <- t(apply(mcsamples[,-ncol(mcsamples)],1,Nx2f))
+    ##matplot(t(fsamples[round(seq(1,nrow(fsamples),length.out=100)),]),type='l', lty=1,ylim=c(0,max(fsamples)),ylab='freq')
+summ1 <- summary(fsamples[,1:4])
+llsamples <- mcsamples[,'logProb_F[1]']
+    matplot(llsamples[round(seq(1,nrow(mcsamples),length.out=100))],type='l', lty=1,ylab='freq')
 
 ############################################################
 ############################################################
@@ -262,36 +242,33 @@ dsmoothdirch <- nimbleFunction(
     ##
     assign('dsmoothdirch', dsmoothdirch, envir = .GlobalEnv)
 ##
-constants <- list(maxS1=maxS1, smoothdim=smoothdim, alphac=dgeo1, smatrixc=smoothness*smoothm)
-    ##
-    initF <- normalize(dgeo1+1/(maxS1))
-    initF <- log(initF) - sum(log(initF))/maxS1
-    initialvalues <- list(F=initF)
-    ##
-logprob <- nimbleCode({
-            F[1:maxS1] ~ dsmoothdirch(alpha=alphac[1:maxS1], smatrix=smatrixc[1:smoothdim,1:maxS1], normconstant=0, normstrength=1000)
-    })
-    t2f <- function(t){exp(t)/sum(exp(t))}
-    ##
-    ##
-    model <- nimbleModel(code=logprob, name='model', constants=constants, data=list(), inits=initialvalues)
-    Cmodel <- compileNimble(model, showCompilerOutput = TRUE, resetFunctions = TRUE)
-    confmodel <- configureMCMC(Cmodel, nodes=NULL)
-confmodel$addSampler(target='F', type='AF_slice', control=list(sliceAdaptFactorMaxIter=20000, sliceAdaptFactorInterval=1000, sliceAdaptWidthMaxIter=1000, sliceMaxSteps=100, maxContractions=1000))
-confmodel$addMonitors('logProb_F')
-    mcmcsampler <- buildMCMC(confmodel)
-    Cmcmcsampler <- compileNimble(mcmcsampler, resetFunctions = TRUE)
-    mcsamples <- runMCMC(Cmcmcsampler, nburnin=20000, niter=40000, thin=20)
-    fsamples <- t(apply(mcsamples[,-ncol(mcsamples)],1,t2f))
-    ##matplot(t(fsamples[round(seq(1,nrow(fsamples),length.out=100)),]),type='l', lty=1,ylim=c(0,max(fsamples)),ylab='freq')
-summ1 <- summary(fsamples[,1:4])
-llsamples <- mcsamples[,'logProb_F[1]']
-    matplot(llsamples[round(seq(1,nrow(mcsamples),length.out=100))],type='l', lty=1,ylab='freq')
 
 
 
 mcmcConf$addMonitors("logProb_alpha", "logProb_sigma_mu", "logProb_Y")
 
+logprob <- nimbleCode({
+            F[1:maxS1] ~ dsmoothdirch(alpha=alphac[1:maxS1], smatrix=smatrixc[1:smoothdim,1:maxS1], normconstant=0, normstrength=1000)
+    })
+
+    testf <- nimbleFunction(
+        run = function(x=double(1), y=double(1)){
+            return(c(x %*% log(y)))
+            returnType(double(1))
+        }
+)
+    Ctestf <- compileNimble(testf)
+    testf2 <- nimbleFunction(
+        run = function(x=double(1), y=double(1)){
+            return(sum(x * log(y)))
+            returnType(double(0))
+        }
+)
+    Ctestf2 <- compileNimble(testf2)
+
+
+
+}
 
 ############################################################
 ############################################################
