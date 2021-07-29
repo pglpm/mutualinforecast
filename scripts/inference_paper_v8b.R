@@ -1,5 +1,5 @@
 ## Author: Battistin, Gonzalo Cogno, Porta Mana
-## Last-Updated: 2021-07-29T21:29:16+0200
+## Last-Updated: 2021-07-29T21:45:27+0200
 ################
 ## Script for:
 ## - outputting samples of prior & posterior distributions
@@ -150,11 +150,12 @@ allmcoutput <- foreach(chunk=0:2, .inorder=F, .packages=c('data.table','nimble')
     rategamma <- sqrt(shapegamma)/priorSdSpikes
     ## shapegamma <- 1
     ## rategamma <- 1
-    powergamma <- 1
+    dgeobase <- dgeom(0:maxS,********)
+    baseweight <- 10
     print('data')
     print(c(chunk,shapegamma, rategamma, powergamma))
     prioralphas <- rep(0,maxS1)
-    smoothness <- 2
+    smoothness <- 0
     smoothm <- t(diff(diag(maxS1),differences=2))
     ##
     pflag <- 0
@@ -181,12 +182,12 @@ allmcoutput <- foreach(chunk=0:2, .inorder=F, .packages=c('data.table','nimble')
     ##
     ## Probability density
     dlogsmoothmean <- nimbleFunction(
-        run = function(x=double(1), alphas=double(1), powerexp=double(0), shapegamma=double(0), rategamma=double(0), smatrix=double(2), normstrength=double(0, default=1000), log=integer(0, default=0)){
+        run = function(x=double(1), alphas=double(1), basedist=double(1), strengthbase=double(0), shapegamma=double(0), rategamma=double(0), smatrix=double(2), normstrength=double(0, default=1000), log=integer(0, default=0)){
             returnType(double(0))
             tx <- sum(x)
-            f <- exp(x)/sum(exp(x))
-            dmean <- inprod(f,0:(length(f)-1))
-            logp <- sum((alphas+1) * log(f)) + (shapegamma-1)*log(dmean) - (rategamma*dmean)^powerexp - sum((log(f) %*% smatrix)^2) - normstrength  * tx^2 
+            dmean <- exp(x[1])
+            f <- exp(x[2:length(x)])/sum(exp(x[2:length(x)]))
+            logp <- sum((alphas+1) * log(f)) - strengthbase * sum((log(f)-basedist)^2) - shapegamma *log(dmean) - rategamma*dmean - sum((log(f) %*% smatrix)^2) - normstrength  * tx^2 
             if(log) return(logp)
             else return(exp(logp))
         })
@@ -194,15 +195,15 @@ allmcoutput <- foreach(chunk=0:2, .inorder=F, .packages=c('data.table','nimble')
     #Cdlogsmoothmean <- compileNimble(dlogsmoothmean)
     lnprob <- nimbleCode({
         for(i in 1:nStimuli){
-            X[i,1:maxS1] ~ dlogsmoothmean(alphas=postalphas[i,1:maxS1], powerexp=powergammac, shapegamma=shapegammac, rategamma=rategammac, smatrix=smatrixc[1:maxS1,1:smoothdim], normstrength=1000)
+            X[i,1+(1:maxS1)] ~ dlogsmoothmean(alphas=postalphas[i,1:maxS1], basedist=basedistc[1:maxS1], strengthbase=strengthbasec, shapegamma=shapegammac, rategamma=rategammac, smatrix=smatrixc[1:maxS1,1:smoothdim], normstrength=1000)
         }
     })
     ##
-    constants <- list(postalphas=sampleFreqs+prioralphas, powergammac=powergamma, shapegammac=shapegamma, rategammac=rategamma, smoothdim=ncol(smoothm), smatrixc=smoothness*smoothm, nStimuli=nStimuli, maxS1=maxS1, maxS=maxS)
+    constants <- list(postalphas=sampleFreqs+prioralphas, basedistc=dgeobase, strengthbasec=baseweight, shapegammac=shapegamma, rategammac=rategamma, smoothdim=ncol(smoothm), smatrixc=smoothness*smoothm, nStimuli=nStimuli, maxS1=maxS1, maxS=maxS)
     ##
     initX <- normalizerows(sampleFreqs+prioralphas+1)
     initX <- log(initX) - rowSums(log(initX))/maxS1
-    inits <- list(X=initX+rnorm(length(initX)))
+    inits <- list(X=c(log(priorMeanSpikes), initX+rnorm(length(initX)))
     ##
     ##
     model2 <- nimbleModel(code=lnprob, name='model2', constants=constants, inits=inits, data=list())
@@ -220,7 +221,7 @@ allmcoutput <- foreach(chunk=0:2, .inorder=F, .packages=c('data.table','nimble')
     nDraws <- nrow(mcsamples)
     llsamples <- mcsamples[,-(1:(maxS1*2)),drop=F]
     ##
-    condfreqSamples <- t(apply(mcsamples[,1:(maxS1*2)],1,function(x){
+    condfreqSamples <- t(apply(mcsamples[,1+(1:(maxS1*2))],1,function(x){
         dim(x) <- c(2,maxS1)
         Nx2f(x)}))
     dim(condfreqSamples) <- c(nrow(mcsamples),nStimuli,maxS1)
