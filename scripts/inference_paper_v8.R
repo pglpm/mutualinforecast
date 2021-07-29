@@ -1,5 +1,5 @@
 ## Author: Battistin, Gonzalo Cogno, Porta Mana
-## Last-Updated: 2021-07-29T14:31:38+0200
+## Last-Updated: 2021-07-29T15:14:24+0200
 ################
 ## Script for:
 ## - outputting samples of prior & posterior distributions
@@ -134,12 +134,13 @@ plan(sequential)
 #plan(multisession, workers = 6L)
 allmcoutput <- foreach(chunk=0:2, .inorder=F, .packages=c('data.table','nimble'))%do%{
     ##
-    ## priorMeanSpikes <- 0.5 # 0.2 = 5Hz * (40Hz/1000s)
-    ## priorSdSpikes <- 0.3 # 0.2 = 5Hz * (40Hz/1000s)
-    ## shapegamma <- (priorMeanSpikes/priorSdSpikes)^2
-    ## rategamma <- priorMeanSpikes/priorSdSpikes^2
-    shapegamma <- 20
-    rategamma <- sqrt(shapegamma)/2
+    priorMeanSpikes <- 0.7 # 0.2 = 5Hz * (40Hz/1000s)
+    priorSdSpikes <- 0.5 # 0.2 = 5Hz * (40Hz/1000s)
+    shapegamma <- (priorMeanSpikes/priorSdSpikes)^2
+    rategamma <- priorMeanSpikes/priorSdSpikes^2
+    ## shapegamma <- 0
+    ## rategamma <- 1/19 #sqrt(shapegamma)/10
+    dataweight <- 1
     smoothness <- 2
     smoothm <- t(diff(diag(maxS1),differences=2))
     ##
@@ -167,11 +168,11 @@ allmcoutput <- foreach(chunk=0:2, .inorder=F, .packages=c('data.table','nimble')
     ##
     ## Probability density
     dlogsmoothmean <- nimbleFunction(
-        run = function(x=double(1), datafreqs=double(1), shapegamma=double(0), rategamma=double(0), smatrix=double(2), normstrength=double(0, default=1000), log=integer(0, default=0)){
+        run = function(x=double(1), datafreqs=double(1), invpriorweight=double(0), shapegamma=double(0), rategamma=double(0), smatrix=double(2), normstrength=double(0, default=1000), log=integer(0, default=0)){
             returnType(double(0))
             tx <- sum(x)
             f <- exp(x)/sum(exp(x))
-            logp <- sum(datafreqs * log(f)) + dgamma(x=inprod(f,0:(length(f)-1)), shape=shapegamma, rate=rategamma, log=1) - sum((log(f) %*% smatrix)^2) - normstrength  * tx^2 
+            logp <- sum(datafreqs * log(f)) + (dgamma(x=inprod(f,0:(length(f)-1)), shape=shapegamma, rate=rategamma, log=1) - sum((log(f) %*% smatrix)^2))/invpriorweight - normstrength  * tx^2 
             if(log) return(logp)
             else return(exp(logp))
         })
@@ -179,11 +180,11 @@ allmcoutput <- foreach(chunk=0:2, .inorder=F, .packages=c('data.table','nimble')
     #Cdlogsmoothmean <- compileNimble(dlogsmoothmean)
     lnprob <- nimbleCode({
         for(i in 1:nStimuli){
-            X[i,1:maxS1] ~ dlogsmoothmean(datafreqs=datafreqsc[i,1:maxS1], shapegamma=shapegammac, rategamma=rategammac, smatrix=smatrixc[1:maxS1,1:smoothdim], normstrength=1000)
+            X[i,1:maxS1] ~ dlogsmoothmean(datafreqs=datafreqsc[i,1:maxS1], invpriorweight=dataweightc, shapegamma=shapegammac, rategamma=rategammac, smatrix=smatrixc[1:maxS1,1:smoothdim], normstrength=1000)
         }
     })
     ##
-    constants <- list(datafreqsc=sampleFreqs, shapegammac=shapegamma, rategammac=rategamma, smoothdim=ncol(smoothm), smatrixc=smoothness*smoothm, nStimuli=nStimuli, maxS1=maxS1, maxS=maxS)
+    constants <- list(datafreqsc=sampleFreqs, dataweightc=dataweight, shapegammac=shapegamma, rategammac=rategamma, smoothdim=ncol(smoothm), smatrixc=smoothness*smoothm, nStimuli=nStimuli, maxS1=maxS1, maxS=maxS)
     ##
     initX <- normalizerows(sampleFreqs+1)
     initX <- log(initX) - rowSums(log(initX))/maxS1
@@ -219,20 +220,23 @@ allmcoutput <- foreach(chunk=0:2, .inorder=F, .packages=c('data.table','nimble')
     ##
     ## PLOTS
     nPlotSamples <- 100
+    maxX <- 8
+    if(chunk==0){psign <- 1}else{psign <- -1}
     pdff(paste0('testsummaryN',chunk))
     matplot(x=nspikesVals, y=t(condfreqSamples[round(seq(1,nDraws,length.out=nPlotSamples)),1,]),
-            type='l', lty=1, lwd=2, col=paste0(mypurpleblue,'22'), ylim=c(-1,1),  xlim=c(0,maxX), xlab='spikes/bin', ylab='freq', cex.lab=2, cex.axis=2)
-        matplot(x=nspikesVals, y=-t(condfreqSamples[round(seq(1,nDraws,length.out=nPlotSamples)),2,]),
-                type='l', lty=1, lwd=1, col=paste0(myredpurple,'22'), add=TRUE)
+            type='l', lty=1, lwd=2, col=paste0(mygrey,'22'), ylim=c(min(0,psign),1),  xlim=c(0,maxX), xlab='spikes/bin', ylab='freq', cex.lab=2, cex.axis=2)
+        matplot(x=nspikesVals, y=psign*t(condfreqSamples[round(seq(1,nDraws,length.out=nPlotSamples)),2,]),
+                type='l', lty=1, lwd=1, col=paste0(mygrey,'22'), add=TRUE)
     ##
-    if(pflag==0){matplot(x=nspikesVals, y=t(normalizerows(sampleFreqs)*c(1,-1)),
+    if(pflag==0){matplot(x=nspikesVals, y=t(normalizerows(sampleFreqs)*c(1,psign)),
                          type='l', lty=2, lwd=5, col=myyellow, add=TRUE)}
     ##
-    matplot(x=nspikesVals, y=t(normalizerows(longrunFreqs)*c(1,-1)),
-            type='l', lty=1, lwd=2, col='black', add=TRUE)
+    matplot(x=nspikesVals, y=t(normalizerows(longrunFreqs)*c(1,psign)),
+            type='l', lty=4, lwd=4, col='black', add=TRUE)
     ##
     title(paste0(nSamples,' data samples,',
-                 ' chunk ', chunk,
+                 ' chunk =', chunk,
+                 ', data weight = ', dataweight,
                  '\n superdistr ',chunk), cex.main=2)
     legend('topright',c('long-run freqs','sample freqs'),lty=c(1,2),lwd=c(2,5),col=c('black',myyellow),cex=1.5)
     ##
@@ -255,6 +259,7 @@ allmcoutput <- foreach(chunk=0:2, .inorder=F, .packages=c('data.table','nimble')
     matplot((llsamples[,]),type='l', lty=1,ylab='log-posterior')
     matplot((mcsamples[,1]),type='l', lty=1,ylab='samples of first freq')
     dev.off()
+    NULL
 }
 
 
