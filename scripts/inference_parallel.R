@@ -1,5 +1,5 @@
 ## Author: Battistin, Gonzalo Cogno, Porta Mana
-## Last-Updated: 2021-07-30T16:32:24+0200
+## Last-Updated: 2021-07-30T22:43:07+0200
 ################
 ## Script for:
 ## - outputting samples of prior & posterior distributions
@@ -408,17 +408,19 @@ matplot(0:10,corr2f,type='l',lty=c(1,2), lwd=3,col=c(myred,myredpurple,myblue,my
 legend('topright',colnames(corr2f),lty=c(1,2),lwd=3,col=c(myred,myredpurple,myblue,mypurpleblue))
 
 
-
+paste0('stimulusseq_',0:1,rep(0:1,each=2),rep(0:1,each=4))
 
 corr3p <- matrix(0,11,8)
 dimnames(corr3p) <- list(paste0('count',0:10), paste0('stimulusseq_',0:1,rep(0:1,each=2),rep(0:1,each=4)))
+batches <- matrix(foreach(i1=0:1,.combine=c)%:%foreach(i2=0:1,.combine=c)%:%foreach(i3=0:1,.combine=c)%do%{c(i1,i2,i3)},3)
+for(i in 1:ncol(batches)){colnames(corr3p)[1+sum(c(1,2,4)*batches[,i])] <- paste0('seq_',paste0(batches[,i],collapse="_"))}
 for(i in 3:nrow(longrunData)){
     batch <- as.matrix(longrunData[(i-2):i])
     group <- 1+sum(c(1,2,4)*batch[,2])
     corr3p[batch[3,1]+1,group] <- corr3p[batch[3,1]+1,group] + 1
 }
-corr3p <- t(corr3p)
-corr3f <- t(corr3p/rowSums(corr3p))
+
+corr3f <- t(t(corr3p)/colSums(corr3p))
 
 matplot(0:10,corr3f,type='l',lty=c(1,2,3,4), lwd=2,col=coluse <- rep(c(myred,myblue),each=4),xlab='spike count',ylab='long-run relative frequency')
 legend('topright',colnames(corr3f),lty=c(1,2,3,4),lwd=3,col=coluse)
