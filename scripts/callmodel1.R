@@ -1,31 +1,15 @@
 ## Author: Battistin, Gonzalo Cogno, Porta Mana
-## Last-Updated: 2021-07-30T08:37:31+0200
+## Last-Updated: 2021-07-30T08:59:52+0200
 ################
 ## Script for:
 ## - outputting samples of prior & posterior distributions
 ## - calculating posteriors
 ## Uses Dirichlet prior
 ################
-
-
-
-
+chunk <- as.numeric(commandArgs(trailingOnly = TRUE))
+print(paste0('chunk ',chunk)
 ## library('parallel')
 ## mycluster <- makeCluster(3)
-library('nimble')
-    dlogsmoothmean <- nimbleFunction(
-        run = function(x=double(1), alphas=double(1), powerexp=double(0), shapegamma=double(0), rategamma=double(0), smatrix=double(2), normstrength=double(0, default=1000), log=integer(0, default=0)){
-            returnType(double(0))
-            tx <- sum(x)
-            f <- exp(x)/sum(exp(x))
-            dmean <- inprod(f,0:(length(f)-1))
-            logp <- sum((alphas+1) * log(f)) + (shapegamma-1)*log(dmean) - (rategamma*dmean)^powerexp - sum((log(f) %*% smatrix)^2) - normstrength  * tx^2 
-            if(log) return(logp)
-            else return(exp(logp))
-        })
-    assign('dlogsmoothmean', dlogsmoothmean, envir = .GlobalEnv)
-##
-runcode <- function(chunk,seed=147){
 #### Custom setup ####
 ## Colour-blind friendly palettes, from https://personal.sron.nl/~pault/
 ## (consider using khroma package instead)
@@ -159,9 +143,8 @@ longrunMI <- c(bit=mutualinfo(longrunFreqs))
     ##  Mean   :0.66060  
     ##  3rd Qu.:0.95008  
     ##  Max.   :1.23955
-    print('HEY')
-    priorMeanSpikes <- 1.6 # 0.2 = 5Hz * (40Hz/1000s)
-    priorSdSpikes <- 0.15 # 0.2 = 5Hz * (40Hz/1000s)
+    priorMeanSpikes <- 0.6 # 0.2 = 5Hz * (40Hz/1000s)
+    priorSdSpikes <- 1 # 0.2 = 5Hz * (40Hz/1000s)
     shapegamma <- (priorMeanSpikes/priorSdSpikes)^2
     rategamma <- sqrt(shapegamma)/priorSdSpikes
     ## shapegamma <- 1
@@ -225,7 +208,7 @@ longrunMI <- c(bit=mutualinfo(longrunFreqs))
     confmodel2
     mcmcsampler <- buildMCMC(confmodel2)
     Cmcmcsampler <- compileNimble(mcmcsampler, resetFunctions = TRUE)
-    mcsamples <- runMCMC(Cmcmcsampler, nburnin=10000, niter=20000, thin=10, setSeed=seed)
+    mcsamples <- runMCMC(Cmcmcsampler, nburnin=10000, niter=20000, thin=10, setSeed=147)
     nDraws <- nrow(mcsamples)
     llsamples <- mcsamples[,-(1:(maxS1*2)),drop=F]
     ##
@@ -251,7 +234,7 @@ longrunMI <- c(bit=mutualinfo(longrunFreqs))
         matplot(x=nspikesVals, y=psign*t(condfreqSamples[round(seq(1,nDraws,length.out=nPlotSamples)),2,]),
                 type='l', lty=1, lwd=1, col=paste0(mygrey,'66'), add=TRUE)
     ##
-    if(pflag==0){matplot(x=nspikesVals, y=t(normalizerows(sampleFreqs)*c(1,psign)),
+    if(chunk>0){matplot(x=nspikesVals, y=t(normalizerows(sampleFreqs)*c(1,psign)),
                          type='l', lty=2, lwd=5, col=myyellow, add=TRUE)}
     ##
     matplot(x=nspikesVals, y=t(normalizerows(longrunFreqs)*c(1,psign)),
@@ -276,14 +259,13 @@ longrunMI <- c(bit=mutualinfo(longrunFreqs))
     legend('topright',c('sample MI', 'long-run MI'),lty=1,col=c(myyellow,myredpurple),lwd=4,cex=1.5)
     ##
     ## Diagnostics
-    hist(meanSsamples[,1], xlim=c(0,3),ylab='mean spikecounts')
+    hist(meanSsamples[,1], xlim=c(0,3),ylab='mean spikecountsy')
     hist(meanSsamples[,2], xlim=c(0,3),ylab='mean spikecounts')
     matplot((MIsamples),type='l', lty=1,ylab='MI samples')
     matplot((llsamples[,]),type='l', lty=1,ylab='log-posterior')
     matplot((mcsamples[,1]),type='l', lty=1,ylab='samples of first freq')
     dev.off()
-    NULL
-}
+
 ##
 ##
 ## plan(sequential)

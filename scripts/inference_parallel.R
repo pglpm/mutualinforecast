@@ -1,14 +1,101 @@
 ## Author: Battistin, Gonzalo Cogno, Porta Mana
-## Last-Updated: 2021-07-30T08:37:31+0200
+## Last-Updated: 2021-07-30T14:40:33+0200
 ################
 ## Script for:
 ## - outputting samples of prior & posterior distributions
 ## - calculating posteriors
 ## Uses Dirichlet prior
 ################
+library('foreach')
+library('doFuture')
+registerDoFuture()
+library('doRNG')
+
+plan(sequential)
+plan(multisession, workers = 3L)
+resu <- foreach(item=0:2, .inorder=F)%dopar%{
+system("cmd.exe", input = paste0('Rscript.exe callmodel2.R ',item))
+}
+
+tsamples <- mcsamples
+dim(tsamples) <- c(nrow(mcsamples),2,(maxS1+1))
+matplot(x=0:maxS,y=t(tsamples[1:10,1,1:maxS1]),type='l',lty=1,col=paste0(mygrey,'88'))
+
+tmeansamples <- c(apply(tsamples[,1,1:maxS],1,function(x){sum(x * (0:maxS))}))
+hist(tmeansamples)
+
+hist(tsamples[,1,-(1:(maxS1+1))])
+
+tmeansamples2 <- mcsamples[,]
+dim(tsamples) <- c(nrow(mcsamples),2,(maxS1+2))
+matplot(x=0:maxS,y=t(tsamples[1:10,1,1:maxS1]),type='l',lty=1,col=paste0(mygrey,'88'))
 
 
 
+gfactor <- function(mean,pstrength,sfreq){
+    tgeo <- pstrength*geomd(x=mean,y=0:maxS)
+    exp(sum(lgamma(tgeo+sfreq)-lgamma(tgeo))+lgamma(sum(tgeo))-lgamma(sum(tgeo+sfreq)))
+}
+
+postggamma <- function(mean,pstrength,sfreq,pmean,psd){
+    sgamma <- (pmean/psd)^2
+    rgamma <- sqrt(sgamma)/psd
+    gfactor(mean,pstrength,sfreq)*dgamma(x=mean,shape=sgamma,rate=rgamma)
+}
+
+normalizerows(sampleFreqs) %*% (0:maxS)
+
+matplot(xgrid <- seq(0,3,length.out=100),sapply(xgrid,function(x){gfactor(x,100,sampleFreqs[2,])}),type='l')
+
+matplot(xgrid <- seq(0,3,length.out=100),sapply(xgrid,function(x){postggamma(x,100,sampleFreqs[1,]*0,0.6,0.5)}),type='l',add=F)
+matplot(xgrid <- seq(0,3,length.out=100),sapply(xgrid,function(x){postggamma(x,100,sampleFreqs[1,]/80,0.6,0.5)}),type='l',add=F)
+matplot(xgrid <- seq(0,3,length.out=100),sapply(xgrid,function(x){postggamma(x,100,sampleFreqs[1,],0.6,0.5)}),type='l',add=F)
+
+
+
+## test with poisson instead of geometric
+gfactor <- function(mean,pstrength,sfreq){
+    rt <- 2
+    tgeo <- pstrength*normalize(dgamma(x=0:maxS,shape=rt,rate=rt/mean))
+    exp(sum(lgamma(tgeo+sfreq)-lgamma(tgeo))+lgamma(sum(tgeo))-lgamma(sum(tgeo+sfreq)))
+}
+postggamma <- function(mean,pstrength,sfreq,pmean,psd){
+    sgamma <- (pmean/psd)^2
+    rgamma <- sqrt(sgamma)/psd
+    gfactor(mean,pstrength,sfreq)*dgamma(x=mean,shape=sgamma,rate=rgamma)
+}
+matplot(xgrid <- seq(0.001,3,length.out=100),sapply(xgrid,function(x){gfactor(x,100,sampleFreqs[2,])}),type='l')
+
+normalizerows(sampleFreqs) %*% (0:maxS)
+
+
+matplot(xgrid <- seq(0,3,length.out=100),sapply(xgrid,function(x){postggamma(x,100,sampleFreqs[1,]*0,0.6,0.5)}),type='l',add=F)
+matplot(xgrid <- seq(0,3,length.out=100),sapply(xgrid,function(x){postggamma(x,100,sampleFreqs[1,]/80,0.6,0.5)}),type='l',add=F)
+matplot(xgrid <- seq(0,3,length.out=100),sapply(xgrid,function(x){postggamma(x,100,sampleFreqs[1,],0.6,0.5)}),type='l',add=F)
+
+
+
+
+
+plan(sequential)
+plan(multisession, workers = 3L)
+tme <- 0.6
+tsd <- 0.5
+tshape <- (tme/tsd)^2
+trate <- sqrt(tshape)/tsd
+tmeans <- rgamma(n=1000, shape=tshape, rate=trate)
+hist(tmeans)
+tsamples <- foreach(i=1:1000, .inorder=F, .combine=rbind)%dorng%{
+    rdirch(n=1,alpha=100*geomd(x=tmeans[i], y=0:maxS))
+}
+matplot(x=0:maxS,y=t(mcsamples[1:10,]),type='l',lty=1,col=paste0(mygrey,'88'))
+
+tmeansamples <- c(apply(tsamples,1,function(x){sum(x * (0:maxS))}))
+hist(tmeansamples)
+
+hist(tmeans)
+
+matplot(x=0:maxS,y=t(tsamples[1:5,]),type='l',lty=1)
 
 ## library('parallel')
 ## mycluster <- makeCluster(3)
@@ -292,3 +379,9 @@ longrunMI <- c(bit=mutualinfo(longrunFreqs))
 ## alloutput <- parLapply(cl = mycluster, X = 0:2, fun = function(chunk){runcode(chunk)})
 ## stopCluster(mycluster)
 
+corrp <- matrix(0,10,4)
+for(i in 11:20){
+    batch <- as.matrix(longrunData[(i-1):i])
+    group <- 1+sum((1:2)*batch[,2])
+    corrp[batch[2,1]+1,group] <- corrp[batch[2,1]+1,group] + 1
+}
