@@ -1,5 +1,5 @@
 ## Author: Battistin, Gonzalo Cogno, Porta Mana
-## Last-Updated: 2021-07-30T15:27:16+0200
+## Last-Updated: 2021-07-30T15:48:53+0200
 ################
 ## Script for:
 ## - outputting samples of prior & posterior distributions
@@ -152,7 +152,7 @@ assign('Nx2f', Nx2f, envir = .GlobalEnv)
     ##  3rd Qu.:0.95008  
     ##  Max.   :1.23955
     priorMeanSpikes <- 0.7 # 0.2 = 5Hz * (40Hz/1000s)
-    priorSdSpikes <- 1 # 0.2 = 5Hz * (40Hz/1000s)
+    priorSdSpikes <- 0.7 # 0.2 = 5Hz * (40Hz/1000s)
     shapegamma <- (priorMeanSpikes/priorSdSpikes)^2
     rategamma <- sqrt(shapegamma)/priorSdSpikes
     priorstrength <- 100
