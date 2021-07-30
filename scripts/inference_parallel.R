@@ -1,5 +1,5 @@
 ## Author: Battistin, Gonzalo Cogno, Porta Mana
-## Last-Updated: 2021-07-30T14:40:33+0200
+## Last-Updated: 2021-07-30T15:21:36+0200
 ################
 ## Script for:
 ## - outputting samples of prior & posterior distributions
@@ -14,7 +14,7 @@ library('doRNG')
 plan(sequential)
 plan(multisession, workers = 3L)
 resu <- foreach(item=0:2, .inorder=F)%dopar%{
-system("cmd.exe", input = paste0('Rscript.exe callmodel2.R ',item))
+system("cmd.exe", input = paste0('Rscript.exe callmodel2randomized.R ',item))
 }
 
 tsamples <- mcsamples
@@ -379,9 +379,30 @@ longrunMI <- c(bit=mutualinfo(longrunFreqs))
 ## alloutput <- parLapply(cl = mycluster, X = 0:2, fun = function(chunk){runcode(chunk)})
 ## stopCluster(mycluster)
 
-corrp <- matrix(0,10,4)
-for(i in 11:20){
+corrp <- matrix(0,11,4)
+dimnames(corrp) <- list(paste0('count',0:10), paste0('stimulus_',0:1,'_then_',rep(0:1,each=2)))
+for(i in 2:nrow(longrunData)){
     batch <- as.matrix(longrunData[(i-1):i])
     group <- 1+sum((1:2)*batch[,2])
     corrp[batch[2,1]+1,group] <- corrp[batch[2,1]+1,group] + 1
 }
+corrp <- t(corrp)
+corrf <- t(corrp/rowSums(corrp))
+
+matplot(0:10,corrf,type='l',lty=c(1,2), lwd=3,col=c(myred,myredpurple,myblue,mypurpleblue),xlab='spike count',ylab='long-run relative frequency')
+legend('topright',colnames(corrf),lty=c(1,2),lwd=3,col=c(myred,myredpurple,myblue,mypurpleblue))
+
+
+corr2p <- matrix(0,11,4)
+dimnames(corr2p) <- list(paste0('count',0:10), paste0('stimulus_',0:1,'_then_',rep(0:1,each=2)))
+randomlrd <- longrunData[sample(nrow(longrunData))]
+for(i in 2:nrow(longrunData)){
+    batch <- as.matrix(randomlrd[(i-1):i])
+    group <- 1+sum((1:2)*batch[,2])
+    corr2p[batch[2,1]+1,group] <- corr2p[batch[2,1]+1,group] + 1
+}
+corr2p <- t(corr2p)
+corr2f <- t(corr2p/rowSums(corr2p))
+
+matplot(0:10,corr2f,type='l',lty=c(1,2), lwd=3,col=c(myred,myredpurple,myblue,mypurpleblue),xlab='spike count',ylab='long-run relative frequency')
+legend('topright',colnames(corr2f),lty=c(1,2),lwd=3,col=c(myred,myredpurple,myblue,mypurpleblue))
