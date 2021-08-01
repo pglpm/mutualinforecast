@@ -1,5 +1,5 @@
 ## Author: PGL Porta Mana
-## Last-Updated: 2021-08-01T08:43:09+0200
+## Last-Updated: 2021-08-01T09:07:25+0200
 ################
 ## Script to test Nimble
 
@@ -84,7 +84,7 @@ code <- nimbleCode({
 })
 ##
 constants <- list()
-inits <- list(mean=0, sd=1)
+inits <- list(mean=0, sd=1, x=0:1)
 modeldata <- list()
 ##
 model <- nimbleModel(code=code, name='model', constants=constants, inits=inits, data=modeldata)
@@ -104,11 +104,14 @@ confmodel
 ##   - x
 ##
 mcmc <- buildMCMC(confmodel)
-samples <- runMCMC(mcmc=mcmc,niter=2000,nburnin=1000)
+samples <- runMCMC(mcmc=mcmc,niter=2000,nburnin=1000,inits=list(x=0:1))
 ## Warning: running an uncompiled MCMC algorithm, use compileNimble() for faster execution.
 ## running chain 1...
-## Error: user-defined distribution dmymnorm provided without random generation function
+## |-------------|-------------|-------------|-------------|
+## |Error: user-defined distribution dmymnorm provided without random generation function.
 
+debug(dmymnorm)
+mcmc$run(100)
 
 confmodel$setMonitors(c('X','logProb_X'))
     confmodel
