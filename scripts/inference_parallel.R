@@ -1,5 +1,5 @@
 ## Author: Battistin, Gonzalo Cogno, Porta Mana
-## Last-Updated: 2021-07-30T22:43:07+0200
+## Last-Updated: 2021-07-31T09:12:28+0200
 ################
 ## Script for:
 ## - outputting samples of prior & posterior distributions
@@ -381,31 +381,212 @@ longrunMI <- c(bit=mutualinfo(longrunFreqs))
 
 corrp <- matrix(0,11,4)
 dimnames(corrp) <- list(paste0('count',0:10), paste0('stimulus_',0:1,'_then_',rep(0:1,each=2)))
+batches <- matrix(foreach(i1=0:1,.combine=c)%:%foreach(i2=0:1,.combine=c)%do%{c(i1,i2)},2)
+for(i in 1:ncol(batches)){colnames(corr3p)[1+sum(c(1,2)*batches[,i])] <- paste0('seq_',paste0(batches[,i],collapse="_"))}
 for(i in 2:nrow(longrunData)){
     batch <- as.matrix(longrunData[(i-1):i])
     group <- 1+sum((1:2)*batch[,2])
     corrp[batch[2,1]+1,group] <- corrp[batch[2,1]+1,group] + 1
 }
-corrp <- t(corrp)
-corrf <- t(corrp/rowSums(corrp))
-
+corrf <- t(t(corrp)/colSums(corrp))
+##
 matplot(0:10,corrf,type='l',lty=c(1,2), lwd=3,col=c(myred,myredpurple,myblue,mypurpleblue),xlab='spike count',ylab='long-run relative frequency')
 legend('topright',colnames(corrf),lty=c(1,2),lwd=3,col=c(myred,myredpurple,myblue,mypurpleblue))
-
-
-corr2p <- matrix(0,11,4)
-dimnames(corr2p) <- list(paste0('count',0:10), paste0('stimulus_',0:1,'_then_',rep(0:1,each=2)))
-randomlrd <- longrunData[sample(nrow(longrunData))]
+##
+##
+rcorrp <- matrix(0,11,4)
+dimnames(rcorrp) <- list(paste0('count',0:10), paste0('stimulus_',0:1,'_then_',rep(0:1,each=2)))
+batches <- matrix(foreach(i1=0:1,.combine=c)%:%foreach(i2=0:1,.combine=c)%do%{c(i1,i2)},2)
+for(i in 1:ncol(batches)){colnames(corr3p)[1+sum(c(1,2)*batches[,i])] <- paste0('seq_',paste0(batches[,i],collapse="_"))}
+##
+randomlrd <- longrunData
+for(i in 0:1){
+whichstim <- which(longrunData$stimulus==i)
+randomlrd[whichstim] <- longrunData[sample(whichstim)]
+}
 for(i in 2:nrow(longrunData)){
     batch <- as.matrix(randomlrd[(i-1):i])
     group <- 1+sum((1:2)*batch[,2])
-    corr2p[batch[2,1]+1,group] <- corr2p[batch[2,1]+1,group] + 1
+    rcorrp[batch[2,1]+1,group] <- rcorrp[batch[2,1]+1,group] + 1
 }
-corr2p <- t(corr2p)
-corr2f <- t(corr2p/rowSums(corr2p))
+rcorrp <- rcorrp
+rcorrf <- t(t(rcorrp)/colSums(rcorrp))
+##
+pdff('2step_condfreqs')
+matplot(0:10,corrf,type='l',lty=c(1,2), lwd=3,col=c(myred,myredpurple,myblue,mypurpleblue),xlab='spike count',ylab='long-run relative frequency',main='data')
+legend('topright',paste0(colnames(corrf),': ',colSums(corrp)),lty=c(1,2),lwd=3,col=c(myred,myredpurple,myblue,mypurpleblue))
+matplot(0:10,rcorrf,type='l',lty=c(1,2), lwd=1,col=c(myred,myredpurple,myblue,mypurpleblue),xlab='spike count',ylab='long-run relative frequency',main='randomized within each stimulus')
+for(sample in 1:10){
+    rcorrp <- matrix(0,11,4)
+    dimnames(rcorrp) <- list(paste0('count',0:10), paste0('stimulus_',0:1,'_then_',rep(0:1,each=2)))
+    batches <- matrix(foreach(i1=0:1,.combine=c)%:%foreach(i2=0:1,.combine=c)%do%{c(i1,i2)},2)
+    for(i in 1:ncol(batches)){colnames(corr3p)[1+sum(c(1,2)*batches[,i])] <- paste0('seq_',paste0(batches[,i],collapse="_"))}
+    ##
+    randomlrd <- longrunData
+    for(i in 0:1){
+        whichstim <- which(longrunData$stimulus==i)
+        randomlrd[whichstim] <- longrunData[sample(whichstim)]
+    }
+    for(i in 2:nrow(longrunData)){
+        batch <- as.matrix(randomlrd[(i-1):i])
+        group <- 1+sum((1:2)*batch[,2])
+        rcorrp[batch[2,1]+1,group] <- rcorrp[batch[2,1]+1,group] + 1
+    }
+    rcorrp <- rcorrp
+    rcorrf <- t(t(rcorrp)/colSums(rcorrp))
+    matplot(0:10,rcorrf,type='l',lty=c(1,2), lwd=1,col=c(myred,myredpurple,myblue,mypurpleblue),xlab='spike count',ylab='long-run relative frequency',main='randomized within each stimulus',add=T)
+}
+legend('topright',colnames(rcorrf),lty=c(1,2),lwd=3,col=c(myred,myredpurple,myblue,mypurpleblue))
+dev.off()
 
-matplot(0:10,corr2f,type='l',lty=c(1,2), lwd=3,col=c(myred,myredpurple,myblue,mypurpleblue),xlab='spike count',ylab='long-run relative frequency')
-legend('topright',colnames(corr2f),lty=c(1,2),lwd=3,col=c(myred,myredpurple,myblue,mypurpleblue))
+
+
+#### corr now & future
+fcorrp <- matrix(0,11,4)
+dimnames(fcorrp) <- list(paste0('count',0:10), paste0('stimulus_now',0:1,'_then_',rep(0:1,each=2)))
+batches <- matrix(foreach(i1=0:1,.combine=c)%:%foreach(i2=0:1,.combine=c)%do%{c(i1,i2)},2)
+for(i in 1:ncol(batches)){colnames(fcorrp)[1+sum(c(1,2)*batches[,i])] <- paste0('seq_',paste0(batches[,i],collapse="_"))}
+for(i in 1:(nrow(longrunData)-1)){
+    batch <- as.matrix(longrunData[i:(i+1)])
+    group <- 1+sum((1:2)*batch[,2])
+    fcorrp[batch[1,1]+1,group] <- fcorrp[batch[1,1]+1,group] + 1
+}
+fcorrf <- t(t(fcorrp)/colSums(fcorrp))
+##
+matplot(0:10,fcorrf,type='l',lty=c(1,2), lwd=3,col=c(myred,myredpurple,myblue,mypurpleblue),xlab='spike count',ylab='long-run relative frequency')
+legend('topright',colnames(fcorrf),lty=c(1,2),lwd=3,col=c(myred,myredpurple,myblue,mypurpleblue))
+##
+##
+rfcorrp <- matrix(0,11,4)
+dimnames(rfcorrp) <- list(paste0('count',0:10), paste0('stimulus_',0:1,'_then_',rep(0:1,each=2)))
+batches <- matrix(foreach(i1=0:1,.combine=c)%:%foreach(i2=0:1,.combine=c)%do%{c(i1,i2)},2)
+for(i in 1:ncol(batches)){colnames(fcorrp)[1+sum(c(1,2)*batches[,i])] <- paste0('seq_',paste0(batches[,i],collapse="_"))}
+##
+randomlrd <- longrunData
+for(i in 0:1){
+whichstim <- which(longrunData$stimulus==i)
+randomlrd[whichstim] <- longrunData[sample(whichstim)]
+}
+for(i in 1:(nrow(longrunData)-1)){
+    batch <- as.matrix(randomlrd[i:(i+1)])
+    group <- 1+sum((1:2)*batch[,2])
+    rfcorrp[batch[1,1]+1,group] <- rfcorrp[batch[1,1]+1,group] + 1
+}
+rfcorrp <- rfcorrp
+rfcorrf <- t(t(rfcorrp)/colSums(rfcorrp))
+##
+pdff('2step_condfreqs_future')
+matplot(0:10,fcorrf,type='l',lty=c(1,2), lwd=3,col=c(myred,myredpurple,myblue,mypurpleblue),xlab='spike count',ylab='long-run relative frequency',main='data')
+legend('topright',paste0(colnames(fcorrf),': ',colSums(fcorrp)),lty=c(1,2),lwd=3,col=c(myred,myredpurple,myblue,mypurpleblue))
+matplot(0:10,rfcorrf,type='l',lty=c(1,2), lwd=1,col=c(myred,myredpurple,myblue,mypurpleblue),xlab='spike count',ylab='long-run relative frequency',main='randomized within each stimulus')
+for(sample in 1:10){
+    rfcorrp <- matrix(0,11,4)
+    dimnames(rfcorrp) <- list(paste0('count',0:10), paste0('stimulus_',0:1,'_then_',rep(0:1,each=2)))
+    batches <- matrix(foreach(i1=0:1,.combine=c)%:%foreach(i2=0:1,.combine=c)%do%{c(i1,i2)},2)
+    for(i in 1:ncol(batches)){colnames(fcorrp)[1+sum(c(1,2)*batches[,i])] <- paste0('seq_',paste0(batches[,i],collapse="_"))}
+    ##
+    randomlrd <- longrunData
+    for(i in 0:1){
+        whichstim <- which(longrunData$stimulus==i)
+        randomlrd[whichstim] <- longrunData[sample(whichstim)]
+    }
+    for(i in 1:(nrow(longrunData)-1)){
+        batch <- as.matrix(randomlrd[i:(i+1)])
+        group <- 1+sum((1:2)*batch[,2])
+        rfcorrp[batch[1,1]+1,group] <- rfcorrp[batch[1,1]+1,group] + 1
+    }
+    rfcorrp <- rfcorrp
+    rfcorrf <- t(t(rfcorrp)/colSums(rfcorrp))
+    matplot(0:10,rfcorrf,type='l',lty=c(1,2), lwd=1,col=c(myred,myredpurple,myblue,mypurpleblue),xlab='spike count',ylab='long-run relative frequency',main='randomized within each stimulus',add=T)
+}
+legend('topright',colnames(rfcorrf),lty=c(1,2),lwd=3,col=c(myred,myredpurple,myblue,mypurpleblue))
+dev.off()
+
+
+
+
+
+
+
+corr3p <- matrix(0,11,8)
+dimnames(corr3p) <- list(paste0('count',0:10), paste0('stimulus_',1:8))
+batches <- matrix(foreach(i1=0:1,.combine=c)%:%foreach(i2=0:1,.combine=c)%:%foreach(i3=0:1,.combine=c)%do%{c(i1,i2,i3)},3)
+for(i in 1:ncol(batches)){colnames(corr3p)[1+sum(c(1,2,4)*batches[,i])] <- paste0('seq_',paste0(batches[,i],collapse="_"))}
+for(i in 3:nrow(longrunData)){
+    batch <- as.matrix(longrunData[(i-2):i])
+    group <- 1+sum(c(1,2,4)*batch[,2])
+    corr3p[batch[3,1]+1,group] <- corr3p[batch[3,1]+1,group] + 1
+}
+corr3f <- t(t(corr3p)/colSums(corr3p))
+##
+matplot(0:10,corr3f,type='l',lty=c(1,2,3,4), lwd=3,col=c(myredpurple,mypurpleblue),xlab='spike count',ylab='long-run relative frequency')
+legend('topright',colnames(corr3f),lty=c(1,2,3,4),lwd=3,col=c(myredpurple,mypurpleblue))
+##
+##
+rcorr3p <- matrix(0,11,8)
+dimnames(rcorr3p) <- list(paste0('count',0:10), paste0('stimulus_',1:8))
+batches <- matrix(foreach(i1=0:1,.combine=c)%:%foreach(i2=0:1,.combine=c)%:%foreach(i3=0:1,.combine=c)%do%{c(i1,i2,i3)},3)
+for(i in 1:ncol(batches)){colnames(rcorr3p)[1+sum(c(1,2,4)*batches[,i])] <- paste0('seq_',paste0(batches[,i],collapse="_"))}
+##
+randomlrd <- longrunData
+for(i in 0:1){
+whichstim <- which(longrunData$stimulus==i)
+randomlrd[whichstim] <- longrunData[sample(whichstim)]
+}
+for(i in 3:nrow(longrunData)){
+    batch <- as.matrix(randomlrd[(i-2):i])
+    group <- 1+sum(c(1,2,4)*batch[,2])
+    rcorr3p[batch[3,1]+1,group] <- rcorr3p[batch[3,1]+1,group] + 1
+}
+rcorr3p <- rcorr3p
+rcorr3f <- t(t(rcorr3p)/colSums(rcorr3p))
+##
+pdff('3step_condfreqs')
+matplot(0:10,corr3f,type='l',lty=c(1,2,3,4), lwd=3,col=rep(c(myredpurple,mypurpleblue),each=4),xlab='spike count',ylab='long-run relative frequency',main='data')
+legend('topright',paste0(colnames(corr3f),': ',colSums(corr3p)),lty=c(1,2,3,4),lwd=3,col=rep(c(myredpurple,mypurpleblue),each=4))
+matplot(0:10,rcorr3f,type='l',lty=c(1,2,3,4), lwd=1,col=rep(c(myredpurple,mypurpleblue),each=4),xlab='spike count',ylab='long-run relative frequency',main='randomized within each stimulus')
+for(sample in 1:10){
+    rcorr3p <- matrix(0,11,8)
+    ## dimnames(rcorr3p) <- list(paste0('count',0:10), paste0('stimulus_',1:8))
+    ## batches <- matrix(foreach(i1=0:1,.combine=c)%:%foreach(i2=0:1,.combine=c)%:%foreach(i3=0:1,.combine=c)%do%{c(i1,i2,i3)},3)
+    ## for(i in 1:ncol(batches)){colnames(corr3p)[1+sum(c(1,2,4)*batches[,i])] <- paste0('seq_',paste0(batches[,i],collapse="_"))}
+    ##
+    randomlrd <- longrunData
+    for(i in 0:1){
+        whichstim <- which(longrunData$stimulus==i)
+        randomlrd[whichstim] <- longrunData[sample(whichstim)]
+    }
+    for(i in 3:nrow(longrunData)){
+        batch <- as.matrix(randomlrd[(i-2):i])
+        group <- 1+sum(c(1,2,4)*batch[,2])
+        rcorr3p[batch[3,1]+1,group] <- rcorr3p[batch[3,1]+1,group] + 1
+    }
+    rcorr3p <- rcorr3p
+    rcorr3f <- t(t(rcorr3p)/colSums(rcorr3p))
+    matplot(0:10,rcorr3f,type='l',lty=c(1,2,3,4), lwd=1,col=rep(c(myredpurple,mypurpleblue),each=4),xlab='spike count',ylab='long-run relative frequency',main='randomized within each stimulus',add=T)
+}
+legend('topright',colnames(corr3f),lty=c(1,2,3,4),lwd=3,col=rep(c(myredpurple,mypurpleblue),each=4))
+dev.off()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 paste0('stimulusseq_',0:1,rep(0:1,each=2),rep(0:1,each=4))
