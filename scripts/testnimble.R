@@ -1,5 +1,5 @@
 ## Author: PGL Porta Mana
-## Last-Updated: 2021-08-01T08:38:59+0200
+## Last-Updated: 2021-08-01T08:43:09+0200
 ################
 ## Script to test Nimble
 
@@ -92,13 +92,22 @@ Cmodel <- compileNimble(model, showCompilerOutput = TRUE, resetFunctions = TRUE)
 ##
 confmodel <- configureMCMC(Cmodel)
 confmodel$addSampler(target='x', type='AF_slice', control=list(sliceAdaptFactorMaxIter=1000, sliceAdaptFactorInterval=100, sliceAdaptWidthMaxIter=500, sliceMaxSteps=100, maxContractions=100))
-confmodel$setMonitors('x')
+confmodel$addMonitors('x')
 confmodel
+## ===== Monitors =====
+## thin = 1: mean, sd, x
+## ===== Samplers =====
+## posterior_predictive_branch sampler (2)
+##   - mean
+##   - sd
+## AF_slice sampler (1)
+##   - x
 ##
 mcmc <- buildMCMC(confmodel)
-Cmcmc <- compileNimble(mcmc, project= model, resetFunctions = TRUE)
-test <- runMCMC(mcmc=mcmc,niter=2000,nburnin=1000)
-
+samples <- runMCMC(mcmc=mcmc,niter=2000,nburnin=1000)
+## Warning: running an uncompiled MCMC algorithm, use compileNimble() for faster execution.
+## running chain 1...
+## Error: user-defined distribution dmymnorm provided without random generation function
 
 
 confmodel$setMonitors(c('X','logProb_X'))
