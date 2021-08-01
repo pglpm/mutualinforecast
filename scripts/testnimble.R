@@ -1,5 +1,5 @@
 ## Author: PGL Porta Mana
-## Last-Updated: 2021-08-01T09:07:25+0200
+## Last-Updated: 2021-08-01T09:21:30+0200
 ################
 ## Script to test Nimble
 
@@ -109,6 +109,49 @@ samples <- runMCMC(mcmc=mcmc,niter=2000,nburnin=1000,inits=list(x=0:1))
 ## running chain 1...
 ## |-------------|-------------|-------------|-------------|
 ## |Error: user-defined distribution dmymnorm provided without random generation function.
+
+
+
+
+##
+code2 <- nimbleCode({
+    means[1:2] <- c(0, 1)
+    prec[1:2,1:2] <- diag(c(1, 0.1))
+    ##    
+    x[1:2] ~ dmymnorm(mean=means[1:2], prec=prec[1:2,1:2])
+})
+##
+constants <- list()
+inits <- list(x=0:1)
+modeldata <- list()
+##
+model2 <- nimbleModel(code=code2, name='model2', constants=constants, inits=inits, data=modeldata)
+Cmodel2 <- compileNimble(model2, showCompilerOutput = TRUE, resetFunctions = TRUE)
+##
+confmodel2 <- configureMCMC(Cmodel2, nodes=NULL)
+confmodel2$addSampler(target='x', type='AF_slice', control=list(sliceAdaptFactorMaxIter=1000, sliceAdaptFactorInterval=100, sliceAdaptWidthMaxIter=500, sliceMaxSteps=100, maxContractions=100))
+confmodel2$addMonitors('x')
+confmodel2
+## ===== Monitors =====
+## thin = 1: x
+## ===== Samplers =====
+## AF_slice sampler (1)
+##   - x
+##
+mcmc2 <- buildMCMC(confmodel2)
+samples <- runMCMC(mcmc=mcmc2,niter=2000,nburnin=1000,inits=list(x=0:1))
+## Warning: running an uncompiled MCMC algorithm, use compileNimble() for faster execution.
+## running chain 1...
+## |-------------|-------------|-------------|-------------|
+## |Error: user-defined distribution dmymnorm provided without random generation function.
+
+
+
+
+
+
+
+
 
 debug(dmymnorm)
 mcmc$run(100)
