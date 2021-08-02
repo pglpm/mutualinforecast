@@ -1,5 +1,5 @@
 ## Author: PGL Porta Mana
-## Last-Updated: 2021-08-01T09:21:30+0200
+## Last-Updated: 2021-08-01T17:38:58+0200
 ################
 ## Script to test Nimble
 
@@ -76,24 +76,32 @@ assign('dmymnorm',dmymnorm,envir=.GlobalEnv)
 ##
 code <- nimbleCode({
     mean ~ dnorm(mean=0, sd=1)
-    sd ~ dgamma(shape=2, rate=1)
+    lsd ~ dnorm(mean=0, sd=1)
+    ## sd ~ dgamma(shape=2, rate=1)
     means[1:2] <- c(mean, mean)
-    prec[1:2,1:2] <- diag(c(1/sd^2, 1/(sd/10)^2))
+    prec[1:2,1:2] <- diag(c(1/exp(sd)^2, 1/(exp(sd)/10)^2))
     ##    
     x[1:2] ~ dmymnorm(mean=means[1:2], prec=prec[1:2,1:2])
+    y[1:2] ~ dmnorm(mean=means[1:2], prec=prec[1:2,1:2])
 })
 ##
 constants <- list()
-inits <- list(mean=0, sd=1, x=0:1)
+inits <- list(mean=0, lsd=0)
 modeldata <- list()
 ##
 model <- nimbleModel(code=code, name='model', constants=constants, inits=inits, data=modeldata)
 Cmodel <- compileNimble(model, showCompilerOutput = TRUE, resetFunctions = TRUE)
 ##
-confmodel <- configureMCMC(Cmodel)
-confmodel$addSampler(target='x', type='AF_slice', control=list(sliceAdaptFactorMaxIter=1000, sliceAdaptFactorInterval=100, sliceAdaptWidthMaxIter=500, sliceMaxSteps=100, maxContractions=100))
-confmodel$addMonitors('x')
+confmodel <- configureMCMC(Cmodel,nodes=NULL)
+confmodel$addSampler(target=c('mean','lsd'), type='posterior_predictive', control=list())
+confmodel$addSampler(target='x', type='AF_slice', control=list(sliceAdaptFactorMaxIter=5000, sliceAdaptFactorInterval=500, sliceAdaptWidthMaxIter=500, sliceMaxSteps=100, maxContractions=100))
+confmodel$addSampler(target='y', type='posterior_predictive', control=list())
+## confmodel$addSampler(target=c('mean','lsd'), type='AF_slice', control=list(sliceAdaptFactorMaxIter=5000, sliceAdaptFactorInterval=500, sliceAdaptWidthMaxIter=500, sliceMaxSteps=100, maxContractions=100))
+## confmodel$addSampler(target='x', type='AF_slice', control=list(sliceAdaptFactorMaxIter=5000, sliceAdaptFactorInterval=500, sliceAdaptWidthMaxIter=500, sliceMaxSteps=100, maxContractions=100))
+## confmodel$addSampler(target='y', type='AF_slice', control=list(sliceAdaptFactorMaxIter=5000, sliceAdaptFactorInterval=500, sliceAdaptWidthMaxIter=500, sliceMaxSteps=100, maxContractions=100))
+confmodel$setMonitors(c('mean','x','y','logProb_x','logProb_y'))
 confmodel
+confmodel$printSamplers(executionOrder=T)
 ## ===== Monitors =====
 ## thin = 1: mean, sd, x
 ## ===== Samplers =====
@@ -104,7 +112,9 @@ confmodel
 ##   - x
 ##
 mcmc <- buildMCMC(confmodel)
-samples <- runMCMC(mcmc=mcmc,niter=2000,nburnin=1000,inits=list(x=0:1))
+#samples0 <- runMCMC(mcmc=mcmc,niter=20,nburnin=10,inits=list(mean=0, sd=1,x=0:1,y=0:1))
+Cmcmc <- compileNimble(mcmc)
+samplesS <- runMCMC(mcmc=Cmcmc,niter=10000,nburnin=5000,thin=5,inits=list(mean=0, lsd=0,x=0:1,y=0:1))
 ## Warning: running an uncompiled MCMC algorithm, use compileNimble() for faster execution.
 ## running chain 1...
 ## |-------------|-------------|-------------|-------------|
@@ -147,7 +157,63 @@ samples <- runMCMC(mcmc=mcmc2,niter=2000,nburnin=1000,inits=list(x=0:1))
 
 
 
-
+## Check what the logProb actually are
+##################################################
+library('nimble')
+##
+dmymnorm <- nimbleFunction(
+    run = function(x=double(1), mean=double(1), prec=double(2), log=integer(0, default=0)){ lp <- -sum(asRow(x-mean) %*% prec %*% asCol(x-mean))/2
+        if(log) return(lp)
+        else return(exp(lp))
+        returnType(double(0))
+    })
+assign('dmymnorm',dmymnorm,envir=.GlobalEnv)
+##
+code <- nimbleCode({
+    mean ~ dnorm(mean=0, sd=1)
+    lsd ~ dnorm(mean=0, sd=1)
+    ## sd ~ dgamma(shape=2, rate=1)
+    means[1:2] <- c(mean, mean)
+    prec[1:2,1:2] <- diag(c(1/exp(sd)^2, 1/(exp(sd)/10)^2))
+    ##    
+    x[1:2] ~ dmymnorm(mean=means[1:2], prec=prec[1:2,1:2])
+    y[1:2] ~ dmnorm(mean=means[1:2], prec=prec[1:2,1:2])
+})
+##
+constants <- list()
+inits <- list(mean=0, lsd=0)
+modeldata <- list()
+##
+model <- nimbleModel(code=code, name='model', constants=constants, inits=inits, data=modeldata)
+Cmodel <- compileNimble(model, showCompilerOutput = TRUE, resetFunctions = TRUE)
+##
+confmodel <- configureMCMC(Cmodel,nodes=NULL)
+confmodel$addSampler(target=c('mean','lsd'), type='posterior_predictive', control=list())
+confmodel$addSampler(target='x', type='AF_slice', control=list(sliceAdaptFactorMaxIter=5000, sliceAdaptFactorInterval=500, sliceAdaptWidthMaxIter=500, sliceMaxSteps=100, maxContractions=100))
+confmodel$addSampler(target='y', type='posterior_predictive', control=list())
+## confmodel$addSampler(target=c('mean','lsd'), type='AF_slice', control=list(sliceAdaptFactorMaxIter=5000, sliceAdaptFactorInterval=500, sliceAdaptWidthMaxIter=500, sliceMaxSteps=100, maxContractions=100))
+## confmodel$addSampler(target='x', type='AF_slice', control=list(sliceAdaptFactorMaxIter=5000, sliceAdaptFactorInterval=500, sliceAdaptWidthMaxIter=500, sliceMaxSteps=100, maxContractions=100))
+## confmodel$addSampler(target='y', type='AF_slice', control=list(sliceAdaptFactorMaxIter=5000, sliceAdaptFactorInterval=500, sliceAdaptWidthMaxIter=500, sliceMaxSteps=100, maxContractions=100))
+confmodel$setMonitors(c('mean','x','y','logProb_x','logProb_y'))
+confmodel
+confmodel$printSamplers(executionOrder=T)
+## ===== Monitors =====
+## thin = 1: mean, sd, x
+## ===== Samplers =====
+## posterior_predictive_branch sampler (2)
+##   - mean
+##   - sd
+## AF_slice sampler (1)
+##   - x
+##
+mcmc <- buildMCMC(confmodel)
+#samples0 <- runMCMC(mcmc=mcmc,niter=20,nburnin=10,inits=list(mean=0, sd=1,x=0:1,y=0:1))
+Cmcmc <- compileNimble(mcmc)
+samplesS <- runMCMC(mcmc=Cmcmc,niter=10000,nburnin=5000,thin=5,inits=list(mean=0, lsd=0,x=0:1,y=0:1))
+## Warning: running an uncompiled MCMC algorithm, use compileNimble() for faster execution.
+## running chain 1...
+## |-------------|-------------|-------------|-------------|
+## |Error: user-defined distribution dmymnorm provided without random generation function.
 
 
 
