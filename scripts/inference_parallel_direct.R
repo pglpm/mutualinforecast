@@ -1,21 +1,53 @@
 ## Author: Battistin, Gonzalo Cogno, Porta Mana
-## Last-Updated: 2021-08-03T10:27:55+0200
+## Last-Updated: 2021-08-03T11:29:31+0200
 ################
 ## Script for:
 ## - outputting samples of prior & posterior distributions
 ## - calculating posteriors
 ## Uses Dirichlet prior
 ################
+## library('parallel')
+## mycluster <- makeCluster(3)
+#### Custom setup ####
+## Colour-blind friendly palettes, from https://personal.sron.nl/~pault/
+## (consider using khroma package instead)
+library('RColorBrewer')
+mypurpleblue <- '#4477AA'
+myblue <- '#66CCEE'
+mygreen <- '#228833'
+myyellow <- '#CCBB44'
+myred <- '#EE6677'
+myredpurple <- '#AA3377'
+mygrey <- '#BBBBBB'
+mypalette <- c(myblue, myred, mygreen, myyellow, myredpurple, mypurpleblue, mygrey, 'black')
+palette(mypalette)
+barpalette <- colorRampPalette(c(mypurpleblue,'white',myredpurple),space='Lab')
+barpalettepos <- colorRampPalette(c('white','black'),space='Lab')
+library('data.table')
+library('khroma')
+library('ggplot2')
+library('ggthemes')
+theme_set(theme_bw(base_size=18))
+scale_colour_discrete <- scale_colour_bright
+#library('cowplot')
+library('png')
+library('foreach')
+##library('ash')
+#library('extraDistr')
+options(bitmapType='cairo')
+pdff <- function(filename){pdf(file=paste0(filename,'.pdf'),paper='a4r',height=11.7,width=16.5)} # to output in pdf format
+pngf <- function(filename,res=300){png(file=paste0(filename,'.png'),height=11.7*1.2,width=16.5)} # to output in png format
+##
 library('foreach')
 library('doFuture')
 registerDoFuture()
 library('doRNG')
 
+source('funcmodel3randomized.R')
+##
 plan(sequential)
 plan(multisession, workers = 3L)
-resu <- foreach(item=0:2, .inorder=F)%dopar%{
-system("cmd.exe", input = paste0('Rscript.exe callmodel2randomized.R ',item))
-}
+resu <- foreach(chunk=0:2, .inorder=F, .packages=c('data.table','foreach'))%dorng%{ postsamples(chunk)}
 
 
 
