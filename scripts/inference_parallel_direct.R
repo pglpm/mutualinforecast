@@ -1,5 +1,5 @@
 ## Author: Battistin, Gonzalo Cogno, Porta Mana
-## Last-Updated: 2021-08-03T11:29:31+0200
+## Last-Updated: 2021-08-03T19:30:11+0200
 ################
 ## Script for:
 ## - outputting samples of prior & posterior distributions
@@ -11,20 +11,22 @@
 #### Custom setup ####
 ## Colour-blind friendly palettes, from https://personal.sron.nl/~pault/
 ## (consider using khroma package instead)
-library('RColorBrewer')
-mypurpleblue <- '#4477AA'
-myblue <- '#66CCEE'
-mygreen <- '#228833'
-myyellow <- '#CCBB44'
-myred <- '#EE6677'
-myredpurple <- '#AA3377'
-mygrey <- '#BBBBBB'
-mypalette <- c(myblue, myred, mygreen, myyellow, myredpurple, mypurpleblue, mygrey, 'black')
-palette(mypalette)
-barpalette <- colorRampPalette(c(mypurpleblue,'white',myredpurple),space='Lab')
-barpalettepos <- colorRampPalette(c('white','black'),space='Lab')
+## library('RColorBrewer')
+## mypurpleblue <- '#4477AA'
+## myblue <- '#66CCEE'
+## mygreen <- '#228833'
+## myyellow <- '#CCBB44'
+## myred <- '#EE6677'
+## myredpurple <- '#AA3377'
+## mygrey <- '#BBBBBB'
+## mypalette <- c(myblue, myred, mygreen, myyellow, myredpurple, mypurpleblue, mygrey, 'black')
+## palette(mypalette)
+## barpalette <- colorRampPalette(c(mypurpleblue,'white',myredpurple),space='Lab')
+## barpalettepos <- colorRampPalette(c('white','black'),space='Lab')
 library('data.table')
 library('khroma')
+palette(colour('bright')())
+## palette(colour('muted')())
 library('ggplot2')
 library('ggthemes')
 theme_set(theme_bw(base_size=18))
