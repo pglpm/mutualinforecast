@@ -1,5 +1,9 @@
 ## Author: Battistin, Gonzalo Cogno, Porta Mana
+<<<<<<< HEAD
 ## Last-Updated: 2021-09-09T10:12:53+0200
+=======
+## Last-Updated: 2021-08-03T19:30:11+0200
+>>>>>>> 7f136e19af6d747aa66142a4deb2de6042270316
 ################
 ## Script for:
 ## - outputting samples of prior & posterior distributions
@@ -286,7 +290,11 @@ longrunMI <- c(bit=mutualinfo(longrunFreqs))
     ##  Mean   :0.66060  
     ##  3rd Qu.:0.95008  
     ##  Max.   :1.23955
+<<<<<<< HEAD
     ## print('HEY')
+=======
+    print('HEY')
+>>>>>>> 7f136e19af6d747aa66142a4deb2de6042270316
     priorMeanSpikes <- 1.6 # 0.2 = 5Hz * (40Hz/1000s)
     priorSdSpikes <- 0.15 # 0.2 = 5Hz * (40Hz/1000s)
     shapegamma <- (priorMeanSpikes/priorSdSpikes)^2
