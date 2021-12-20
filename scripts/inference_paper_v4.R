@@ -1,5 +1,5 @@
 ## Author: Battistin, Gonzalo Cogno, Porta Mana
-## Last-Updated: 2021-07-26T17:02:20+0200
+## Last-Updated: 2021-12-19T17:09:30+0100
 ################
 ## Script for:
 ## - outputting samples of prior & posterior distributions
@@ -7,41 +7,42 @@
 ## Uses Dirichlet prior
 ################
 
+if(file.exists("/cluster/home/pglpm/R")){
+    .libPaths(c("/cluster/home/pglpm/R",.libPaths()))
+}
 #### Custom setup ####
 ## Colour-blind friendly palettes, from https://personal.sron.nl/~pault/
-## (consider using khroma package instead)
-library('RColorBrewer')
-mypurpleblue <- '#4477AA'
-myblue <- '#66CCEE'
-mygreen <- '#228833'
-myyellow <- '#CCBB44'
-myred <- '#EE6677'
-myredpurple <- '#AA3377'
-mygrey <- '#BBBBBB'
-mypalette <- c(myblue, myred, mygreen, myyellow, myredpurple, mypurpleblue, mygrey, 'black')
-palette(mypalette)
-barpalette <- colorRampPalette(c(mypurpleblue,'white',myredpurple),space='Lab')
-barpalettepos <- colorRampPalette(c('white','black'),space='Lab')
-#dev.off()
-####
+## library('khroma')
+## palette(colour('bright')())
+## scale_colour_discrete <- scale_colour_bright
+## palette(colour('muted')())
 library('data.table')
-library('khroma')
-library('ggplot2')
-library('ggthemes')
-theme_set(theme_bw(base_size=18))
-scale_colour_discrete <- scale_colour_bright
+## library('ggplot2')
+## library('ggthemes')
+## theme_set(theme_bw(base_size=18))
 #library('cowplot')
 library('png')
 library('foreach')
 library('doFuture')
-registerDoFuture()
 library('doRNG')
-library('ash')
-#library('LaplacesDemon') # used for Dirichlet generator
-library('extraDistr')
-options(bitmapType='cairo')
-pdff <- function(filename){pdf(file=paste0(filename,'.pdf'),paper='a4r',height=11.7,width=16.5)} # to output in pdf format
-pngf <- function(filename,res=300){png(file=paste0(filename,'.png'),height=11.7*1.2,width=16.5,units='in',res=res,pointsize=36)} # to output in png format
+registerDoFuture()
+print('availableCores:')
+print(availableCores())
+print('availableCores-multicore:')
+print(availableCores('multicore'))
+if(file.exists("/cluster/home/pglpm/R")){
+    plan(multicore, workers=availableCores()-1)
+}else{
+    plan(multisession, workers=6)
+}
+##library('ash')
+## library('LaplacesDemon')
+## library('extraDistr')
+## library('mvtnorm')
+## options(bitmapType='cairo')
+## pdff <- function(filename){pdf(file=paste0(filename,'.pdf'),paper='a4r',height=11.7,width=16.5)} # to output in pdf format
+## pngf <- function(filename,res=300){png(file=paste0(filename,'.png'),height=11.7*1.2,width=16.5,units='in',res=res,pointsize=36)} # to output in pdf format
+library('nimble')
 #### End custom setup ####
 
 #######################################

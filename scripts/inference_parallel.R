@@ -1,5 +1,5 @@
 ## Author: Battistin, Gonzalo Cogno, Porta Mana
-## Last-Updated: 2021-07-31T09:12:28+0200
+## Last-Updated: 2021-08-03T10:27:55+0200
 ################
 ## Script for:
 ## - outputting samples of prior & posterior distributions
@@ -16,6 +16,12 @@ plan(multisession, workers = 3L)
 resu <- foreach(item=0:2, .inorder=F)%dopar%{
 system("cmd.exe", input = paste0('Rscript.exe callmodel2randomized.R ',item))
 }
+
+
+
+
+
+
 
 tsamples <- mcsamples
 dim(tsamples) <- c(nrow(mcsamples),2,(maxS1+1))

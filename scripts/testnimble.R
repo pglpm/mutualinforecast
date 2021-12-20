@@ -1,5 +1,5 @@
 ## Author: PGL Porta Mana
-## Last-Updated: 2021-08-01T17:38:58+0200
+## Last-Updated: 2021-08-03T10:05:39+0200
 ################
 ## Script to test Nimble
 
@@ -64,62 +64,303 @@ test <- runMCMC(mcmc=Cmcmc,niter=2000,nburnin=1000)
 
 
 ##################################################
-library('nimble')
+library('foreach')
+library('doFuture')
 ##
-dmymnorm <- nimbleFunction(
-    run = function(x=double(1), mean=double(1), prec=double(2), log=integer(0, default=0)){ lp <- -sum(asRow(x-mean) %*% prec %*% asCol(x-mean))/2
-        if(log) return(lp)
-        else return(exp(lp))
-        returnType(double(0))
+parallelSamplesFun <- function(mymeansd){
+    library('nimble')
+    ##
+##    deregisterDistributions('dmymnorm')
+    dmymnorm <- nimbleFunction(
+        run = function(x=double(1), mean=double(1), prec=double(2), log=integer(0, default=0)){ lp <- -sum(asRow(x-mean) %*% prec %*% asCol(x-mean))/2
+            if(log) return(lp)
+            else return(exp(lp))
+            returnType(double(0))
+        })
+    assign('dmymnorm',dmymnorm,envir=.GlobalEnv)
+    ##
+    code <- nimbleCode({
+        mu ~ dnorm(mean=2, sd=meansd)
+        means[1:2] <- c(mu, mu)
+        prec[1:2,1:2] <- diag(c(1/1^2, 1/0.1^2))
+        ##    
+        x[1:2] ~ dmymnorm(mean=means[1:2], prec=prec[1:2,1:2])
     })
-assign('dmymnorm',dmymnorm,envir=.GlobalEnv)
+    ##
+    constants <- list(meansd=mymeansd)
+    inits <- list(mu=1, x=1:2)
+    modeldata <- list()
+    ##
+    model <- nimbleModel(code=code, name='model', constants=constants, inits=inits, data=modeldata, dimensions=list(x=2, means=2, prec=c(2,2)), calculate=F)
+    Cmodel <- compileNimble(model, showCompilerOutput = TRUE, resetFunctions = TRUE)
+    ##
+    confmodel <- configureMCMC(Cmodel, nodes=NULL)
+    confmodel$addSampler(target=c('mu'), type='posterior_predictive')
+    confmodel$addSampler(target='x', type='AF_slice', control=list(sliceAdaptFactorMaxIter=5000, sliceAdaptFactorInterval=500, sliceAdaptWidthMaxIter=500, sliceMaxSteps=100, maxContractions=100))
+    confmodel$setMonitors(c('mu','x','logProb_x'))
+    confmodel
+    ##
+    confmodel$printSamplers(executionOrder=T)
+    mcmc <- buildMCMC(confmodel)
+    Cmcmc <- compileNimble(mcmc)
+    samples <- runMCMC(mcmc=Cmcmc, niter=10000, nburnin=5000, thin=5)
+    samples
+}
 ##
-code <- nimbleCode({
-    mean ~ dnorm(mean=0, sd=1)
-    lsd ~ dnorm(mean=0, sd=1)
-    ## sd ~ dgamma(shape=2, rate=1)
-    means[1:2] <- c(mean, mean)
-    prec[1:2,1:2] <- diag(c(1/exp(sd)^2, 1/(exp(sd)/10)^2))
-    ##    
-    x[1:2] ~ dmymnorm(mean=means[1:2], prec=prec[1:2,1:2])
-    y[1:2] ~ dmnorm(mean=means[1:2], prec=prec[1:2,1:2])
-})
-##
-constants <- list()
-inits <- list(mean=0, lsd=0)
-modeldata <- list()
-##
-model <- nimbleModel(code=code, name='model', constants=constants, inits=inits, data=modeldata)
-Cmodel <- compileNimble(model, showCompilerOutput = TRUE, resetFunctions = TRUE)
-##
-confmodel <- configureMCMC(Cmodel,nodes=NULL)
-confmodel$addSampler(target=c('mean','lsd'), type='posterior_predictive', control=list())
-confmodel$addSampler(target='x', type='AF_slice', control=list(sliceAdaptFactorMaxIter=5000, sliceAdaptFactorInterval=500, sliceAdaptWidthMaxIter=500, sliceMaxSteps=100, maxContractions=100))
-confmodel$addSampler(target='y', type='posterior_predictive', control=list())
-## confmodel$addSampler(target=c('mean','lsd'), type='AF_slice', control=list(sliceAdaptFactorMaxIter=5000, sliceAdaptFactorInterval=500, sliceAdaptWidthMaxIter=500, sliceMaxSteps=100, maxContractions=100))
-## confmodel$addSampler(target='x', type='AF_slice', control=list(sliceAdaptFactorMaxIter=5000, sliceAdaptFactorInterval=500, sliceAdaptWidthMaxIter=500, sliceMaxSteps=100, maxContractions=100))
-## confmodel$addSampler(target='y', type='AF_slice', control=list(sliceAdaptFactorMaxIter=5000, sliceAdaptFactorInterval=500, sliceAdaptWidthMaxIter=500, sliceMaxSteps=100, maxContractions=100))
-confmodel$setMonitors(c('mean','x','y','logProb_x','logProb_y'))
-confmodel
-confmodel$printSamplers(executionOrder=T)
-## ===== Monitors =====
-## thin = 1: mean, sd, x
-## ===== Samplers =====
-## posterior_predictive_branch sampler (2)
-##   - mean
-##   - sd
-## AF_slice sampler (1)
-##   - x
-##
-mcmc <- buildMCMC(confmodel)
-#samples0 <- runMCMC(mcmc=mcmc,niter=20,nburnin=10,inits=list(mean=0, sd=1,x=0:1,y=0:1))
-Cmcmc <- compileNimble(mcmc)
-samplesS <- runMCMC(mcmc=Cmcmc,niter=10000,nburnin=5000,thin=5,inits=list(mean=0, lsd=0,x=0:1,y=0:1))
-## Warning: running an uncompiled MCMC algorithm, use compileNimble() for faster execution.
-## running chain 1...
-## |-------------|-------------|-------------|-------------|
-## |Error: user-defined distribution dmymnorm provided without random generation function.
+plan(sequential)
+plan(multisession, workers = 3)
+results <- foreach(ii=c(1,10), .packages='nimble')%dopar%{parallelSamplesFun(ii)}
 
+
+
+
+#### With dummy r-generator
+##################################################
+library('foreach')
+library('doFuture')
+registerDoFuture()
+## library('parallel')
+## mycluster <- makeCluster(3)
+##
+parallelSamplesFun <- function(XX){
+    library('nimble')
+    ##
+    ##    deregisterDistributions('dmymnorm')
+    dmymnorm <- nimbleFunction(
+        run = function(x=double(1), mean=double(1), prec=double(2), log=integer(0, default=0)){ lp <- -sum(asRow(x-mean) %*% prec %*% asCol(x-mean))/2
+            if(log) return(lp)
+            else return(exp(lp))
+            returnType(double(0))
+        })
+    rmymnorm <- nimbleFunction(
+        run = function(n=integer(0), mean=double(1), prec=double(2)){
+            print('This function does not exist')
+            return(Inf)
+            returnType(double(1))
+        })
+    ## registerDistributions(list(
+    ## dmymnorm = list(
+    ##           BUGSdist = "dmymnorm(mean, prec)",
+    ##           Rdist = "dmymnorm(mean, prec)",
+    ##     pqAvail = FALSE,
+    ##     types = c("value = double(1)", "mean = double(1)", "prec = double(2)")
+    ##     )))
+    assign('dmymnorm', dmymnorm, envir=.GlobalEnv)
+    assign('rmymnorm', rmymnorm, envir=.GlobalEnv)
+    ##
+    code <- nimbleCode({
+        x[1:2] ~ dmymnorm(mean=means[1:2], prec=prec[1:2,1:2])
+    })
+    ##
+    constants <- list(means=rep(XX,2), prec=diag(c(1/1^2, 1/0.1^2)))
+    inits <- list(x=1:2)
+    modeldata <- list()
+    ##
+    model <- nimbleModel(code=code, name='model', constants=constants, inits=inits, data=modeldata, dimensions=list(x=2, means=2, prec=c(2,2)), calculate=F)
+    Cmodel <- compileNimble(model, showCompilerOutput = TRUE, resetFunctions = TRUE)
+    ##
+    confmodel <- configureMCMC(Cmodel, nodes=NULL)
+    confmodel$addSampler(target='x', type='AF_slice')#, control=list(sliceAdaptFactorMaxIter=5000, sliceAdaptFactorInterval=500, sliceAdaptWidthMaxIter=500, sliceMaxSteps=100, maxContractions=100))
+    confmodel$setMonitors(c('x','logProb_x'))
+    confmodel
+    ##
+    confmodel$printSamplers(executionOrder=T)
+    mcmc <- buildMCMC(confmodel)
+    Cmcmc <- compileNimble(mcmc)
+    samples <- runMCMC(mcmc=Cmcmc, niter=10, nburnin=5, inits=list(x=1:2), setSeed=147)
+    samples
+}
+plan(sequential)
+plan(multisession, workers = 3)
+results3 <- foreach(XX=c(1,10), .packages='nimble')%dopar%{parallelSamplesFun(XX)}
+
+##
+results <- parLapply(cl = mycluster, X = c(1,10), parallelSamplesFun)
+
+## Error in checkForRemoteErrors(val) : 
+##   2 nodes produced errors; first error: In sizeAssignAfterRecursing: 'rmymnorm' is not available or its output type is unknown.
+##  This occurred for: eigenBlock(model_x,1:2) <<- rmymnorm(=1,mean=model_means[1:2],prec=model_prec[1:2, 1:2])
+##  This was part of the call:  {
+##   eigenBlock(model_x,1:2) <<- rmymnorm(=1,mean=model_means[1:2],prec=model_prec[1:2, 1:2])
+## }
+
+
+
+    library('nimble')
+    ##
+    ##    deregisterDistributions('dmymnorm')
+    ## dmymnorm <- nimbleFunction(
+    ##     run = function(x=double(1), mean=double(1), prec=double(2), log=integer(0, default=0)){ lp <- -sum(asRow(x-mean) %*% prec %*% asCol(x-mean))/2
+    ##         if(log) return(lp)
+    ##         else return(exp(lp))
+    ##         returnType(double(0))
+    ##     })
+    ## rmymnorm <- nimbleFunction(
+    ##     run = function(n=integer(0), mean=double(1), prec=double(2)){
+    ##         print('This function does not exist')
+    ##         return(Inf)
+    ##         returnType(double(1))
+    ##     })
+    ## registerDistributions(list(
+    ## dmymnorm = list(
+    ##           BUGSdist = "dmymnorm(mean, prec)",
+    ##           Rdist = "dmymnorm(mean, prec)",
+    ##     pqAvail = FALSE,
+    ##     types = c("value = double(1)", "mean = double(1)", "prec = double(2)")
+    ##     )))
+    ## assign('dmymnorm', dmymnorm, envir=.GlobalEnv)
+    ## assign('rmymnorm', rmymnorm, envir=.GlobalEnv)
+    ##
+code <- nimbleCode({
+    mu ~ dnorm(mean=0, sd=10)
+    x ~ dnorm(mean=mu, sd=1)
+    })
+    ##
+    constants <- list()
+    inits <- list(mu=1)
+    modeldata <- list(x=10)
+    ##
+    model <- nimbleModel(code=code, name='model', constants=constants, inits=inits, data=modeldata, calculate=F)
+    Cmodel <- compileNimble(model, showCompilerOutput = TRUE, resetFunctions = TRUE)
+    ##
+    confmcmc <- configureMCMC(Cmodel)
+#    confmcmc$addSampler(target='x', type='AF_slice')#, control=list(sliceAdaptFactorMaxIter=5000, sliceAdaptFactorInterval=500, sliceAdaptWidthMaxIter=500, sliceMaxSteps=100, maxContractions=100))
+    confmcmc$setMonitors(c('mu','x','logProb_x','logLik'))
+    confmcmc
+    ##
+    confmcmc$printSamplers(executionOrder=T)
+    mcmc <- buildMCMC(confmcmc)
+Cmcmc <- compileNimble(mcmc)
+Cmcmc$run(niter=10)
+samples <- as.matrix(Cmcmc$mvSamples)
+
+    samples <- runMCMC(mcmc=Cmcmc, niter=1000, nburnin=1000, inits=list(x=1:2), setSeed=147)
+    samples
+}
+plan(sequential)
+plan(multisession, workers = 3)
+results3 <- foreach(XX=c(1,10), .packages='nimble')%dopar%{parallelSamplesFun(XX)}
+
+
+
+
+##################################################
+library('foreach')
+library('doFuture')
+registerDoFuture()
+##
+parallelSamplesFun <- function(XX){
+    library('nimble')
+    ##
+##    deregisterDistributions('dmymnorm')
+    dmymnorm <- nimbleFunction(
+        run = function(x=double(1), mean=double(1), prec=double(2), log=integer(0, default=0)){ lp <- -sum(asRow(x-mean) %*% prec %*% asCol(x-mean))/2
+            if(log) return(lp)
+            else return(exp(lp))
+            returnType(double(0))
+        })
+    registerDistributions(list(
+    dmymnorm = list(
+              BUGSdist = "dmymnorm(mean, prec)",
+              Rdist = "dmymnorm(mean, prec)",
+        pqAvail = FALSE,
+        types = c("value = double(1)", "mean = double(1)", "prec = double(2)")
+        )))
+    assign('dmymnorm', dmymnorm, envir=.GlobalEnv)
+    ##
+    code <- nimbleCode({
+        mu ~ dnorm(mean=2, sd=meansd)
+        means[1:2] <- c(mu, mu)
+        ##    
+        x[1:2] ~ dmymnorm(mean=means[1:2], prec=prec[1:2,1:2])
+    })
+    ##
+    constants <- list(meansd=XX, prec=diag(c(1/1^2, 1/0.1^2)))
+    inits <- list(mu=1, x=1:2)
+    modeldata <- list()
+    ##
+    model <- nimbleModel(code=code, name='model', constants=constants, inits=inits, data=modeldata, dimensions=list(x=2, means=2, prec=c(2,2)), calculate=F)
+    Cmodel <- compileNimble(model, showCompilerOutput = TRUE, resetFunctions = TRUE)
+    ##
+    confmodel <- configureMCMC(Cmodel, nodes=NULL)
+    confmodel$addSampler(target=c('mu'), type='posterior_predictive')
+    confmodel$addSampler(target='x', type='AF_slice', control=list(sliceAdaptFactorMaxIter=5000, sliceAdaptFactorInterval=500, sliceAdaptWidthMaxIter=500, sliceMaxSteps=100, maxContractions=100))
+    confmodel$setMonitors(c('mu','x','logProb_x'))
+    confmodel
+    ##
+    confmodel$printSamplers(executionOrder=T)
+    mcmc <- buildMCMC(confmodel)
+    Cmcmc <- compileNimble(mcmc)
+    samples <- runMCMC(mcmc=Cmcmc, niter=10000, nburnin=5000, thin=5, inits=list(mu=1, x=1:2))
+    samples
+}
+##
+plan(multisession, workers = 3)
+results <- foreach(ii=c(1,10))%dopar%{parallelSamplesFun(ii)}
+
+
+
+##################################################
+library('foreach')
+library('doFuture')
+registerDoFuture()
+##
+##
+plan(multisession, workers = 3)
+
+results <- foreach(XX=c(1,10))%dopar%{
+    library('nimble')
+    ##
+##    deregisterDistributions('dmymnorm')
+    dmymnorm <- nimbleFunction(
+        run = function(x=double(1), mean=double(1), prec=double(2), log=integer(0, default=0)){ lp <- -sum(asRow(x-mean) %*% prec %*% asCol(x-mean))/2
+            if(log) return(lp)
+            else return(exp(lp))
+            returnType(double(0))
+        })
+    registerDistributions(list(
+    dmymnorm = list(
+              BUGSdist = "dmymnorm(mean, prec)",
+              Rdist = "dmymnorm(mean, prec)",
+        pqAvail = FALSE,
+        types = c("value = double(1)", "mean = double(1)", "prec = double(2)")
+        )))
+    assign('dmymnorm', dmymnorm, envir=.GlobalEnv)
+    ##
+    code <- nimbleCode({
+        mu ~ dnorm(mean=2, sd=meansd)
+        means[1:2] <- c(mu, mu)
+        ##    
+        x[1:2] ~ dmymnorm(mean=means[1:2], prec=prec[1:2,1:2])
+    })
+    ##
+    constants <- list(meansd=XX, prec=diag(c(1/1^2, 1/0.1^2)))
+    inits <- list(mu=1, x=1:2)
+    modeldata <- list()
+    ##
+    model <- nimbleModel(code=code, name='model', constants=constants, inits=inits, data=modeldata, dimensions=list(x=2, means=2, prec=c(2,2)), calculate=F)
+    Cmodel <- compileNimble(model, showCompilerOutput = TRUE, resetFunctions = TRUE)
+    ##
+    confmodel <- configureMCMC(Cmodel, nodes=NULL)
+    confmodel$addSampler(target=c('mu'), type='posterior_predictive')
+    confmodel$addSampler(target='x', type='AF_slice', control=list(sliceAdaptFactorMaxIter=5000, sliceAdaptFactorInterval=500, sliceAdaptWidthMaxIter=500, sliceMaxSteps=100, maxContractions=100))
+    confmodel$setMonitors(c('mu','x','logProb_x'))
+    confmodel
+    ##
+    confmodel$printSamplers(executionOrder=T)
+    mcmc <- buildMCMC(confmodel)
+    Cmcmc <- compileNimble(mcmc)
+    samples <- runMCMC(mcmc=Cmcmc, niter=10000, nburnin=5000, thin=5, inits=list(mu=1, x=1:2))
+    samples
+}
+
+
+
+
+
+plan(multisession, workers = 3)
+results <- foreach(ii=c(1,10), .packages='nimble')%dopar%{parallelSamplesFun(ii)}
+stopCluster(mycluster)
 
 
 
@@ -171,18 +412,12 @@ assign('dmymnorm',dmymnorm,envir=.GlobalEnv)
 ##
 code <- nimbleCode({
     mean ~ dnorm(mean=0, sd=1)
-    lsd ~ dnorm(mean=0, sd=1)
-    ## sd ~ dgamma(shape=2, rate=1)
-    means[1:2] <- c(mean, mean)
-    prec[1:2,1:2] <- diag(c(1/exp(sd)^2, 1/(exp(sd)/10)^2))
-    ##    
-    x[1:2] ~ dmymnorm(mean=means[1:2], prec=prec[1:2,1:2])
-    y[1:2] ~ dmnorm(mean=means[1:2], prec=prec[1:2,1:2])
+    x ~ dnorm(mean=mean, sd=0.1)
 })
 ##
 constants <- list()
-inits <- list(mean=0, lsd=0)
-modeldata <- list()
+inits <- list()
+modeldata <- list(x=-100)
 ##
 model <- nimbleModel(code=code, name='model', constants=constants, inits=inits, data=modeldata)
 Cmodel <- compileNimble(model, showCompilerOutput = TRUE, resetFunctions = TRUE)
