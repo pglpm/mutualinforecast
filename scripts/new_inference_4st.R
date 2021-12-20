@@ -1,5 +1,5 @@
 ## Author: Battistin, Gonzalo Cogno, Porta Mana
-## Last-Updated: 2021-12-20T07:43:34+0100
+## Last-Updated: 2021-12-20T08:10:31+0100
 ################
 ## Script for:
 ## - outputting samples of prior & posterior distributions
@@ -164,6 +164,10 @@ for(lsample in c(2^(5:13), nrow(longrunData)-1)){
 dev.off()
 
 
+
+###################
+#### OLD STUFF ####
+###################
 
 condfreqSamples <- t(apply(mcmcrun,1,normalizerows))
 dim(condfreqSamples) <- c(nDraws, nStimuli, maxSpikes1)
