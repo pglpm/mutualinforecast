@@ -1,5 +1,5 @@
 ## Author: Battistin, Gonzalo Cogno, Porta Mana
-## Last-Updated: 2022-01-03T10:41:57+0100
+## Last-Updated: 2022-01-03T12:21:01+0100
 ################
 ## Script for:
 ## - outputting samples of prior & posterior distributions
@@ -92,12 +92,20 @@ longrunData$stimulus_lag1[2:nrow(longrunData)] <- 1L*longrunData$stimulus[2:nrow
 ##
 stimuli <- sort(unique(longrunData[2:nrow(longrunData),stimulus_lag1],na.rm=T))
 nStimuli <- length(stimuli)
-##shuffle
-##longrunData <- longrunData[c(1,sample(2:nrow(longrunData)))]
+######### shuffle
+longrunData <- longrunData[c(1,sample(2:nrow(longrunData)))] #shuffle
+#########
 ## frequencies of full recording
 longrunFreqs <- t(sapply(stimuli, function(stim){
     tabulate(longrunData[stimulus_lag1==stim,nspikes]+1L, nbins=maxSpikes1)
 }))
+## Autocorrelation
+pdff('autocorr_shuffled10')
+lags <- 0:50
+tplot(x=lags*0.04,y=cbind(coda::autocorr(coda::as.mcmc(longrunData$nspikes),lags),coda::autocorr(coda::as.mcmc(longrunData$stimulus),lags)),ylim=c(0,NA),xlab='time/s',ylab='autocorrelation',lwd=4)
+legend('topright',legend=c('n. spikes','stimulus'),col=1:2,lty=1:2,bty='n',cex=2,lwd=3)
+dev.off()
+##
 ##priorBaseDistr <- normalize(c(colSums(longrunFreqs))+0.1)
 rownames(longrunFreqs) <- nameStimulus <- paste0('stimulus',stimuli)
 colnames(longrunFreqs) <- nameNspikes <- paste0('nspikes',0:maxSpikes)
