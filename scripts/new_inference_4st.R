@@ -1,5 +1,5 @@
 ## Author: Battistin, Gonzalo Cogno, Porta Mana
-## Last-Updated: 2021-12-20T08:10:31+0100
+## Last-Updated: 2022-01-03T10:41:57+0100
 ################
 ## Script for:
 ## - outputting samples of prior & posterior distributions
@@ -93,7 +93,7 @@ longrunData$stimulus_lag1[2:nrow(longrunData)] <- 1L*longrunData$stimulus[2:nrow
 stimuli <- sort(unique(longrunData[2:nrow(longrunData),stimulus_lag1],na.rm=T))
 nStimuli <- length(stimuli)
 ##shuffle
-longrunData <- longrunData[c(1,sample(2:nrow(longrunData)))]
+##longrunData <- longrunData[c(1,sample(2:nrow(longrunData)))]
 ## frequencies of full recording
 longrunFreqs <- t(sapply(stimuli, function(stim){
     tabulate(longrunData[stimulus_lag1==stim,nspikes]+1L, nbins=maxSpikes1)
