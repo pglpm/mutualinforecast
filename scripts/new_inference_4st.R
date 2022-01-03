@@ -1,5 +1,5 @@
 ## Author: Battistin, Gonzalo Cogno, Porta Mana
-## Last-Updated: 2022-01-03T12:21:01+0100
+## Last-Updated: 2022-01-03T12:33:09+0100
 ################
 ## Script for:
 ## - outputting samples of prior & posterior distributions
@@ -72,7 +72,7 @@ normalize <- function(freqs){freqs/sum(freqs, na.rm=T)}
 normalizerows <- function(freqs){freqs/rowSums(freqs, na.rm=T)}
 normalizecols <- function(freqs){t(t(freqs)/colSums(freqs, na.rm=T))}
 
-equalstim <- FALSE
+equalstim <- TRUE
 set.seed(147)
 longrunDataFile  <- 'SpikeCounts_and_direction.csv'
 #sampleIndexFile  <- 'index_mat_80.csv'
@@ -93,7 +93,7 @@ longrunData$stimulus_lag1[2:nrow(longrunData)] <- 1L*longrunData$stimulus[2:nrow
 stimuli <- sort(unique(longrunData[2:nrow(longrunData),stimulus_lag1],na.rm=T))
 nStimuli <- length(stimuli)
 ######### shuffle
-longrunData <- longrunData[c(1,sample(2:nrow(longrunData)))] #shuffle
+## longrunData <- longrunData[c(1,sample(2:nrow(longrunData)))] #shuffle
 #########
 ## frequencies of full recording
 longrunFreqs <- t(sapply(stimuli, function(stim){
@@ -110,6 +110,19 @@ dev.off()
 rownames(longrunFreqs) <- nameStimulus <- paste0('stimulus',stimuli)
 colnames(longrunFreqs) <- nameNspikes <- paste0('nspikes',0:maxSpikes)
 longrunMI <- c(bit=mutualinfo(longrunFreqs, equalstim=equalstim))
+
+addspikes <- longrunData$nspikes[seq(1,nrow(longrunData)-1,by=2)] +
+    longrunData$nspikes[seq(1,nrow(longrunData)-1,by=2)+1]
+addstims <- longrunData$stimulus[seq(1,nrow(longrunData)-1,by=2)]*2L +
+    longrunData$stimulus[seq(1,nrow(longrunData)-1,by=2)+1]
+longrunData2 <- data.table(nspikes=addspikes, stimulus=addstims)
+## Autocorrelation
+pdff('autocorr_2bintogether')
+lags <- 0:50
+tplot(x=lags,y=cbind(coda::autocorr(coda::as.mcmc(longrunData2$nspikes),lags),coda::autocorr(coda::as.mcmc(longrunData2$stimulus),lags)),ylim=c(0,NA),xlab='bin (80 ms)',ylab='autocorrelation',lwd=4)
+legend('topright',legend=c('n. spikes','stimulus'),col=1:2,lty=1:2,bty='n',cex=2,lwd=3)
+dev.off()
+
 
 nDraws <- 2^14
 nPlotSamples <- 100
