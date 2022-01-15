@@ -1,5 +1,5 @@
 ## Author: Battistin, Gonzalo Cogno, Porta Mana
-## Last-Updated: 2022-01-07T13:15:53+0100
+## Last-Updated: 2022-01-15T16:44:52+0100
 ################
 ## Script for:
 ## - outputting samples of prior & posterior distributions
@@ -74,7 +74,7 @@ normalizecols <- function(freqs){t(t(freqs)/colSums(freqs, na.rm=T))}
 
 equalstim <- TRUE
 set.seed(147)
-setlabel <- '1000ms'
+setlabel <- '5000ms'
 longrunDataFile  <- 'BinarizedStimulus_SpikeCounts_dt=1000ms.csv'
 #sampleIndexFile  <- 'index_mat_80.csv'
 maxSpikes <- 150
