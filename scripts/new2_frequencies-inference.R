@@ -1,5 +1,5 @@
 ## Author: Battistin, Gonzalo Cogno, Porta Mana
-## Last-Updated: 2022-01-15T17:40:08+0100
+## Last-Updated: 2022-01-17T10:34:14+0100
 ################
 ## Script for:
 ## - outputting samples of prior & posterior distributions
@@ -51,6 +51,21 @@ if(file.exists("/cluster/home/pglpm/R")){
 ## and if requested constructs
 ## a new joint distribution with equal marginals for S
 ## Note: don't need to normalize input to mutualinfo
+myoptim <- function(par, fn){
+    resu0 <- list(par=par)
+    resu <- optim(par=resu0$par, fn=fn, control=list(factr = 1e-10, maxit=10000))
+    while(any(resu$par!=resu0$par)){
+        resu0 <- resu
+        resu <- optim(par=resu0$par, fn=fn, control=list(factr = 1e-10, maxit=10000))
+    }
+    resu}
+myoptimbounds <- function(par, fn, lower, upper, maxit=100){
+    optim(par, fn=fn,
+          gr = function(x) pracma::grad(fn, x), 
+          method = "L-BFGS-B",
+          lower = lower, upper = upper,
+          control = list(factr = 1e-10, maxit = maxit))
+}
 mutualinfo <- function(jointFreqs, equalstim=FALSE, base=2L){##in bits by default
     if(equalstim){
         jointFreqs <- (jointFreqs/rowSums(jointFreqs))/nrow(jointFreqs)
@@ -58,9 +73,20 @@ mutualinfo <- function(jointFreqs, equalstim=FALSE, base=2L){##in bits by defaul
         jointFreqs <- jointFreqs/sum(jointFreqs)
     }
     jointFreqs[is.na(jointFreqs)] <- 0
-    sum(jointFreqs *
-        log2(jointFreqs/outer(rowSums(jointFreqs), colSums(jointFreqs))),
-        na.rm=TRUE)/log2(base)
+    jointFreqs <- jointFreqs *
+        log2(jointFreqs/outer(rowSums(jointFreqs), colSums(jointFreqs)))
+    sum(jointFreqs[is.finite(jointFreqs)])/log2(base)
+}
+mutualinfoX <- function(jointFreqs, pstim1, base=2L){##in bits by default
+        jointFreqs <- (jointFreqs/rowSums(jointFreqs))*c(1-pstim1, pstim1) # conditionals p(spike|stim) * p(stim)
+        jointFreqs[is.na(jointFreqs)] <- 0
+    jointFreqs <- jointFreqs *
+        log2(jointFreqs/outer(rowSums(jointFreqs), colSums(jointFreqs)))
+    sum(jointFreqs[is.finite(jointFreqs)])/log2(base)
+}
+capacity <- function(jointFreqs, base=2L){
+    fn <- function(x){-mutualinfoX(jointFreqs, x)}
+    -myoptimbounds(0.5, fn, 0, 1)$value/log2(base)
 }
 entropy <- function(freqs, base=2L){
     freqs <- cbind(freqs)
@@ -72,13 +98,13 @@ normalize <- function(freqs){freqs/sum(freqs, na.rm=T)}
 normalizerows <- function(freqs){freqs/rowSums(freqs, na.rm=T)}
 normalizecols <- function(freqs){t(t(freqs)/colSums(freqs, na.rm=T))}
 
-equalstim <- TRUE
+equalstim <- FALSE
 set.seed(147)
 binwidthms <- 500
 longrunDataFile  <- 'BinarizedStimulus_SpikeCounts_dt=500ms.csv'
 #sampleIndexFile  <- 'index_mat_80.csv'
-T <- 10 ## prior weight
-priorMeanSpikes <- 40*binwidthms/1000 # 0.2 = 5Hz * (40Hz/1000s)
+T <- 16 ## prior weight
+priorMeanSpikes <- 5*binwidthms/1000 # 5Hz
 ##
 ## load full recording
 longrunData  <- as.data.table(t(read.csv(longrunDataFile,header=FALSE,sep=',')))
@@ -111,6 +137,7 @@ dev.off()
 rownames(longrunFreqs) <- nameStimulus <- paste0('stimulus',stimuli)
 colnames(longrunFreqs) <- nameNspikes <- paste0('nspikes',0:maxSpikes)
 longrunMI <- c(bit=mutualinfo(longrunFreqs, equalstim=equalstim))
+longrunC <- capacity(longrunFreqs)
 
 ## addspikes <- longrunData$nspikes[seq(1,nrow(longrunData)-1,by=2)] +
 ##     longrunData$nspikes[seq(1,nrow(longrunData)-1,by=2)+1]
@@ -125,72 +152,96 @@ longrunMI <- c(bit=mutualinfo(longrunFreqs, equalstim=equalstim))
 ## dev.off()
 
 
-nDraws <- 2^14
-nPlotSamples <- 100
+nDraws <- 2^12
+nPlotSamples <- 32
 maxX <- maxSpikes
 priorAlphas <- NULL
 for(i in 1:nStimuli){priorAlphas <- rbind(priorAlphas, priorBaseDistr)}
 dimnames(priorAlphas) <- list(nameStimulus, nameNspikes)
-T <- 16 ## prior weight
+T <- 32 ## prior weight
 startr <- 2 ## 2 or 0 for sequence with max uniformity of stimuli
+startbin <- 1L
 ##
 ##pdff(paste0('MIhistogram_4stimEQ_prior',T,'_start',(if(startr==2){2}else{'OPT'})))
-pdff(paste0('MIhisto_',binwidthms,'_equalstim__prior',T,'_start2'))
-for(lsample in c(2^(5:13), nrow(longrunData)-1)){
-    if(startr==0){
-        entseq <- foreach(i=2L:(nrow(longrunData)-lsample+2L), .combine=c, .inorder=TRUE)%dopar%{
-            entropy(
-                tabulate(longrunData[i-1L+(1L:lsample),stimulus]+1L, nbins=nStimuli)
-            )
-        }
-        entorder <- order(entseq, decreasing=T)+1L
-        startbin <- entorder[1]
-    }else{
-        startbin <- 1
-    }
+set.seed(149)
+pdff(paste0('MIhisto_bin',binwidthms,'ms_prior',T))
+for(lsample in c(2^c(4:9), nrow(longrunData))){
+    ## if(FALSE){
+    ##     entseq <- foreach(i=1L:(nrow(longrunData)-lsample+2L), .combine=c, .inorder=TRUE)%dopar%{
+    ##         entropy(
+    ##             tabulate(longrunData[i-1L+(1L:lsample),stimulus]+1L, nbins=nStimuli)
+    ##         )
+    ##     }
+    ##     entorder <- order(entseq, decreasing=T)+1L
+    ##     startbin <- entorder[1]
+    ## }else{
+    ##     startbin <- 1
+    ## }
     ##
     sampleData <- longrunData[startbin-1+(1:lsample),]
     sampleFreqs <- t(sapply(stimuli, function(stim){
         tabulate(sampleData[stimulus==stim,nspikes]+1L, nbins=maxSpikes1)
     }))
     dimnames(sampleFreqs) <- dimnames(longrunFreqs)
-    sampleMI <- c(bit=mutualinfo(sampleFreqs, equalstim=equalstim))
+    sampleMI <- c(bit=mutualinfo(sampleFreqs))
+    sampleC <- c(bit=capacity(sampleFreqs))
     ##
     ## Alphas for Dirichlet distribution
-    dAlphas <- sampleFreqs + T*priorAlphas
+    dAlphas <- sampleFreqs + T*priorAlphas/2
     ## Generate samples
-    if(TRUE){
-        mcmcrun <- NULL
-        for(i in 1:nStimuli){mcmcrun <- cbind(mcmcrun, t(LaplacesDemon::rdirichlet(n=nDraws, alpha=dAlphas[i,])))}
-        dim(mcmcrun) <- c(maxSpikes1, nDraws, nStimuli)
-        mcmcrun <- aperm(mcmcrun, c(2,3,1))
-    }else{
+    ## if(TRUE){
+    ##     mcmcrun <- NULL
+    ##     for(i in 1:nStimuli){mcmcrun <- cbind(mcmcrun, t(LaplacesDemon::rdirichlet(n=nDraws, alpha=dAlphas[i,])))}
+    ##     dim(mcmcrun) <- c(maxSpikes1, nDraws, nStimuli)
+    ##     mcmcrun <- aperm(mcmcrun, c(2,3,1))
+    ## }else{
         mcmcrun <- LaplacesDemon::rdirichlet(n=nDraws, alpha=c(dAlphas))
         dim(mcmcrun) <- c(nDraws, nStimuli, maxSpikes1)
-        }
+##        }
     dimnames(mcmcrun) <- list(NULL, nameStimulus, nameNspikes)
-    postMISamples <- apply(mcmcrun, 1, function(x){mutualinfo(x, equalstim=equalstim)})
+    postMISamples <- apply(mcmcrun, 1, function(x){mutualinfo(x)})
+##    postCSamples <- apply(mcmcrun, 1, function(x){capacity(x)})
+    postCSamples <- foreach(i=1:nDraws,.combine=c)%dopar%{capacity(mcmcrun[i,,])}
     ##
     postMIDistr <- thist(postMISamples)
+    postCDistr <- thist(postCSamples)
     ##
-    tplot(x=postMIDistr$breaks,y=postMIDistr$density,
-          xlim=c(0,max(postMIDistr$breaks,longrunMI,sampleMI,0.7)),
-          xlab='long-run MI/bit', ylab='probability density',
+    tplot(x=list(postMIDistr$mids, postCDistr$mids),y=list(postMIDistr$density, postCDistr$density),
+          xlim=c(0,max(postMIDistr$breaks,postCDistr$breaks,longrunMI,longrunC,sampleMI,sampleC,0.75)),
+          xlab='Sh', ylab='probability density',
           main=paste0(binwidthms,' ms; ',lsample, ' observed bins; start observation at bin ', startbin, '; prior weight: ', T),
-          cex.main=1.25)
-    abline(v=longrunMI, col=2, lty=1, lwd=2)
-    abline(v=sampleMI, col=3, lty=2, lwd=2)
-    postMIQuantiles <- quant(x=postMISamples, probs=c(2.5,50,97.5)/100)
-    abline(v=postMIQuantiles, col=c(7,7,7), lty=c(4,4,4), lwd=c(3,3,3))
-    legend('topright', legend=c(names(postMIQuantiles),'sample','true'), col=c(7,7,7,3,2), lty=c(4,4,4,2,1), lwd=3, bty='n', cex=1.5)
+          cex.main=1.25, col=c(1,6), lwd=2)
+    tplot(x=list(longrunMI, longrunC, sampleMI, sampleC),
+          y=list(-0.01*max(c(postMIDistr$density, postCDistr$density))),
+    type='p', cex=2, pch=c(16,1,17,2), col=c(1,6,5,2), lty=c(1,2,1,2), add=T)
+    ##    
+    ## abline(v=longrunMI, col=3, lty=1, lwd=3)
+    ## abline(v=longrunC, col=3, lty=2, lwd=3)
+    ## abline(v=sampleMI, col=4, lty=1, lwd=2)
+    ## abline(v=sampleC, col=4, lty=2, lwd=2)
+    postMIQuantiles <- quant(x=postMISamples, probs=c(1,8,15)/16)
+    postCQuantiles <- quant(x=postCSamples, probs=c(1,8,15)/16)
+    ## abline(v=postMIQuantiles, col=c(5,5,5), lty=c(4,4,4), lwd=c(3,3,3))
+    ## abline(v=postCQuantiles, col=c(2,2,2), lty=c(4,4,4), lwd=c(3,3,3))
+    legend('topleft', legend=c(
+                           'forecast long-run MI',
+                           'forecast long-run capacity',
+                           'true long-run MI',
+                           'true long-run capacity',
+                           'sample MI',
+                           'sample capacity'),
+           col=c(1,6,1,6,5,2),
+           lty=c(1,2,NA,NA,NA,NA),
+           pch=c(NA, NA, 16,1, 17,2),
+           lwd=3, bty='n', cex=1)
     ##
-    subsam <- sample(1:nrow(mcmcrun),size=32)
+    subsam <- sample(1:nrow(mcmcrun),size=nPlotSamples)
     ylim=c(-1,1)*max(mcmcrun[subsam,,])
-    tplot(x=0:maxX, y=t(mcmcrun[subsam,1,]),type='l',lwd=0.5,lty=1,alpha=0.5,col=5,ylim=ylim)
-    tplot(x=0:maxX, y=-t(mcmcrun[subsam,2,]),type='l',lwd=0.5,lty=1,alpha=0.5,col=2, add=T)
-    tplot(x=0:maxX, y=t(c(1,-1)*normalizerows(longrunFreqs)), type='l', lwd=3, lty=2, col=c(1,6), add=T)
-    tplot(x=0:maxX, y=t(c(1,-1)*normalizerows(sampleFreqs)), type='l', lwd=4, lty=2, col=c(3,4), add=T)
-    tplot(x=0:maxX, y=t(c(1,-1)*normalizerows(priorAlphas)), type='l', lwd=3, lty=3, col=7, add=T)
+    tplot(x=0:maxX, y=t(normalizerows(mcmcrun[subsam,1,])),type='l',lwd=0.5,lty=1,alpha=0.5,col=1,ylim=ylim)
+    tplot(x=0:maxX, y=-t(normalizerows(mcmcrun[subsam,2,])),type='l',lwd=0.5,lty=1,alpha=0.5,col=1, add=T)
+    tplot(x=0:maxX, y=t(c(1,-1)*normalizerows(longrunFreqs)), type='l', lwd=3, lty=1, col=c(3), add=T)
+    tplot(x=0:maxX, y=t(c(1,-1)*normalizerows(sampleFreqs)), type='l', lwd=4, lty=2, col=c(4), add=T)
+#    tplot(x=0:maxX, y=t(c(1,-1)*normalizerows(priorAlphas)), type='l', lwd=3, lty=3, col=7, add=T)
 }
 dev.off()
 
