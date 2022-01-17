@@ -1,5 +1,5 @@
 ## Author: Battistin, Gonzalo Cogno, Porta Mana
-## Last-Updated: 2022-01-17T10:34:14+0100
+## Last-Updated: 2022-01-17T12:18:38+0100
 ################
 ## Script for:
 ## - outputting samples of prior & posterior distributions
@@ -127,7 +127,7 @@ longrunFreqs <- t(sapply(stimuli, function(stim){
     tabulate(longrunData[stimulus==stim,nspikes]+1L, nbins=maxSpikes1)
 }))
 ## Autocorrelation
-pdff(paste0('autocorr_',binwidthms))
+pdff(paste0('autocorr_bin',binwidthms,'ms'))
 lags <- 0:50
 tplot(x=lags,y=cbind(coda::autocorr(coda::as.mcmc(longrunData$nspikes),lags),coda::autocorr(coda::as.mcmc(longrunData$stimulus),lags)),ylim=c(min(0,cbind(coda::autocorr(coda::as.mcmc(longrunData$nspikes),lags),coda::autocorr(coda::as.mcmc(longrunData$stimulus),lags))),NA),xlab='bins',ylab='autocorrelation',lwd=4)
 legend('topright',legend=c('n. spikes','stimulus'),col=1:2,lty=1:2,bty='n',cex=2,lwd=3)
