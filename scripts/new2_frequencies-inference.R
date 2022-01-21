@@ -1,5 +1,5 @@
 ## Author: Battistin, Gonzalo Cogno, Porta Mana
-## Last-Updated: 2022-01-17T12:18:38+0100
+## Last-Updated: 2022-01-21T10:30:44+0100
 ################
 ## Script for:
 ## - outputting samples of prior & posterior distributions
@@ -118,7 +118,7 @@ nStimuli <- length(stimuli)
 ## longrunData <- longrunData[c(1,sample(2:nrow(longrunData)))] #shuffle
 #########
 ## frequencies of full recording
-maxSpikes <- round(max(longrunData$nspikes,na.rm=T)*1.1)
+maxSpikes <- 99#round(max(longrunData$nspikes,na.rm=T)*1.1)
 maxSpikes1 <- maxSpikes + 1
 #priorBaseDistr <- normalize(dpois(x=0:maxSpikes, lambda=priorMeanSpikes, log=FALSE))
 priorBaseDistr <- normalize(dgeom(x=0:maxSpikes, prob=1/(priorMeanSpikes+1), log=FALSE))
@@ -164,7 +164,7 @@ startbin <- 1L
 ##
 ##pdff(paste0('MIhistogram_4stimEQ_prior',T,'_start',(if(startr==2){2}else{'OPT'})))
 set.seed(149)
-pdff(paste0('MIhisto_bin',binwidthms,'ms_prior',T))
+pdff(paste0('newMIhisto_bin',binwidthms,'ms_prior',T))
 for(lsample in c(2^c(4:9), nrow(longrunData))){
     ## if(FALSE){
     ##     entseq <- foreach(i=1L:(nrow(longrunData)-lsample+2L), .combine=c, .inorder=TRUE)%dopar%{
