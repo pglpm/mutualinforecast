@@ -1,5 +1,5 @@
 ## Author: Battistin, Gonzalo Cogno, Porta Mana
-## Last-Updated: 2022-01-21T11:18:02+0100
+## Last-Updated: 2022-01-21T14:25:56+0100
 ################
 ## Script for:
 ## - outputting samples of prior & posterior distributions
@@ -165,7 +165,7 @@ startbin <- 1L
 ##pdff(paste0('MIhistogram_4stimEQ_prior',T,'_start',(if(startr==2){2}else{'OPT'})))
 set.seed(149)
 pdff(paste0('newMIhisto_bin',binwidthms,'ms_prior',T,'_startbin',startbin))
-for(lsample in c(40*(1:floor(nrow(longrunData)/40)), nrow(longrunData))){
+for(lsample in c(40*(1:(floor(nrow(longrunData)/40)-1)), nrow(longrunData))){
     ## if(FALSE){
     ##     entseq <- foreach(i=1L:(nrow(longrunData)-lsample+2L), .combine=c, .inorder=TRUE)%dopar%{
     ##         entropy(
