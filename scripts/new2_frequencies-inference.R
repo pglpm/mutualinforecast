@@ -1,5 +1,5 @@
 ## Author: Battistin, Gonzalo Cogno, Porta Mana
-## Last-Updated: 2022-03-17T15:52:42+0100
+## Last-Updated: 2022-03-17T16:01:02+0100
 ################
 ## Script for:
 ## - outputting samples of prior & posterior distributions
@@ -244,8 +244,6 @@ for(lsample in c(40*(1:(floor(nrow(longrunData)/40)-1)), nrow(longrunData))){
 #    tplot(x=0:maxX, y=t(c(1,-1)*normalizerows(priorAlphas)), type='l', lwd=3, lty=3, col=7, add=T)
 }
 dev.off()
-
-
 
 
 ###################
