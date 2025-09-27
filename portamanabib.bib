@@ -6,7 +6,7 @@
 %% Home page: http://magnaspesmeretrix.org
 %% Email (remove ZZ): pglZZ[at]portamana.org
 %% Created: 2000-08-23T16:53:30+0200
-%% Last-Updated: 2025-09-24T06:09:40+0200
+%% Last-Updated: 2025-09-27T09:05:11+0200
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % NB: This database contains also items whose content's validity I
@@ -1846,11 +1846,7 @@ pages =	       {383--395}
 
 @Book{aczel1988,
 author =       {Peter Aczel},
-<<<<<<< HEAD
-title =	       {Non-Well-Founded Sets},
-=======
 title =        {Non-Well-Founded Sets},
->>>>>>> 93d98c56e135f9855653a849295e0518930d78cf
 publisher =    {CSLI},
 year =         {1988},
 number =       {14},
@@ -1929,11 +1925,7 @@ keywords =     {information theory}
 
 @Book{aczeletal1975,
 author =       {Janos Acz{\'e}l and Z. Dar{\'o}czy},
-<<<<<<< HEAD
-title =	       {On Measures of Information and Their Characterizations},
-=======
 title =        {On Measures of Information and Their Characterizations},
->>>>>>> 93d98c56e135f9855653a849295e0518930d78cf
 publisher =    {Academic Press},
 year =         {1975},
 volume =       {115},
@@ -6640,11 +6632,7 @@ pages =	       {1804--1807}
 
 @Article{asplundetal2005,
 author =       {M. Asplund and N. Grevesse and A. J. Sauval},
-<<<<<<< HEAD
-title =	       {The Solar Chemical Composition},
-=======
 title =        {The Solar Chemical Composition},
->>>>>>> 93d98c56e135f9855653a849295e0518930d78cf
 journal =      aspcs,
 year =         {2005},
 volume =       {336},
@@ -39609,7 +39597,7 @@ year =	       {1970},
 volume =       {15},
 number =       {3},
 pages =	       {458--486},
-keywords =     {Vasershtejn-Kantorovich distance}
+keywords =     {Vasershtejn-Kantorovich distance, Earth mover's distance}
 }
 
 @Book{docarmo1979_t1993,
@@ -41422,6 +41410,18 @@ note =	       {\doi{10.1093/biomet/asp021}},
 keywords =     {Dirichlet-process mixture, Markov-chain Monte Carlo}
 }
 
+@InCollection{dunson2010,
+author =       {David B. Dunson},
+title =        {Nonparametric {Bayes} applications to biostatistics},
+booktitle =    {\NoCaseChange{\citein{hjortetal2010}}},
+publisher =    {},
+year =         {2010},
+chapter =      {\chapb~7},
+pages =        {223--273},
+note =         {\doi{10.1017/CBO9780511802478.008}},
+keywords =     {exchangeability, Bayes, Dirichlet-process mixture}
+}
+
 @Article{dunson2017,
 author =       {David B. Dunson},
 title =	       {Toward Automated Prior Choice},
@@ -41799,7 +41799,7 @@ keywords =     {Bayes, machine learning, decision theory, area under the curve}
 
 @Misc{dyrlandetal2022b,
 author =       {Kjetil Dyrland and Alexander Selvikv{\aa}g Lundervold and Piero Giovanni Luca {Porta Mana}},
-title =	       {Don't guess what's true: choose what's optimal. A probability transducer for machine-learning classifiers},
+title =	       {Don't guess what's true: choose what's optimal. {A} probability transducer for machine-learning classifiers},
 year =	       {2022},
 note =	       {\osfdoi{10.31219/osf.io/vct9y}, \arxivdoi{10.48550/arXiv.2302.10578}},
 keywords =     {Bayes, machine learning, decision theory}
@@ -41814,14 +41814,14 @@ note =	       {\osfproj{mfz5w}}
 
 @Article{dyson1972,
 author =       {Freeman J. Dyson},
-title =	       {Missed opportunities},
+title =        {Missed opportunities},
 journal =      bams,
-year =	       {1972},
+year =         {1972},
 volume =       {78},
 number =       {5},
-pages =	       {635--652},
-note =	       {\doi{10.1090/S0002-9904-1972-12971-9}},
-keywords =     {interdisciplinarity}
+pages =        {635--652},
+note =         {\doi{10.1090/S0002-9904-1972-12971-9}},
+keywords =     {interdisciplinarity, James Clerk Maxwell}
 }
 
 @InCollection{dyson2007,
@@ -53536,7 +53536,7 @@ title =	       {Uncertainty in Deep Learning},
 school =       {University of Cambridge},
 year =	       {2016},
 address =      {Cambridge},
-note =	       {\url{https://www.cs.ox.ac.uk/people/yarin.gal/website/blog_2248.html}},
+note =	       {\url{https://www.cs.ox.ac.uk/people/yarin.gal/website/thesis/thesis.pdf}},
 keywords =     {Bayesian non-parametric probability theory, neural networks}
 }
 
@@ -57785,10 +57785,11 @@ note =	       {\doi{10.21428/2c646de5.031d4553}}
 
 @Book{good1950,
 author =       {Irving John Good},
-title =	       {Probability and the Weighing of Evidence},
+title =        {Probability and the Weighing of Evidence},
 publisher =    {Griffin},
-year =	       {1950},
+year =         {1950},
 address =      {London},
+note =         {\url{https://gwern.net/doc/statistics/bayes/1950-good-probabilityandtheweighingofevidence.pdf}},
 keywords =     {Bayes, Bayes factors, weight of evidence, composite hypotheses hierarchical model (\sect~6.5)},
 mynote =       {\url{https://archive.org/details/probabilityweigh0000good}. On considering hypotheses about future frequencies: \enquote{An alternative approach would be to define $H$ and $\overline{H}$ as stating that two fixed proportions of the lot would pass the test. This approach would lead to nearly the same results if the lot were assumed to be large compared with the sample} \sect~6.2 pp.~64--65}
 }
@@ -57833,35 +57834,37 @@ keywords =     {probability theory, surprise, Shannon entropy}
 
 @Article{good1956_e1957,
 author =       {Irving John Good},
-title =	       {Corrections to ``{The} Surprise Index for the Multivariate Normal Distribution''},
+title =        {Corrections to ``{The} Surprise Index for the Multivariate Normal Distribution''},
 journal =      ams,
-year =	       {1957},
+year =         {1957},
 volume =       {28},
 number =       {4},
-pages =	       {1055},
-note =	       {\doi{10.1214/aoms/1177706815}. See \citebi{good1956}}
+pages =        {1055},
+note =         {\doi{10.1214/aoms/1177706815}. See \citebi{good1956}},
+origdate =     {1956}
 }
 
 @Article{good1956b,
 author =       {Irving John Good},
-title =	       {Some Terminology and Notation in Information Theory},
+title =        {Some Terminology and Notation in Information Theory},
 journal =      pieec,
-year =	       {1956},
+year =         {1956},
 volume =       {103},
 number =       {3},
-pages =	       {200--204},
+pages =        {200--204},
+note =         {\doi{10.1049/pi-c.1956.0024}},
 keywords =     {Shannon entropy}
 }
 
 @Article{good1956c,
 author =       {Irving John Good},
-title =	       {Which Comes First, Probability or Statistics?},
+title =        {Which Comes First, Probability or Statistics?},
 journal =      jia,
-year =	       {1956},
+year =         {1956},
 volume =       {82},
 number =       {2},
-pages =	       {249--255},
-note =	       {Partly repr.\ in \citebi{good1983} \chap~5},
+pages =        {249--255},
+note =         {\doi{10.1017/S0020268100046448}. Partly repr.\ in \citebi{good1983} \chap~5},
 keywords =     {Bayes, confidence intervals, maximum likelihood, $p$-values}
 }
 
@@ -57925,13 +57928,14 @@ mynote =       {\url{https://www.jstor.org/stable/685131}, \url{https://www.jsto
 
 @Article{good1961_e1962,
 author =       {Irving John Good},
-title =	       {Erratum: {A} Causal Calculus},
+title =        {Erratum: {A} Causal Calculus},
 journal =      bjps,
-year =	       {1962},
+year =         {1962},
 volume =       {XIII},
 number =       {49},
-pages =	       {88},
-note =	       {\doi{10.1093/bjps/XIII.49.88}. See \citebi{good1961}}
+pages =        {88},
+note =         {\doi{10.1093/bjps/XIII.49.88}. See \citebi{good1961}},
+origdate =     {1961}
 }
 
 @InCollection{good1961b,
@@ -57957,12 +57961,13 @@ mynote =       {\url{https://archive.org/details/scientistspecula0000unse}}
 
 @Article{good1963,
 author =       {Irving John Good},
-title =	       {Maximum Entropy for Hypothesis Formulation, Especially for Multidimensional Contingency Tables},
+title =        {Maximum Entropy for Hypothesis Formulation, Especially for Multidimensional Contingency Tables},
 journal =      ams,
-year =	       {1963},
+year =         {1963},
 volume =       {34},
 number =       {3},
-pages =	       {911--934}
+pages =        {911--934},
+note =         {\doi{10.1214/aoms/1177704014}}
 }
 
 @Book{good1965,
@@ -57987,7 +57992,7 @@ number =       {4},
 pages =        {364--383},
 note =         {\doi{10.1093/imamat/2.4.364}},
 keywords =     {Johnson-Dirichlet prior, exchangeability, frequencies of frequencies},
-mynote =       {\enquote{The five kinds of probability form a rough hierarchy: psychological probabilities are careless and impetuous, subjective probabilities are more mature, credibilities would be agreed by all rational men if there were any rational men, physical probabilities would be agreed if we knew enough about the physical world, or if experiments could be repeated infinitely often, and tautological probabilities are indisputable.} \sect~1, p.~367}
+mynote =       {\url{https://archive.org/details/estimationofprob0000irvi} \enquote{The five kinds of probability form a rough hierarchy: psychological probabilities are careless and impetuous, subjective probabilities are more mature, credibilities would be agreed by all rational men if there were any rational men, physical probabilities would be agreed if we knew enough about the physical world, or if experiments could be repeated infinitely often, and tautological probabilities are indisputable.} \sect~1, p.~367}
 }
 
 @Article{good1966b,
@@ -58038,12 +58043,13 @@ keywords =     {Johnson-Dirichlet prior, exchangeability, frequencies of frequen
 
 @Article{good1968,
 author =       {Irving John Good},
-title =	       {Corroboration, Explanation, Evolving Probability, Simplicity and a Sharpened Razor},
+title =        {Corroboration, Explanation, Evolving Probability, Simplicity and a Sharpened Razor},
 journal =      bjps,
-year =	       {1968},
+year =         {1968},
 volume =       {19},
 number =       {2},
-pages =	       {123--143},
+pages =        {123--143},
+note =         {\doi{10.1093/bjps/19.2.123}},
 keywords =     {Bayes factors, model comparison, hypothesis testing, induction, weight of evidence}
 }
 
@@ -58088,13 +58094,13 @@ mynote =       {\enquote{Note how it is difficult to establish high probability 
 
 @Article{good1976,
 author =       {Irving John Good},
-title =	       {On the Application of Symmetric {Dirichlet} Distributions and their Mixtures to Contingency Tables},
+title =        {On the Application of Symmetric {Dirichlet} Distributions and their Mixtures to Contingency Tables},
 journal =      jasa,
-year =	       {1976},
+year =         {1976},
 volume =       {4},
 number =       {6},
-pages =	       {1159--1189},
-note =	       {See also \citebi{crooketal1980}},
+pages =        {1159--1189},
+note =         {\doi{10.1214/aos/1176343649}. See also \citebi{crooketal1980}},
 keywords =     {Johnson prior, exchangeability, frequencies of frequencies}
 }
 
@@ -58150,12 +58156,13 @@ keywords =     {Bayes factor, weight of evidence}
 
 @Article{good1982,
 author =       {Irving John Good},
-title =	       {A Good Explanation of an Event Is Not Necessarily Corroborated by the Event},
+title =        {A Good Explanation of an Event Is Not Necessarily Corroborated by the Event},
 journal =      psci,
-year =	       {1982},
+year =         {1982},
 volume =       {49},
 number =       {2},
-pages =	       {251--253},
+pages =        {251--253},
+note =         {\url{https://www.jstor.org/stable/186922}},
 keywords =     {probability theory}
 }
 
@@ -58216,26 +58223,27 @@ mynote =       {\url{https://www.jstor.org/stable/2245388}}
 
 @Article{goodetal1958,
 author =       {Irving John Good and K. Caj Doog},
-title =	       {A paradox concerning rate of information},
+title =        {A paradox concerning rate of information},
 journal =      icont,
-year =	       {1958},
+year =         {1958},
 volume =       {1},
 number =       {2},
-pages =	       {113--126},
-note =	       {See also \citebi{goodetal1959}},
+pages =        {113--126},
+note =         {\doi{10.1016/S0019-9958(58)90092-5}. See also corrections and additions \citebi{goodetal1959}},
 keywords =     {probability theory, Shannon entropy}
 }
 
-@Article{goodetal1959,
+@Article{goodetal1958_e1959,
 author =       {Irving John Good and K. Caj Doog},
-title =	       {A paradox concerning rate of information: Corrections and additions},
+title =        {A paradox concerning rate of information: Corrections and additions},
 journal =      icont,
-year =	       {1959},
+year =         {1959},
 volume =       {2},
 number =       {2},
-pages =	       {195--197},
-note =	       {See \citebi{goodetal1958}},
-keywords =     {probability theory, Shannon entropy}
+pages =        {195--197},
+note =         {\doi{10.1016/S0019-9958(59)90383-3}. See \citebi{goodetal1958}},
+keywords =     {probability theory, Shannon entropy},
+origdate =     {1958}
 }
 
 @Article{goodetal1968,
@@ -63733,52 +63741,58 @@ keywords =     {prior probability, Bayes, Jeffreys prior, sufficient statistics}
 
 @Article{haldane1932,
 author =       {J. B. S. Haldane},
-title =	       {A note on inverse probability},
+title =        {A note on inverse probability},
 journal =      pcps,
-year =	       {1932},
+year =         {1932},
 volume =       {28},
 number =       {1},
-pages =	       {55--61},
+pages =        {55--61},
+note =         {\doi{10.1017/S0305004100010495}},
 keywords =     {law of total probability}
 }
 
 @Article{haldane1945,
 author =       {J. B. S. Haldane},
-title =	       {On a method of estimating frequencies},
+title =        {On a method of estimating frequencies},
 journal =      bm,
-year =	       {1945},
+year =         {1945},
 volume =       {33},
 number =       {3},
-pages =	       {222--225},
-keywords =     {negative-binomial distribution, stopping rule}
+pages =        {222--225},
+note =         {\doi{10.1093/biomet/33.3.222}},
+keywords =     {negative-binomial distribution, stopping rule},
+mynote =       {\doi{10.2307/2332299}}
 }
 
 @Article{haldane1948,
 author =       {J. B. S. Haldane},
-title =	       {The Precision of Observed Values of Small Frequencies},
+title =        {The Precision of Observed Values of Small Frequencies},
 journal =      bm,
-year =	       {1948},
+year =         {1948},
 volume =       {35},
 number =       {3/4},
-pages =	       {297--300},
-note =	       {See also \citebi{pearson1948}},
-keywords =     {probability theory, Haldane prior}
+pages =        {297--300},
+note =         {\doi{10.1093/biomet/35.3-4.297}. See also \citebi{pearson1948}},
+keywords =     {probability theory, Haldane prior},
+mynote =       {\doi{10.2307/2332350}}
 }
 
 @Article{haldane1948b,
 author =       {J. B. S. Haldane},
-title =	       {Note on the median of a multivariate distribution},
+title =        {Note on the median of a multivariate distribution},
 journal =      bm,
-year =	       {1948},
+year =         {1948},
 volume =       {35},
 number =       {3/4},
-pages =	       {414--417},
-keywords =     {probability theory}
+pages =        {414--417},
+note =         {\doi{10.1093/biomet/35.3-4.414}},
+keywords =     {probability theory},
+mynote =       {\doi{10.2307/2332359}}
 }
 
 @Article{haldetal1966,
 author =       {A. Hald and J. A. Bather and F. Downton and I. D. Hill and G. M. Jenkins and D. R. Cox and Irving John Good and R. Bohrer and H. Chernoff and G. B. Wetherill and G. E. G. Campling},
-title =	       {Discussion on the paper by {Dr wetherill} and {Mr Campling}},
+title =	       {Discussion on the paper by {Dr Wetherill} and {Mr Campling}},
 journal =      jrssb,
 year =	       {1966},
 volume =       {28},
@@ -78430,7 +78444,7 @@ volume =       {6},
 number =       {4},
 pages =	       {366--422},
 note =	       {First publ.\ in Russian 1939},
-keywords =     {Vasershtejn-Kantorovich distance},
+keywords =     {Vasershtejn-Kantorovich distance, Earth mover's distance},
 origdate =     {1939}
 }
 
@@ -96013,12 +96027,13 @@ origdate =     {1984}
 
 @Article{mandtetal2017,
 author =       {Stephan Mandt and Matthew D. Hoffman and David M. Blei},
-title =	       {Stochastic Gradient Descent as Approximate {Bayesian} Inference},
+title =        {Stochastic Gradient Descent as Approximate {Bayesian} Inference},
 journal =      jmlr,
-year =	       {2017},
+year =         {2017},
 volume =       {18},
-pages =	       {1--35},
-keywords =     {deep learning, Bayes}
+pages =        {134},
+note =         {\url{https://www.jmlr.org/papers/v18/17-214.html}},
+keywords =     {deep learning, Bayes, neural networks, machine learning}
 }
 
 @Book{manetal2005,
@@ -109212,22 +109227,26 @@ year =	       {2019}
 
 @Article{omnes1990,
 author =       {Roland Omn{\`e}s},
-title =	       {From {Hilbert} space to common sense: A synthesis of recent progress in the interpretation of quantum mechanics},
+title =        {From {Hilbert} space to common sense: A synthesis of recent progress in the interpretation of quantum mechanics},
 journal =      aop,
-year =	       {1990},
+year =         {1990},
 volume =       {201},
 number =       {2},
-pages =	       {354--447}
+pages =        {354--447},
+note =         {\doi{10.1016/0003-4916(90)90045-P}},
+keywords =     {quantum histories}
 }
 
 @Article{omnes1992,
 author =       {Roland Omn{\`e}s},
-title =	       {Consistent interpretations of quantum mechanics},
+title =        {Consistent interpretations of quantum mechanics},
 journal =      rmp,
-year =	       {1992},
+year =         {1992},
 volume =       {64},
 number =       {2},
-pages =	       {339--382}
+pages =        {339--382},
+note =         {\doi{10.1103/RevModPhys.64.339}},
+keywords =     {quantum histories}
 }
 
 @Article{omoteetal1995,
@@ -109241,7 +109260,7 @@ pages =	       {273--278}
 }
 
 @Book{ondar1977_t1981,
-editor =       {Kh. O. Ondar},
+editor =       {Kheimerool O. Ondar},
 title =	       {The Correspondence Between A. A. Markov and A. A. Chuprov on the Theory of Probability and Mathematical Statistics},
 publisher =    {Springer},
 year =	       {1981},
@@ -109251,11 +109270,11 @@ keywords =     {random variable, critique of term \enquote{random}},
 mynote =       {\enquote{By the way, everywhere possible I exclude the completely undefined expressions ``random'' and ``at random''; where it is necessary to use them I introduce an explanation corresponding to the particular case.} No.~54, p.~65}
 }
 
-@Misc{one2009,
-author =       {{ONE}},
-title =        {One-Punch Man},
-year =         {2009},
-mynote =       {\enquote{That is my fate. It can't be helped. I just need to change how I think. Right! I need to think positively. I just have to believe there will be people in this world who appreciate all the things that I do.} Season~1 OVA~1}
+@Misc{oneetal2015,
+author =       {One and Yusuke Murata},
+title =        {A shadow that snuck up too close},
+year =         {2015},
+mynote =       {\enquote{I just need to change how I think. Right! I need to think positively. I just have to believe there will be people in this world who appreciate all the things that I do.} \enquote{I'm not saying I need fans, but it would be nice if someone noticed what I've been doing...} Season~1 OVA~1}
 }
 
 @Article{ongetal1992,
@@ -112062,14 +112081,15 @@ keywords =     {de Finetti's theorem, probability of a probability}
 
 @Article{pearson1948,
 author =       {E. S. Pearson},
-title =	       {Note on {Professor Haldane's} paper regarding the treatment of rare events},
+title =        {Note on {Professor Haldane's} paper regarding the treatment of rare events},
 journal =      bm,
-year =	       {1948},
+year =         {1948},
 volume =       {35},
 number =       {3/4},
-pages =	       {301--303},
-note =	       {See \citebi{haldane1948}},
-keywords =     {probability theory, Haldane prior}
+pages =        {301--303},
+note =         {\doi{10.1093/biomet/35.3-4.301}. See \citebi{haldane1948}},
+keywords =     {probability theory, Haldane prior},
+mynote =       {\doi{10.2307/2332351}}
 }
 
 @Article{pearsonetal1965,
@@ -112464,7 +112484,7 @@ year =	       {2008},
 volume =       {08},
 pages =	       {495--508},
 note =	       {See also accompanying material at \url{http://ofirpele.droppages.com}},
-keywords =     {Vasershtejn-Kantorovich distance on the circle}
+keywords =     {Vasershtejn-Kantorovich distance on the circle, Earth mover's distance}
 }
 
 @Article{pelissettoetal2002,
@@ -116834,7 +116854,7 @@ keywords =     {probability theory}
 }
 
 @Misc{portamanaetal2023b,
-author =       {Porta Mana and Piero Giovanni Luca and Ingrid Rye and A. Vik and M. Koci{\'n}ski and A. Lundervold and A. J. Lundervold and A. S. Lundervold},
+author =       {Piero Giovanni Luca {Porta Mana} and Ingrid Rye and A. Vik and M. Koci{\'n}ski and A. Lundervold and A. J. Lundervold and A. S. Lundervold},
 title =	       {Personalized prognosis \amp\ treatment using an optimal predictor machine: An example study on conversion from Mild Cognitive Impairment to {Alzheimer's} Disease},
 year =	       {2023},
 note =	       {\osfdoi{10.31219/osf.io/8nr56}},
@@ -132552,7 +132572,7 @@ school =       {Universiteit Leiden},
 year =	       {2016},
 address =      {Leiden},
 note =	       {\url{https://www.universiteitleiden.nl/binaries/content/assets/science/mi/scripties/slegers.pdf}},
-keywords =     {probability theory, Vasershtein-Kantorovich metric}
+keywords =     {probability theory, Vasershtein-Kantorovich metric, Earth mover's distance}
 }
 
 @Article{slepian1951,
@@ -142358,11 +142378,11 @@ keywords =     {Criticism of `operationalism'}
 
 @InBook{truesdell1963b_r1968,
 author =       {Truesdell, III, Clifford Ambrose},
-title =	       {Whence the law of moment of momentum?},
+title =        {Whence the law of moment of momentum?},
 chapter =      {\chapb~V},
-year =	       {1968},
-pages =	       {239--271},
-note =	       {\doi{10.1007/978-3-642-86647-0_5}. First delivered as a lecture 1963. See also \citebi{truesdell1964}},
+year =         {1968},
+pages =        {239--271},
+note =         {\doi{10.1007/978-3-642-86647-0_5}. First delivered as a lecture 1963. See also \citebi{truesdell1964}},
 mynote =       {\url{http://pi.math.cornell.edu/~rand/randdocs/classics/truesdell\%20whence.pdf}},
 origdate =     {1963},
 booktitle =    {\NoCaseChange{\citein{truesdell1968}}}
@@ -144574,7 +144594,7 @@ year =	       {1972},
 volume =       {18},
 number =       {4},
 pages =	       {784--786},
-keywords =     {Vasershtejn-Kantorovich distance}
+keywords =     {Vasershtejn-Kantorovich distance, Earth mover's distance}
 }
 
 @Article{valleretal2000,
@@ -145596,7 +145616,7 @@ year =	       {1969},
 volume =       {5},
 number =       {3},
 pages =	       {64--72},
-keywords =     {Kantorovich distance, probability theory}
+keywords =     {Kantorovich distance, probability theory, Earth mover's distance}
 }
 
 @Article{vasicek1980,
@@ -145927,7 +145947,7 @@ volume =       {35},
 number =       {4},
 pages =	       {1--9},
 note =	       {\url{http://www.pdmi.ras.ru/~vershik/papers.html}},
-keywords =     {Vasershtejn-Kantorovich distance}
+keywords =     {Vasershtejn-Kantorovich distance, Earth mover's distance}
 }
 
 @Misc{vershynin2004,
@@ -147375,11 +147395,12 @@ keywords =     {Dirichlet process, non-parametric Bayes, Markov-chain Monte Carl
 
 @InCollection{walker2010,
 author =       {Stephen G. Walker},
-title =	       {Bayesian nonparametric methods: motivation and ideas},
+title =        {Bayesian nonparametric methods: motivation and ideas},
 booktitle =    {\NoCaseChange{\citein{hjortetal2010}}},
-year =	       {2010},
+year =         {2010},
 chapter =      {\chapb~1},
-pages =	       {22--34},
+pages =        {22--34},
+note =         {\doi{10.1017/CBO9780511802478.002}},
 keywords =     {exchangeability, Bayes, Dirichlet-process mixture},
 mynote =       {\enquote{Many of the questions posed to the nonparametric methods are of the type ``what if this and what if that?'' referring to the possibility that the true density is normal or some other low-dimensional density and so using many parameters is going to be highly inefficient. In truth, it is these questions that are more appropriately directed to those who consistently use low-dimensional densities for modeling: ``what if the model is not normal?''} \sect~1.2 p.~24. \enquote{A common argument is that it is not possible to learn about all the parameters of a nonparametric model. This spectacularly misses the point. Bayesian inference is about being willing and able to specify all uncertainties into a prior distribution. If one does not like the outcome, do not be a Bayesian. Even a parametric model needs a certain amount of data to learn anything reasonable and the nonparametric model, which reflects greater starting uncertainty than a parametric model, needs more data to overcome the additional starting uncertainty. But it is not right to wish away the prior uncertainty or purposefully to underestimate it.} \sect~1.2 p.~25}
 }
